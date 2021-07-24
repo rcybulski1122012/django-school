@@ -1,0 +1,17 @@
+.navbar {
+    border-bottom: 1px solid lightgray;
+    padding: 1em;
+}
+
+.nav-link {
+    color: black !important;
+}
+
+.nav-link:hover, .navbar-brand:hover {
+    color: lightgray !important;
+    transition: 0.15s;
+}
+
+.asteriskField {
+    display: none;
+}
