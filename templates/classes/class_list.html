@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}
+  Classes
+{% endblock %}
+
+{% block content %}
+  <h1>Classes</h1>
+  <ul>
+    {% for class in classes %}
+      <li class="list-group my-4">
+       <a href="#" class="list-group-item">
+          {{ class.number }}
+        </a>
+      </li>
+    {% empty %}
+      <p>No classes have been created yet.</p>
+    {% endfor %}
+  </ul>
+{% endblock %}

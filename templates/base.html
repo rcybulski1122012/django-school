@@ -1,4 +1,5 @@
 {% load static %}
+{% load utils %}
 <!doctype html>
 <html lang="en">
   <head>
@@ -21,6 +22,9 @@
           <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
             <div class="navbar-nav ms-auto">
               {% if request.user.is_authenticated %}
+                {% if request.user|is_in_group:"teachers" %}
+                  <a class="nav-link" href="{% url "classes:list" %}">Classes</a>
+                {% endif %}
                 <a class="nav-link" href="{%  url "accounts:logout" %}">Logout</a>
               {% else %}
                 <a class="nav-link" href="{% url "accounts:login" %}">Login</a>

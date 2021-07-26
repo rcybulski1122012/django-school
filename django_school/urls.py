@@ -22,5 +22,6 @@ urlpatterns = [
     path(
         "accounts/", include("django_school.apps.accounts.urls", namespace="accounts")
     ),
+    path("classes/", include("django_school.apps.classes.urls", namespace="classes")),
     path("admin/", admin.site.urls),
 ]
