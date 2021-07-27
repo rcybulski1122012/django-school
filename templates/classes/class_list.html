@@ -6,10 +6,10 @@
 
 {% block content %}
   <h1>Classes</h1>
-  <ul>
+  <ul class="list-group my-4">
     {% for class in classes %}
-      <li class="list-group my-4">
-       <a href="#" class="list-group-item">
+      <li class="list-group-item">
+       <a href="{% url "classes:detail" pk=class.pk %}">
           {{ class.number }}
         </a>
       </li>

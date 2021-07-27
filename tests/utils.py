@@ -11,8 +11,8 @@ class AccountsMixin:
     DEFAULT_PASSWORD = "password"
 
     @staticmethod
-    def create_user(username=DEFAULT_USERNAME, password=DEFAULT_PASSWORD):
-        return User.objects.create_user(username=username, password=password)
+    def create_user(username=DEFAULT_USERNAME, password=DEFAULT_PASSWORD, **kwargs):
+        return User.objects.create_user(username=username, password=password, **kwargs)
 
     def login(self, username=DEFAULT_USERNAME, password=DEFAULT_PASSWORD):
         self.client.login(username=username, password=password)

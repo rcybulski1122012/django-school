@@ -21,7 +21,9 @@ class Profile(models.Model):
 
     user = models.OneToOneField(User, models.CASCADE)
     address = models.OneToOneField(Address, models.SET_NULL, null=True)
-    school_class = models.OneToOneField(Class, models.SET_NULL, null=True)
+    school_class = models.OneToOneField(
+        Class, models.SET_NULL, null=True, related_name="students"
+    )
 
     def __str__(self):
         return f"{self.user.first_name} {self.user.last_name}"
