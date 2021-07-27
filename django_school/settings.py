@@ -139,3 +139,5 @@ CRISPY_TEMPLATE_PACK = "bootstrap4"
 # Authentication options
 LOGOUT_REDIRECT_URL = reverse_lazy("accounts:login")
 LOGIN_REDIRECT_URL = reverse_lazy("index")
+
+AUTH_USER_MODEL = "accounts.user"

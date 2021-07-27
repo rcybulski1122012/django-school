@@ -79,7 +79,26 @@ class TestClassDetailView(ClassesMixin, AccountsMixin, TestCase):
         self.assertContains(response, f"{user.first_name} {user.last_name}")
 
     def test_renders_users_list(self):
-        pass
+        user = self.create_user(first_name="TestClass", last_name="TestTutor")
+        self.login()
+        self.add_user_to_group(user, "teachers")
+        school_class = self.create_class(number="TestClassNumber", tutor=user)
+        student = self.create_user(
+            username="TestStudent123",
+            first_name="Student",
+            last_name="ForTesting",
+            school_class=school_class,
+        )
 
-    def test_perform_only_x_queries(self):
-        pass
+        response = self.client.get(reverse("classes:detail", args=[school_class.pk]))
+
+        self.assertContains(response, f"{student.first_name} {student.last_name}")
+
+    def test_perform_only_7_queries(self):
+        user = self.create_user(first_name="TestClass", last_name="TestTutor")
+        self.login()
+        self.add_user_to_group(user, "teachers")
+        school_class = self.create_class(number="TestClassNumber", tutor=user)
+
+        with self.assertNumQueries(7):
+            self.client.get(reverse("classes:detail", args=[school_class.pk]))

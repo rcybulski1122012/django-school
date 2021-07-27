@@ -10,10 +10,10 @@
 
   <h2>Students:</h2>
   <ul class="list-group">
-    {% for student in class.studens %}
+    {% for student in class.students.all %}
       <li class="list-group-item">
         <a href="#">
-          {{ student.user.first_name }} {{ student.user.last_name }}
+          {{ student.first_name }} {{ student.last_name }}
         </a>
       </li>
     {% empty %}
