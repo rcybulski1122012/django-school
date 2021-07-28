@@ -1,10 +1,10 @@
 from django.test import TestCase
 
 from django_school.apps.common.templatetags.utils import is_in_group
-from tests.utils import AccountsMixin
+from tests.utils import UsersMixin
 
 
-class TestIsInGroupTemplateTag(AccountsMixin, TestCase):
+class TestIsInGroupTemplateTag(UsersMixin, TestCase):
     fixtures = ["groups.json"]
 
     def test_when_user_is_in_given_group(self):

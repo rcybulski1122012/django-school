@@ -33,7 +33,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    "django_school.apps.accounts",
+    "django_school.apps.users",
     "django_school.apps.classes",
     "django_school.apps.common",
     "django.contrib.admin",
@@ -137,7 +137,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 CRISPY_TEMPLATE_PACK = "bootstrap4"
 
 # Authentication options
-LOGOUT_REDIRECT_URL = reverse_lazy("accounts:login")
+LOGOUT_REDIRECT_URL = reverse_lazy("users:login")
 LOGIN_REDIRECT_URL = reverse_lazy("index")
+LOGIN_URL = reverse_lazy("users:login")
 
-AUTH_USER_MODEL = "accounts.user"
+AUTH_USER_MODEL = "users.user"

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}
+  Profile | {{ user.first_name }} {{ user.last_name }}
+{% endblock %}
+
+{% block content %}
+  <h2>Personal Information</h2>
+  <ul id="personal-info">
+    <li><strong>Full name</strong>: {{ user.first_name }} {{ user.last_name }}</li>
+    {% with class=user.school_class %}
+      {% if class %}
+        <li><strong>Class</strong>: <a href="{% url "classes:detail" class.pk %}">
+          {{ class.number }}
+        </a></li>
+        <li><strong>Tutor</strong>: <a href="{% url "users:detail" class.tutor.pk %}">
+          {{ class.tutor.first_name }} {{ class.tutor.last_name }}
+        </a></li>
+      {% endif %}
+    {% endwith %}
+    <li><strong>Last Login</strong>: {{ user.last_login }}</li>
+    <li><strong>Email</strong>: {{ user.email }}</li>
+    <li><strong>Phone number</strong>: {{ user.phone_number }}</li>
+    <li><strong>Address</strong>: {{ user.address }}</li>
+  </ul>
+{% endblock %}

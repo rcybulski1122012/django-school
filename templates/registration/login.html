@@ -7,7 +7,7 @@
 
 {% block content %}
   <h1>Login</h1>
-  <form action="{% url "accounts:login" %}" method="POST">
+  <form action="{% url "users:login" %}" method="POST">
     {{ form|crispy }}
 
     <input type="submit" value="Login" class="btn btn-success my-3">

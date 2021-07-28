@@ -12,7 +12,7 @@
   <ul class="list-group">
     {% for student in class.students.all %}
       <li class="list-group-item">
-        <a href="#">
+        <a href="{% url "users:detail" student.pk %}">
           {{ student.first_name }} {{ student.last_name }}
         </a>
       </li>

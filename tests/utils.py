@@ -6,7 +6,7 @@ from django_school.apps.classes.models import Class
 User = get_user_model()
 
 
-class AccountsMixin:
+class UsersMixin:
     DEFAULT_USERNAME = "username"
     DEFAULT_PASSWORD = "password"
 

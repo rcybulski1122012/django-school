@@ -1,14 +1,14 @@
 from django.test import TestCase
 from django.urls import reverse
 
-from tests.utils import AccountsMixin, ClassesMixin
+from tests.utils import ClassesMixin, UsersMixin
 
 
-class TestClassesListView(ClassesMixin, AccountsMixin, TestCase):
+class TestClassesListView(ClassesMixin, UsersMixin, TestCase):
     fixtures = ["groups.json"]
 
     def test_redirects_when_user_is_not_logged_in(self):
-        expected_url = f"{reverse('accounts:login')}?next={reverse('classes:list')}"
+        expected_url = f"{reverse('users:login')}?next={reverse('classes:list')}"
 
         response = self.client.get(reverse("classes:list"))
 
@@ -47,12 +47,12 @@ class TestClassesListView(ClassesMixin, AccountsMixin, TestCase):
         self.assertContains(response, "No classes have been created yet.")
 
 
-class TestClassDetailView(ClassesMixin, AccountsMixin, TestCase):
+class TestClassDetailView(ClassesMixin, UsersMixin, TestCase):
     fixtures = ["groups.json"]
 
     def test_redirects_when_user_is_not_logged_in(self):
         school_class = self.create_class()
-        expected_url = f"{reverse('accounts:login')}?next={reverse('classes:detail', args=[school_class.pk])}"
+        expected_url = f"{reverse('users:login')}?next={reverse('classes:detail', args=[school_class.pk])}"
 
         response = self.client.get(reverse("classes:detail", args=[school_class.pk]))
 
