@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.urls import reverse
 
 from django_school.apps.classes.models import Class
 from django_school.apps.common.models import Address
@@ -22,3 +23,10 @@ class User(AbstractUser):
     school_class = models.ForeignKey(
         Class, models.SET_NULL, null=True, blank=True, related_name="students"
     )
+
+    def get_absolute_url(self):
+        return reverse("users:detail", args=[self.pk])
+
+    @property
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}"

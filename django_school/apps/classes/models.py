@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.urls import reverse
 
 
 class Class(models.Model):
@@ -8,6 +9,9 @@ class Class(models.Model):
 
     class Meta:
         verbose_name_plural = "classes"
+
+    def get_absolute_url(self):
+        return reverse("classes:detail", args=[self.pk])
 
     def __str__(self):
         return self.number

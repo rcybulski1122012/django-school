@@ -9,7 +9,7 @@
   <ul class="list-group my-4">
     {% for class in classes %}
       <li class="list-group-item">
-       <a href="{% url "classes:detail" pk=class.pk %}">
+       <a href="{{ class.get_absolute_url }}">
           {{ class.number }}
         </a>
       </li>

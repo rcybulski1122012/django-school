@@ -8,10 +8,9 @@ class TestIsInGroupTemplateTag(UsersMixin, TestCase):
     fixtures = ["groups.json"]
 
     def test_when_user_is_in_given_group(self):
-        user = self.create_user()
-        self.add_user_to_group(user, "teachers")
+        teacher = self.create_teacher()
 
-        result = is_in_group(user, "teachers")
+        result = is_in_group(teacher, "teachers")
 
         self.assertTrue(result)
 

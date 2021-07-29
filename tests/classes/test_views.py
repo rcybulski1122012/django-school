@@ -1,88 +1,85 @@
 from django.test import TestCase
 from django.urls import reverse
 
-from tests.utils import ClassesMixin, UsersMixin
+from tests.utils import ClassesMixin, CommonMixin, UsersMixin
 
 
 class TestClassesListView(ClassesMixin, UsersMixin, TestCase):
     fixtures = ["groups.json"]
 
-    def test_redirects_when_user_is_not_logged_in(self):
-        expected_url = f"{reverse('users:login')}?next={reverse('classes:list')}"
-
-        response = self.client.get(reverse("classes:list"))
-
-        self.assertRedirects(response, expected_url)
+    def test_redirects_when_user_is_not_logged_in1(self):
+        self.assertRedirectsWhenNotLoggedIn(reverse("classes:list"))
 
     def test_returns_403_when_user_is_not_in_teachers_group(self):
-        self.create_user()
-        self.login()
+        not_teacher = self.create_user()
+        self.login(not_teacher)
 
         response = self.client.get(reverse("classes:list"))
 
         self.assertEqual(response.status_code, 403)
 
     def test_context_contains_list_of_classes_ordered_by_number(self):
-        user = self.create_user()
-        self.login()
-        self.add_user_to_group(user, "teachers")
+        teacher = self.create_teacher()
+        self.login(teacher)
         classes = [self.create_class(number=str(i)) for i in range(5)]
 
         response = self.client.get(reverse("classes:list"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn("classes", response.context)
         self.assertQuerysetEqual(response.context["classes"], classes)
 
     def test_displays_appropriate_message_when_there_are_no_classes(self):
-        user = self.create_user()
-        self.login()
-        self.add_user_to_group(user, "teachers")
+        teacher = self.create_teacher()
+        self.login(teacher)
 
         response = self.client.get(reverse("classes:list"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn("classes", response.context)
         self.assertQuerysetEqual(response.context["classes"], [])
         self.assertContains(response, "No classes have been created yet.")
 
 
-class TestClassDetailView(ClassesMixin, UsersMixin, TestCase):
+class TestClassDetailView(ClassesMixin, UsersMixin, CommonMixin, TestCase):
     fixtures = ["groups.json"]
 
-    def test_redirects_when_user_is_not_logged_in(self):
+    def test_redirects_when_user_is_not_logged_in1(self):
         school_class = self.create_class()
-        expected_url = f"{reverse('users:login')}?next={reverse('classes:detail', args=[school_class.pk])}"
 
-        response = self.client.get(reverse("classes:detail", args=[school_class.pk]))
-
-        self.assertRedirects(response, expected_url)
+        self.assertRedirectsWhenNotLoggedIn(
+            reverse("classes:detail", args=[school_class.pk])
+        )
 
     def test_returns_403_when_user_is_not_in_teachers_group(self):
-        self.create_user()
-        self.login()
+        not_teacher = self.create_user()
+        self.login(not_teacher)
         school_class = self.create_class()
 
         response = self.client.get(reverse("classes:detail", args=[school_class.pk]))
 
         self.assertEqual(response.status_code, 403)
 
-    def test_renders_class_info(self):
-        user = self.create_user(first_name="TestClass", last_name="TestTutor")
-        self.login()
-        self.add_user_to_group(user, "teachers")
-        school_class = self.create_class(number="TestClassNumber", tutor=user)
+    def test_context_contains_school_class(self):
+        teacher = self.create_teacher()
+        self.login(teacher)
+        school_class = self.create_class(number="TestClassNumber", tutor=teacher)
 
         response = self.client.get(reverse("classes:detail", args=[school_class.pk]))
 
-        self.assertContains(response, school_class.number)
-        self.assertContains(response, f"{user.first_name} {user.last_name}")
+        self.assertEqual(response.context["class"], school_class)
+
+    def test_renders_class_info(self):
+        teacher = self.create_teacher(first_name="TestClass", last_name="TestTutor")
+        self.login(teacher)
+        school_class = self.create_class(number="TestClassNumber", tutor=teacher)
+
+        response = self.client.get(reverse("classes:detail", args=[school_class.pk]))
+
+        self.assertContainsFew(response, school_class.number, teacher.full_name)
 
     def test_renders_users_list(self):
-        user = self.create_user(first_name="TestClass", last_name="TestTutor")
-        self.login()
-        self.add_user_to_group(user, "teachers")
-        school_class = self.create_class(number="TestClassNumber", tutor=user)
+        teacher = self.create_teacher(first_name="TestClass", last_name="TestTutor")
+        self.login(teacher)
+        school_class = self.create_class(number="TestClassNumber", tutor=teacher)
         student = self.create_user(
             username="TestStudent123",
             first_name="Student",
@@ -92,13 +89,12 @@ class TestClassDetailView(ClassesMixin, UsersMixin, TestCase):
 
         response = self.client.get(reverse("classes:detail", args=[school_class.pk]))
 
-        self.assertContains(response, f"{student.first_name} {student.last_name}")
+        self.assertContains(response, student.full_name)
 
     def test_perform_only_7_queries(self):
-        user = self.create_user(first_name="TestClass", last_name="TestTutor")
-        self.login()
-        self.add_user_to_group(user, "teachers")
-        school_class = self.create_class(number="TestClassNumber", tutor=user)
+        teacher = self.create_teacher()
+        self.login(teacher)
+        school_class = self.create_class(number="TestClassNumber", tutor=teacher)
 
         with self.assertNumQueries(7):
             self.client.get(reverse("classes:detail", args=[school_class.pk]))

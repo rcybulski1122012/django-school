@@ -6,14 +6,14 @@
 
 {% block content %}
   <h1>Class: {{ class.number }}</h1>
-  <h2>Tutor: <a href="#">{{ class.tutor.first_name }} {{ class.tutor.last_name }}</a></h2>
+  <h2>Tutor: <a href="{{ class.tutor.get_absolute_url }}">{{ class.tutor.full_name }}</a></h2>
 
   <h2>Students:</h2>
   <ul class="list-group">
     {% for student in class.students.all %}
       <li class="list-group-item">
-        <a href="{% url "users:detail" student.pk %}">
-          {{ student.first_name }} {{ student.last_name }}
+        <a href="{{ student.get_absolute_url }}">
+          {{ student.full_name }}
         </a>
       </li>
     {% empty %}
