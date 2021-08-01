@@ -4,6 +4,7 @@ from django.contrib.auth.models import Group
 
 from django_school.apps.classes.models import Class
 from django_school.apps.common.models import Address
+from django_school.apps.lessons.models import Lesson, Subject
 
 User = get_user_model()
 
@@ -79,3 +80,32 @@ class CommonMixin:
     def assertContainsFew(self, response, *strings):
         for string in strings:
             self.assertContains(response, string)
+
+
+class LessonsMixin:
+    DEFAULT_SUBJECT_NAME = "subject"
+    DEFAULT_TIME = ("1", "7:00 - 7:45")
+    DEFAULT_WEEKDAY = ("mon", "Monday")
+    DEFAULT_CLASSROOM = 123
+
+    @staticmethod
+    def create_subject(name=DEFAULT_SUBJECT_NAME):
+        return Subject.objects.create(name=name)
+
+    @staticmethod
+    def create_lesson(
+        subject,
+        teacher,
+        school_class,
+        time=DEFAULT_TIME,
+        weekday=DEFAULT_WEEKDAY,
+        classroom=DEFAULT_CLASSROOM,
+    ):
+        return Lesson.objects.create(
+            subject=subject,
+            teacher=teacher,
+            school_class=school_class,
+            time=time,
+            weekday=weekday,
+            classroom=classroom,
+        )

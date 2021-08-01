@@ -12,6 +12,10 @@
        <a href="{{ class.get_absolute_url }}">
           {{ class.number }}
         </a>
+        <span class="mx-5">|</span>
+       <a href="{{ class.get_timetable_url }}">
+         timetable
+       </a>
       </li>
     {% empty %}
       <p>No classes have been created yet.</p>

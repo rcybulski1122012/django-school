@@ -20,6 +20,14 @@ class TestUserDetailView(ClassesMixin, UsersMixin, CommonMixin, TestCase):
 
         self.assertEqual(response.status_code, 403)
 
+    def test_returns_404_when_user_does_not_exist(self):
+        user = self.create_teacher()
+        self.login(user)
+
+        response = self.client.get(reverse("users:detail", args=[100]))
+
+        self.assertEqual(response.status_code, 404)
+
     def test_context_contains_user(self):
         teacher = self.create_teacher()
         self.login(teacher)
@@ -57,7 +65,7 @@ class TestUserDetailView(ClassesMixin, UsersMixin, CommonMixin, TestCase):
             str(address),
         )
 
-    def test_perform_only_6_queries(self):
+    def test_performs_optimal_number_of_queries(self):
         teacher = self.create_teacher()
         self.login(teacher)
         school_class = self.create_class(number="TestClassNumber", tutor=teacher)

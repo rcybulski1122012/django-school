@@ -21,5 +21,6 @@ urlpatterns = [
     path("", TemplateView.as_view(template_name="index.html"), name="index"),
     path("users/", include("django_school.apps.users.urls", namespace="users")),
     path("classes/", include("django_school.apps.classes.urls", namespace="classes")),
+    path("lessons/", include("django_school.apps.lessons.urls", namespace="lessons")),
     path("admin/", admin.site.urls),
 ]

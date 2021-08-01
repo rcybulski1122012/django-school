@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}
+  Timetable
+{% endblock %}
+
+{% block content %}
+  <h2 class="mb-4">Timetable | Class: {{ school_class }}</h2>
+
+  <div class="row">
+    <div class="col-10 table-responsive">
+      <table id="timetable" class="table table-bordered table-hover">
+        <thead>
+          <tr>
+            <th>Lesson</th>
+            {% for weekday in weekdays %}
+              <th>{{ weekday.1 }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for time in lessons_times %}
+            <tr>
+              <td>{{ time.1 }}</td>
+              {% for weekday in weekdays %}
+                <td id="{{ weekday.0 }}{{ time.0 }}">
+                  <div class="lesson"> - </div>
+                  <div class="text-muted lesson-details">
+                    <span class="teacher"></span>
+                    <span class="classroom"></span>
+                  </div>
+                </td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+       </tbody>
+      </table>
+    </div>
+
+    <div class="col-2">
+      <h3>filters:</h3>
+    </div>
+  </div>
+
+  <script>
+      let timetable = document.querySelector("#timetable");
+
+      {% for lesson in school_class.lessons.all %}
+          {
+              let cell = timetable.querySelector("#{{ lesson.weekday }}{{ lesson.time }}")
+              cell.querySelector(".lesson").innerText = "{{ lesson.subject.name }}"
+              cell.querySelector(".teacher").innerText = "{{ lesson.teacher.full_name }} |"
+              cell.querySelector(".classroom").innerText = "{{ lesson.classroom }}"
+          }
+      {% endfor %}
+  </script>
+{% endblock %}

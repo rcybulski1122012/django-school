@@ -7,7 +7,7 @@ from tests.utils import ClassesMixin, CommonMixin, UsersMixin
 class TestClassesListView(ClassesMixin, UsersMixin, TestCase):
     fixtures = ["groups.json"]
 
-    def test_redirects_when_user_is_not_logged_in1(self):
+    def test_redirects_when_user_is_not_logged_in(self):
         self.assertRedirectsWhenNotLoggedIn(reverse("classes:list"))
 
     def test_returns_403_when_user_is_not_in_teachers_group(self):
@@ -58,6 +58,14 @@ class TestClassDetailView(ClassesMixin, UsersMixin, CommonMixin, TestCase):
 
         self.assertEqual(response.status_code, 403)
 
+    def test_returns_404_when_class_does_not_exist(self):
+        teacher = self.create_teacher()
+        self.login(teacher)
+
+        response = self.client.get(reverse("classes:detail", args=[100]))
+
+        self.assertEqual(response.status_code, 404)
+
     def test_context_contains_school_class(self):
         teacher = self.create_teacher()
         self.login(teacher)
@@ -91,7 +99,7 @@ class TestClassDetailView(ClassesMixin, UsersMixin, CommonMixin, TestCase):
 
         self.assertContains(response, student.full_name)
 
-    def test_perform_only_7_queries(self):
+    def test_performs_optimal_number_of_queries(self):
         teacher = self.create_teacher()
         self.login(teacher)
         school_class = self.create_class(number="TestClassNumber", tutor=teacher)

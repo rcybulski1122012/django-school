@@ -17,6 +17,4 @@ class ClassDetailView(PermissionRequiredMixin, DetailView):
     context_object_name = "class"
 
     def get_queryset(self):
-        return (
-            super().get_queryset().prefetch_related("students").select_related("tutor")
-        )
+        return super().get_queryset().select_related("tutor")

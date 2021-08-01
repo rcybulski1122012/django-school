@@ -7,6 +7,7 @@
 {% block content %}
   <h1>Class: {{ class.number }}</h1>
   <h2>Tutor: <a href="{{ class.tutor.get_absolute_url }}">{{ class.tutor.full_name }}</a></h2>
+  <h2><a href="{{ class.get_timetable_url }}">timetable</a></h2>
 
   <h2>Students:</h2>
   <ul class="list-group">

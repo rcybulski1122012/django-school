@@ -4,7 +4,7 @@ from django.urls import reverse
 
 
 class Class(models.Model):
-    number = models.CharField(max_length=4)
+    number = models.CharField(max_length=4, unique=True)
     tutor = models.OneToOneField(settings.AUTH_USER_MODEL, models.SET_NULL, null=True)
 
     class Meta:
@@ -12,6 +12,9 @@ class Class(models.Model):
 
     def get_absolute_url(self):
         return reverse("classes:detail", args=[self.pk])
+
+    def get_timetable_url(self):
+        return reverse("lessons:timetable", args=[self.pk])
 
     def __str__(self):
         return self.number
