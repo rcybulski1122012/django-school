@@ -7,13 +7,12 @@
 {% block content %}
   <h1>Classes</h1>
   <ul class="list-group my-4">
-    {% for class in classes %}
+    {% for school_class in school_classes %}
       <li class="list-group-item">
-       <a href="{{ class.get_absolute_url }}">
-          {{ class.number }}
+       <a href="{{ school_class.get_absolute_url }}">
+          {{ school_class.number }}
         </a>
-        <span class="mx-5">|</span>
-       <a href="{{ class.get_timetable_url }}">
+       <a href="{{ school_class.get_timetable_url }}" class="float-end">
          timetable
        </a>
       </li>

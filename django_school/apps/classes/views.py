@@ -8,13 +8,13 @@ class ClassesListView(PermissionRequiredMixin, ListView):
     model = Class
     ordering = ["number"]
     permission_required = "classes.view_class"
-    context_object_name = "classes"
+    context_object_name = "school_classes"
 
 
 class ClassDetailView(PermissionRequiredMixin, DetailView):
     model = Class
     permission_required = "classes.view_class"
-    context_object_name = "class"
+    context_object_name = "school_class"
 
     def get_queryset(self):
         return super().get_queryset().select_related("tutor")

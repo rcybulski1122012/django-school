@@ -5,41 +5,34 @@
 {% endblock %}
 
 {% block content %}
-  <h2 class="mb-4">Timetable | Class: {{ school_class }}</h2>
-
-  <div class="row">
-    <div class="col-10 table-responsive">
-      <table id="timetable" class="table table-bordered table-hover">
-        <thead>
+  <h1 class="mb-4">Timetable | Class: {{ school_class }}</h1>
+  <div class="table-responsive">
+    <table id="timetable" class="table table-bordered table-hover">
+      <thead>
+        <tr>
+          <th>Lesson</th>
+          {% for weekday in weekdays %}
+            <th>{{ weekday.1 }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for time in lessons_times %}
           <tr>
-            <th>Lesson</th>
+            <td>{{ time.1 }}</td>
             {% for weekday in weekdays %}
-              <th>{{ weekday.1 }}</th>
+              <td id="{{ weekday.0 }}{{ time.0 }}">
+                <div class="lesson"> - </div>
+                <div class="text-muted lesson-details">
+                  <span class="teacher"></span>
+                  <span class="classroom"></span>
+                </div>
+              </td>
             {% endfor %}
           </tr>
-        </thead>
-        <tbody>
-          {% for time in lessons_times %}
-            <tr>
-              <td>{{ time.1 }}</td>
-              {% for weekday in weekdays %}
-                <td id="{{ weekday.0 }}{{ time.0 }}">
-                  <div class="lesson"> - </div>
-                  <div class="text-muted lesson-details">
-                    <span class="teacher"></span>
-                    <span class="classroom"></span>
-                  </div>
-                </td>
-              {% endfor %}
-            </tr>
-          {% endfor %}
-       </tbody>
-      </table>
-    </div>
-
-    <div class="col-2">
-      <h3>filters:</h3>
-    </div>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 
   <script>

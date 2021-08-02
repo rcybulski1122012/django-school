@@ -55,3 +55,18 @@ class TestTimetableView(ClassesMixin, UsersMixin, LessonsMixin, CommonMixin, Tes
 
         with self.assertNumQueries(4):
             self.client.get(reverse("lessons:timetable", args=[school_class.pk]))
+
+
+class TestTimetablesListView(ClassesMixin, TestCase):
+    def test_context_contains_list_of_classes(self):
+        classes = [self.create_class(number=number) for number in "1234"]
+
+        response = self.client.get(reverse("lessons:timetables_list"))
+
+        self.assertQuerysetEqual(response.context["school_classes"], classes)
+
+    def test_displays_appropriate_message_when_there_are_no_classes(self):
+        response = self.client.get(reverse("lessons:timetables_list"))
+
+        self.assertQuerysetEqual(response.context["school_classes"], [])
+        self.assertContains(response, "No classes have been created yet.")

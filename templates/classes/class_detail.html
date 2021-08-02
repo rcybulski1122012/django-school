@@ -1,17 +1,16 @@
 {% extends "base.html" %}
 
 {% block title %}
-  Classes
+  Class {{ school_class.number }}
 {% endblock %}
 
 {% block content %}
-  <h1>Class: {{ class.number }}</h1>
-  <h2>Tutor: <a href="{{ class.tutor.get_absolute_url }}">{{ class.tutor.full_name }}</a></h2>
-  <h2><a href="{{ class.get_timetable_url }}">timetable</a></h2>
+  <h1>Class: {{ school_class.number }}</h1>
+  <h2>Tutor: <a href="{{ school_class.tutor.get_absolute_url }}">{{ school_class.tutor.full_name }}</a></h2>
 
   <h2>Students:</h2>
   <ul class="list-group">
-    {% for student in class.students.all %}
+    {% for student in school_class.students.all %}
       <li class="list-group-item">
         <a href="{{ student.get_absolute_url }}">
           {{ student.full_name }}

@@ -1,7 +1,14 @@
-from django.views.generic import DetailView
+from django.views.generic import DetailView, ListView
 
 from django_school.apps.classes.models import Class
 from django_school.apps.lessons.models import LESSONS_TIMES, WEEKDAYS
+
+
+class TimetablesListView(ListView):
+    model = Class
+    ordering = ["number"]
+    context_object_name = "school_classes"
+    template_name = "lessons/timetable_list.html"
 
 
 class TimetableView(DetailView):

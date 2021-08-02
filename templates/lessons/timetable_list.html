@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}
+  Timetables
+{% endblock %}
+
+{% block content %}
+  <h1>Timetables</h1>
+  <ul class="list-group my-4">
+    {% for school_class in school_classes %}
+      <li class="list-group-item"><a href="{{ school_class.get_timetable_url }}">{{ school_class.number }}</a></li>
+    {% empty %}
+      <p>No classes have been created yet.</p>
+    {% endfor %}
+  </ul>
+{% endblock %}

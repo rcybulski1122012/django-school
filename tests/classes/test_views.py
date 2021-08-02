@@ -26,7 +26,7 @@ class TestClassesListView(ClassesMixin, UsersMixin, TestCase):
         response = self.client.get(reverse("classes:list"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertQuerysetEqual(response.context["classes"], classes)
+        self.assertQuerysetEqual(response.context["school_classes"], classes)
 
     def test_displays_appropriate_message_when_there_are_no_classes(self):
         teacher = self.create_teacher()
@@ -34,8 +34,7 @@ class TestClassesListView(ClassesMixin, UsersMixin, TestCase):
 
         response = self.client.get(reverse("classes:list"))
 
-        self.assertEqual(response.status_code, 200)
-        self.assertQuerysetEqual(response.context["classes"], [])
+        self.assertQuerysetEqual(response.context["school_classes"], [])
         self.assertContains(response, "No classes have been created yet.")
 
 
@@ -73,7 +72,7 @@ class TestClassDetailView(ClassesMixin, UsersMixin, CommonMixin, TestCase):
 
         response = self.client.get(reverse("classes:detail", args=[school_class.pk]))
 
-        self.assertEqual(response.context["class"], school_class)
+        self.assertEqual(response.context["school_class"], school_class)
 
     def test_renders_class_info(self):
         teacher = self.create_teacher(first_name="TestClass", last_name="TestTutor")
