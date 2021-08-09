@@ -81,6 +81,10 @@ class CommonMixin:
         for string in strings:
             self.assertContains(response, string)
 
+    def assertModelFieldsEqual(self, instance, **fields):
+        for key, value in fields.items():
+            self.assertEqual(getattr(instance, key), value)
+
 
 class LessonsMixin:
     DEFAULT_SUBJECT_NAME = "subject"

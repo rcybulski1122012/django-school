@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 
+from django_school.apps.users.views import SUCCESS_PROFILE_UPDATE_MESSAGE
 from tests.utils import ClassesMixin, CommonMixin, UsersMixin
 
 
@@ -77,3 +78,52 @@ class TestUserDetailView(ClassesMixin, UsersMixin, CommonMixin, TestCase):
 
         with self.assertNumQueries(6):
             self.client.get(reverse("users:detail", args=[student.pk]))
+
+
+class TestProfileView(UsersMixin, CommonMixin, TestCase):
+    def test_redirects_when_user_is_not_logged_in(self):
+        self.assertRedirectsWhenNotLoggedIn(reverse("users:profile"))
+
+    def test_context_contains_user_info_and_address_form(self):
+        user = self.create_user()
+        self.login(user)
+
+        response = self.client.get(reverse("users:profile"))
+
+        self.assertIn("user_info_form", response.context)
+        self.assertIn("address_form", response.context)
+
+    def test_updates_profile_and_displays_success_message_when_data_is_correct(self):
+        address = self.create_address()
+        user = self.create_user(address=address)
+        self.login(user)
+        user_data = {
+            "phone_number": "333-444-555",
+            "email": "new@email.com",
+        }
+        address_data = {
+            "street": "new-street",
+            "building_number": "5",
+            "apartment_number": "10",
+            "city": "new-city",
+            "zip_code": "new-code",
+            "country": "new-country",
+        }
+        response = self.client.post(
+            reverse("users:profile"), {**user_data, **address_data}, follow=True
+        )
+        user.refresh_from_db()
+        address.refresh_from_db()
+
+        self.assertModelFieldsEqual(user, **user_data)
+        self.assertModelFieldsEqual(address, **address_data)
+        self.assertContains(response, SUCCESS_PROFILE_UPDATE_MESSAGE)
+
+    def test_displays_error_message_when_data_is_incorrect(self):
+        address = self.create_address()
+        user = self.create_user(address=address)
+        self.login(user)
+
+        response = self.client.post(reverse("users:profile"), {"incorrect": "data"})
+
+        self.assertContains(response, "This field is required")

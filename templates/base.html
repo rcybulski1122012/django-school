@@ -26,6 +26,7 @@
                 {% if request.user|is_in_group:"teachers" %}
                   <a class="nav-link" href="{% url "classes:list" %}">Classes</a>
                 {% endif %}
+                <a class="nav-link" href="{% url "users:profile" %}">Profile</a>
                 <a class="nav-link" href="{%  url "users:logout" %}">Logout</a>
               {% else %}
                 <a class="nav-link" href="{% url "users:login" %}">Login</a>
@@ -34,7 +35,16 @@
           </div>
         </nav>
       </header>
-
+      {% if messages %}
+        <div id="messages" class="mt-3">
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
       <main class="py-3 px-3">
         {% block content %}{% endblock %}
       </main>
