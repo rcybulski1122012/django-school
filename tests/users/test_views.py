@@ -1,7 +1,11 @@
+from django.contrib.auth.hashers import check_password
 from django.test import TestCase
 from django.urls import reverse
 
-from django_school.apps.users.views import SUCCESS_PROFILE_UPDATE_MESSAGE
+from django_school.apps.users.views import (
+    SUCCESS_PASSWORD_CHANGE_MESSAGE,
+    SUCCESS_PROFILE_UPDATE_MESSAGE,
+)
 from tests.utils import ClassesMixin, CommonMixin, UsersMixin
 
 
@@ -127,3 +131,31 @@ class TestProfileView(UsersMixin, CommonMixin, TestCase):
         response = self.client.post(reverse("users:profile"), {"incorrect": "data"})
 
         self.assertContains(response, "This field is required")
+
+
+class TestPasswordChangeWithMessageView(UsersMixin, TestCase):
+    def setUp(self):
+        self.user = self.create_user()
+        self.login(self.user)
+
+    def test_redirects_to_profile(self):
+        data = {
+            "old_password": self.DEFAULT_PASSWORD,
+            "new_password1": "NewPassword1!",
+            "new_password2": "NewPassword1!",
+        }
+
+        response = self.client.post(reverse("users:password_change"), data)
+
+        self.assertRedirects(response, reverse("users:profile"))
+
+    def test_displays_success_message(self):
+        data = {
+            "old_password": self.DEFAULT_PASSWORD,
+            "new_password1": "NewPassword1!",
+            "new_password2": "NewPassword1!",
+        }
+
+        response = self.client.post(reverse("users:password_change"), data, follow=True)
+
+        self.assertContains(response, SUCCESS_PASSWORD_CHANGE_MESSAGE)
