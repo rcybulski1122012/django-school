@@ -6,11 +6,17 @@
 
 {% block content %}
   <h1>Timetables</h1>
+  <h3>By class</h3>
   <ul class="list-group my-4">
     {% for school_class in school_classes %}
       <li class="list-group-item"><a href="{{ school_class.get_timetable_url }}">{{ school_class.number }}</a></li>
-    {% empty %}
-      <p>No classes have been created yet.</p>
+
     {% endfor %}
   </ul>
+
+  <h3>By teacher</h3>
+  {% for teacher in teachers %}
+    <li class="list-group-item"><a href="{% url "lessons:teacher_timetable" teacher.pk %}">{{ teacher.full_name }}</a>
+    </li>
+  {% endfor %}
 {% endblock %}

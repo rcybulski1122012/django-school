@@ -14,7 +14,7 @@ class Class(models.Model):
         return reverse("classes:detail", args=[self.pk])
 
     def get_timetable_url(self):
-        return reverse("lessons:timetable", args=[self.pk])
+        return reverse("lessons:class_timetable", args=[self.pk])
 
     def __str__(self):
         return self.number

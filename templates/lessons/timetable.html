@@ -1,44 +1,36 @@
-{% extends "base.html" %}
-
-{% block title %}
-  Timetable
-{% endblock %}
-
-{% block content %}
-  <h1 class="mb-4">Timetable | Class: {{ school_class }}</h1>
-  <div class="table-responsive">
-    <table id="timetable" class="table table-bordered table-hover">
-      <thead>
-        <tr>
-          <th>Lesson</th>
-          {% for weekday in weekdays %}
-            <th>{{ weekday.1 }}</th>
-          {% endfor %}
-        </tr>
-      </thead>
-      <tbody>
-        {% for time in lessons_times %}
-          <tr>
-            <td>{{ time.1 }}</td>
-            {% for weekday in weekdays %}
-              <td id="{{ weekday.0 }}{{ time.0 }}">
-                <div class="lesson"> - </div>
-                <div class="text-muted lesson-details">
-                  <span class="teacher"></span>
-                  <span class="classroom"></span>
-                </div>
-              </td>
-            {% endfor %}
-          </tr>
+<div class="table-responsive">
+  <table id="timetable" class="table table-bordered table-hover">
+    <thead>
+    <tr>
+      <th>Lesson</th>
+      {% for weekday in weekdays %}
+        <th>{{ weekday.1 }}</th>
+      {% endfor %}
+    </tr>
+    </thead>
+    <tbody>
+    {% for time in lessons_times %}
+      <tr>
+        <td>{{ time.1 }}</td>
+        {% for weekday in weekdays %}
+          <td id="{{ weekday.0 }}{{ time.0 }}">
+            <div class="lesson"> -</div>
+            <div class="text-muted lesson-details">
+              <span class="teacher"></span>
+              <span class="classroom"></span>
+            </div>
+          </td>
         {% endfor %}
-      </tbody>
-    </table>
-  </div>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
 
-  <script>
+<script>
       let timetable = document.querySelector("#timetable");
 
-      {% for lesson in school_class.lessons.all %}
+      {% for lesson in lessons %}
           {
               let cell = timetable.querySelector("#{{ lesson.weekday }}{{ lesson.time }}")
               cell.querySelector(".lesson").innerText = "{{ lesson.subject.name }}"
@@ -47,4 +39,3 @@
           }
       {% endfor %}
   </script>
-{% endblock %}

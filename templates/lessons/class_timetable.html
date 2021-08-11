@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block title %}
+  Timetable
+{% endblock %}
+`
+{% block content %}
+  <h1 class="mb-4">Timetable | Class: {{ school_class }}</h1>
+  {% include "lessons/timetable.html" with lessons=school_class.lessons.all weekdays=weekdays lessons_times=lessons_times %}
+{% endblock %}
