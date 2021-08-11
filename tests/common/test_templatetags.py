@@ -5,8 +5,6 @@ from tests.utils import UsersMixin
 
 
 class TestIsInGroupTemplateTag(UsersMixin, TestCase):
-    fixtures = ["groups.json"]
-
     def test_when_user_is_in_given_group(self):
         teacher = self.create_teacher()
 

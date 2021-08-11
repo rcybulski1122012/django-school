@@ -5,8 +5,6 @@ from tests.utils import ClassesMixin, CommonMixin, UsersMixin
 
 
 class TestClassesListView(ClassesMixin, UsersMixin, TestCase):
-    fixtures = ["groups.json"]
-
     def test_redirects_when_user_is_not_logged_in(self):
         self.assertRedirectsWhenNotLoggedIn(reverse("classes:list"))
 
@@ -39,8 +37,6 @@ class TestClassesListView(ClassesMixin, UsersMixin, TestCase):
 
 
 class TestClassDetailView(ClassesMixin, UsersMixin, CommonMixin, TestCase):
-    fixtures = ["groups.json"]
-
     def test_redirects_when_user_is_not_logged_in1(self):
         school_class = self.create_class()
 

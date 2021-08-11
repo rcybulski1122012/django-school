@@ -10,6 +10,7 @@ User = get_user_model()
 
 
 class UsersMixin:
+    fixtures = ["groups.json"]
     DEFAULT_USERNAME = "username"
     DEFAULT_PASSWORD = "password"
 

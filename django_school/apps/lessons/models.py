@@ -3,14 +3,6 @@ from django.db import models
 from django_school import settings
 from django_school.apps.classes.models import Class
 
-
-class Subject(models.Model):
-    name = models.CharField(max_length=64)
-
-    def __str__(self):
-        return self.name
-
-
 LESSONS_TIMES = [
     ("1", "7:00 - 7:45"),
     ("2", "7:50 - 8:35"),
@@ -35,6 +27,21 @@ WEEKDAYS = [
     ("sun", "Sunday"),
 ]
 
+PRESENCE_STATUSES = [
+    ("present", "Present"),
+    ("absent", "Absent"),
+    ("exempt", "Exempt"),
+    ("excused", "Excused"),
+    ("none", "None"),
+]
+
+
+class Subject(models.Model):
+    name = models.CharField(max_length=64)
+
+    def __str__(self):
+        return self.name
+
 
 class Lesson(models.Model):
     time = models.CharField(max_length=16, choices=LESSONS_TIMES)
@@ -52,3 +59,24 @@ class Lesson(models.Model):
 
     def __str__(self):
         return f"{self.school_class}: {self.subject.name}, {self.weekday}: {self.time}"
+
+
+class ExactLesson(models.Model):
+    topic = models.CharField(max_length=128, blank=True)
+    date = models.DateField(auto_now_add=True)
+
+    lesson = models.ForeignKey(
+        Lesson, on_delete=models.CASCADE, related_name="exact_lessons"
+    )
+    presences = models.ManyToManyField(settings.AUTH_USER_MODEL, through="Presence")
+
+    def __str__(self):
+        return (
+            f"{self.lesson.subject.name} {self.lesson.school_class.number}, {self.date}"
+        )
+
+
+class Presence(models.Model):
+    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    exact_lesson = models.ForeignKey(ExactLesson, on_delete=models.CASCADE)
+    status = models.CharField(max_length=16, choices=PRESENCE_STATUSES, default="none")

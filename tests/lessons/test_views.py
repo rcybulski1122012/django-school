@@ -6,8 +6,6 @@ from tests.utils import ClassesMixin, CommonMixin, LessonsMixin, UsersMixin
 
 
 class TestTimetableView(ClassesMixin, UsersMixin, LessonsMixin, CommonMixin, TestCase):
-    fixtures = ["groups.json"]
-
     def test_returns_404_when_class_does_not_exits(self):
         response = self.client.get(reverse("lessons:class_timetable", args=[100]))
 
@@ -66,8 +64,6 @@ class TestTimetableView(ClassesMixin, UsersMixin, LessonsMixin, CommonMixin, Tes
 class TestTeacherTimetableView(
     ClassesMixin, UsersMixin, LessonsMixin, CommonMixin, TestCase
 ):
-    fixtures = ["groups.json"]
-
     def setUp(self):
         self.teacher = self.create_teacher()
         self.subject = self.create_subject()
@@ -111,8 +107,6 @@ class TestTeacherTimetableView(
 
 
 class TestTimetableListView(ClassesMixin, UsersMixin, TestCase):
-    fixtures = ["groups.json"]
-
     def test_context_contains_lists_of_classes_and_teachers(self):
         school_classes = [self.create_class(number=number) for number in "1234"]
         teachers = [

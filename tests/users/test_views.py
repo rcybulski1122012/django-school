@@ -2,16 +2,12 @@ from django.contrib.auth.hashers import check_password
 from django.test import TestCase
 from django.urls import reverse
 
-from django_school.apps.users.views import (
-    SUCCESS_PASSWORD_CHANGE_MESSAGE,
-    SUCCESS_PROFILE_UPDATE_MESSAGE,
-)
+from django_school.apps.users.views import (SUCCESS_PASSWORD_CHANGE_MESSAGE,
+                                            SUCCESS_PROFILE_UPDATE_MESSAGE)
 from tests.utils import ClassesMixin, CommonMixin, UsersMixin
 
 
 class TestUserDetailView(ClassesMixin, UsersMixin, CommonMixin, TestCase):
-    fixtures = ["groups.json"]
-
     def test_redirects_when_user_is_not_logged_in(self):
         user = self.create_user(username="TestDetailView")
         self.assertRedirectsWhenNotLoggedIn(reverse("users:detail", args=[user.pk]))
