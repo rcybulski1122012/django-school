@@ -208,9 +208,9 @@ class TeacherLessonsListView(
             response, "There are no lessons in the given range of time."
         )
 
-    # def test_performs_optimal_number_of_queries(self):
-    #     self.login(self.teacher)
-    #     ExactLesson(self.lesson)
-    #
-    #     with self.assertNumQueries(5):
-    #         response = self.client.get(reverse("lessons:teacher_lessons"))
+    def test_performs_optimal_number_of_queries(self):
+        self.login(self.teacher)
+        [self.create_exact_lesson(self.lesson) for _ in range(5)]
+
+        with self.assertNumQueries(6):
+            self.client.get(reverse("lessons:teacher_lessons"))

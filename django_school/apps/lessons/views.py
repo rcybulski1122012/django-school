@@ -72,7 +72,7 @@ class TeacherLessonsListView(PermissionRequiredMixin, ListView):
         qs = (
             super()
             .get_queryset()
-            .select_related("lesson__teacher")
+            .select_related("lesson__subject", "lesson__school_class")
             .filter(lesson__teacher=self.request.user)
             .filter(date=date)
         )
