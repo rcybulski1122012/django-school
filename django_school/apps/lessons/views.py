@@ -7,8 +7,7 @@ from django.shortcuts import render
 from django.views.generic import DetailView, ListView
 
 from django_school.apps.classes.models import Class
-from django_school.apps.lessons.models import (LESSONS_TIMES, WEEKDAYS,
-                                               ExactLesson)
+from django_school.apps.lessons.models import LESSONS_TIMES, WEEKDAYS, LessonSession
 
 User = get_user_model()
 
@@ -60,11 +59,11 @@ class TeacherTimetableView(TimetableContextMixin, DetailView):
         return user
 
 
-class TeacherLessonsListView(PermissionRequiredMixin, ListView):
-    model = ExactLesson
-    permission_required = "lessons.view_exactlesson"
-    template_name = "lessons/teacher_lessons_list.html"
-    context_object_name = "lessons"
+class TeacherLessonSessionListView(PermissionRequiredMixin, ListView):
+    model = LessonSession
+    permission_required = "lessons.view_lessonsession"
+    template_name = "lessons/teacher_lesson_sessions_list.html"
+    context_object_name = "lesson_sessions"
 
     def get_queryset(self):
         date = self.request.GET.get("date", datetime.date.today())

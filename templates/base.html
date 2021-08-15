@@ -25,7 +25,7 @@
               {% if request.user.is_authenticated %}
                 {% if request.user|is_in_group:"teachers" %}
                   <a class="nav-link" href="{% url "classes:list" %}">Classes</a>
-                  <a class="nav-link" href="{% url "lessons:teacher_lessons" %}">Your lessons</a>
+                  <a class="nav-link" href="{% url "lessons:sessions" %}">Lesson Sessions</a>
                 {% endif %}
                 <div class="nav-item dropdown">
                   <a class="nav-link dropdown-toggle" href="#" id="accountDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">

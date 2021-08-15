@@ -4,7 +4,7 @@ from django.contrib.auth.models import Group
 
 from django_school.apps.classes.models import Class
 from django_school.apps.common.models import Address
-from django_school.apps.lessons.models import ExactLesson, Lesson, Subject
+from django_school.apps.lessons.models import Lesson, LessonSession, Subject
 
 User = get_user_model()
 
@@ -116,12 +116,12 @@ class LessonsMixin:
         )
 
     @staticmethod
-    def create_exact_lesson(lesson, date=None, **kwargs):
+    def create_lesson_session(lesson, date=None, **kwargs):
         if date:
-            exact_lesson = ExactLesson.objects.create(lesson=lesson, **kwargs)
-            exact_lesson.date = date
-            exact_lesson.save()
+            lesson_session = LessonSession.objects.create(lesson=lesson, **kwargs)
+            lesson_session.date = date
+            lesson_session.save()
         else:
-            exact_lesson = ExactLesson.objects.create(lesson=lesson, **kwargs)
+            lesson_session = LessonSession.objects.create(lesson=lesson, **kwargs)
 
-        return exact_lesson
+        return lesson_session

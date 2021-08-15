@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from django_school.apps.lessons.models import (ExactLesson, Lesson, Presence,
+from django_school.apps.lessons.models import (Lesson, LessonSession, Presence,
                                                Subject)
 
 
@@ -14,8 +14,8 @@ class LessonAdmin(admin.ModelAdmin):
     pass
 
 
-@admin.register(ExactLesson)
-class ExactLessonAdmin(admin.ModelAdmin):
+@admin.register(LessonSession)
+class LessonSessionAdmin(admin.ModelAdmin):
     pass
 
 

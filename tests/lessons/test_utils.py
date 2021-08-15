@@ -1,12 +1,12 @@
 from django.test import TestCase
 
-from django_school.apps.lessons.models import ExactLesson, Presence
-from django_school.apps.lessons.utils import generate_exact_lesson
+from django_school.apps.lessons.models import LessonSession, Presence
+from django_school.apps.lessons.utils import create_lesson_session
 from tests.utils import ClassesMixin, LessonsMixin, UsersMixin
 
 
-class TestGenerateExactLesson(LessonsMixin, ClassesMixin, UsersMixin, TestCase):
-    def test_creates_exact_lesson_and_presences(self):
+class TestCreateLessonSession(LessonsMixin, ClassesMixin, UsersMixin, TestCase):
+    def test_creates_lesson_session_and_presences(self):
         subject = self.create_subject()
         user = self.create_user()
         school_class = self.create_class()
@@ -16,8 +16,8 @@ class TestGenerateExactLesson(LessonsMixin, ClassesMixin, UsersMixin, TestCase):
             for i in range(5)
         ]
 
-        generate_exact_lesson(lesson)
+        create_lesson_session(lesson)
 
         students_with_presence_object = [p.student for p in Presence.objects.all()]
-        self.assertEqual(ExactLesson.objects.first().lesson, lesson)
+        self.assertEqual(LessonSession.objects.first().lesson, lesson)
         self.assertEqual(students_with_presence_object, students)

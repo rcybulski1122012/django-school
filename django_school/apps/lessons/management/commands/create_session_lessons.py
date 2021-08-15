@@ -3,11 +3,11 @@ from datetime import date
 from django.core.management import BaseCommand
 
 from django_school.apps.lessons.models import Lesson
-from django_school.apps.lessons.utils import generate_exact_lesson
+from django_school.apps.lessons.utils import create_lesson_session
 
 
 class Command(BaseCommand):
-    help = "Creates ExactLessons ans Presences objects for lessons planned for today."
+    help = "Creates LessonSession ans Presence objects for lessons planned for today."
 
     def handle(self, *args, **kwargs):
         current_day = date.today().strftime("%a").lower()
@@ -18,4 +18,4 @@ class Command(BaseCommand):
         )
 
         for lesson in lessons:
-            generate_exact_lesson(lesson)
+            create_lesson_session(lesson)

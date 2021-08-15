@@ -61,12 +61,12 @@ class Lesson(models.Model):
         return f"{self.school_class}: {self.subject.name}, {self.weekday}: {self.time}"
 
 
-class ExactLesson(models.Model):
+class LessonSession(models.Model):
     topic = models.CharField(max_length=128, blank=True, null=True)
     date = models.DateField(auto_now_add=True)
 
     lesson = models.ForeignKey(
-        Lesson, on_delete=models.CASCADE, related_name="exact_lessons"
+        Lesson, on_delete=models.CASCADE, related_name="sessions"
     )
     presences = models.ManyToManyField(settings.AUTH_USER_MODEL, through="Presence")
 
@@ -78,5 +78,5 @@ class ExactLesson(models.Model):
 
 class Presence(models.Model):
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    exact_lesson = models.ForeignKey(ExactLesson, on_delete=models.CASCADE)
+    lesson_session = models.ForeignKey(LessonSession, on_delete=models.CASCADE)
     status = models.CharField(max_length=16, choices=PRESENCE_STATUSES, default="none")

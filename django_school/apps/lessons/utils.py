@@ -1,11 +1,11 @@
-from django_school.apps.lessons.models import ExactLesson, Presence
+from django_school.apps.lessons.models import LessonSession, Presence
 
 
-def generate_exact_lesson(lesson):
-    exact_lesson = ExactLesson.objects.create(lesson=lesson)
+def create_lesson_session(lesson):
+    lesson_session = LessonSession.objects.create(lesson=lesson)
 
     presences = [
-        Presence(student=student, exact_lesson=exact_lesson, status="none")
+        Presence(student=student, lesson_session=lesson_session, status="none")
         for student in lesson.school_class.students.all()
     ]
 

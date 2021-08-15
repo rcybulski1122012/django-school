@@ -5,13 +5,13 @@
 {% endblock %}
 
 {% block content %}
-  <h1>Lessons</h1>
+  <h1>Lesson Sessions</h1>
   <div class="row">
     <div class="col-9">
       <ul class="list-group">
-        {% for lesson in lessons %}
+        {% for session in lesson_sessions %}
           <li class="list-group-item">
-            <a href="#">{{ lesson.lesson }}</a>
+            <a href="#">{{ session.lesson }}</a>
           </li>
         {% empty %}
           <p>There are no lessons in the given range of time.</p>
@@ -20,7 +20,7 @@
     </div>
 
     <div class="col-3">
-      <form method="get" action="{% url "lessons:teacher_lessons" %}">
+      <form method="get" action="{% url "lessons:sessions" %}">
         <label for="date_to">Date:</label>
         <input type="date" name="date" id="date" class="form-control" value="{% now "Y-m-d" %}">
         <input type="submit" class="btn btn-outline-success my-3" value="Filter">

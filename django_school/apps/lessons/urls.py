@@ -1,7 +1,7 @@
 from django.urls import path
 
 from django_school.apps.lessons.views import (ClassTimetableView,
-                                              TeacherLessonsListView,
+                                              TeacherLessonSessionListView,
                                               TeacherTimetableView,
                                               timetable_list_view)
 
@@ -19,5 +19,9 @@ urlpatterns = [
         TeacherTimetableView.as_view(),
         name="teacher_timetable",
     ),
-    path("teacher_lessons/", TeacherLessonsListView.as_view(), name="teacher_lessons"),
+    path(
+        "sessions/",
+        TeacherLessonSessionListView.as_view(),
+        name="sessions",
+    ),
 ]

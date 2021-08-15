@@ -124,7 +124,7 @@ class TestTimetableListView(ClassesMixin, UsersMixin, TestCase):
         self.assertQuerysetEqual(response.context["teachers"], teachers)
 
 
-class TeacherLessonsListView(
+class TestTeacherLessonsListView(
     UsersMixin, CommonMixin, LessonsMixin, ClassesMixin, TestCase
 ):
     def setUp(self):
@@ -139,70 +139,68 @@ class TeacherLessonsListView(
         )
 
     def test_redirects_when_user_is_not_logged_in(self):
-        self.assertRedirectsWhenNotLoggedIn(reverse("lessons:teacher_lessons"))
+        self.assertRedirectsWhenNotLoggedIn(reverse("lessons:sessions"))
 
     def test_returns_403_when_user_is_not_in_teachers_group(self):
         not_teacher = self.create_user(username="not-a-teacher")
         self.login(not_teacher)
 
-        response = self.client.get(reverse("lessons:teacher_lessons"))
+        response = self.client.get(reverse("lessons:sessions"))
 
         self.assertEqual(response.status_code, 403)
 
-    def test_context_contain_lessons_list(self):
+    def test_context_contain_lesson_session_list(self):
         self.login(self.teacher)
 
-        response = self.client.get(reverse("lessons:teacher_lessons"))
+        response = self.client.get(reverse("lessons:sessions"))
 
-        self.assertIn("lessons", response.context)
+        self.assertIn("lesson_sessions", response.context)
 
-    def test_selects_only_lessons_of_currently_logged_teacher(self):
+    def test_selects_only_lesson_sessions_of_currently_logged_teacher(self):
         self.login(self.teacher)
         teacher2 = self.create_teacher(username="SecondTeacher2")
         lesson2 = self.create_lesson(self.subject, teacher2, self.school_class)
-        exact1 = self.create_exact_lesson(self.lesson)
-        self.create_exact_lesson(lesson2)
+        session1 = self.create_lesson_session(self.lesson)
+        self.create_lesson_session(lesson2)
 
-        response = self.client.get(reverse("lessons:teacher_lessons"))
+        response = self.client.get(reverse("lessons:sessions"))
 
-        exact_lessons = response.context["lessons"]
-        self.assertEqual(len(exact_lessons), 1)
-        self.assertEqual(exact_lessons[0], exact1)
+        sessions = response.context["lesson_sessions"]
+        self.assertEqual(len(sessions), 1)
+        self.assertEqual(sessions[0], session1)
 
-    def test_select_today_lessons_by_default(self):
+    def test_select_today_lesson_sessions_by_default(self):
         self.login(self.teacher)
         lesson2 = self.create_lesson(
             self.subject, self.teacher, self.school_class, weekday="mon"
         )
-        exact1 = self.create_exact_lesson(self.lesson)
-        self.create_exact_lesson(lesson2, datetime.date(2015, 2, 2))
+        session1 = self.create_lesson_session(self.lesson)
+        self.create_lesson_session(lesson2, datetime.date(2015, 2, 2))
 
-        response = self.client.get(reverse("lessons:teacher_lessons"))
+        response = self.client.get(reverse("lessons:sessions"))
 
-        exact_lessons = response.context["lessons"]
-        self.assertEqual(len(exact_lessons), 1)
-        self.assertEqual(exact_lessons[0], exact1)
+        sessions = response.context["lesson_sessions"]
+        self.assertEqual(len(sessions), 1)
+        self.assertEqual(sessions[0], session1)
 
     def test_select_lessons_in_given_date(self):
         self.login(self.teacher)
         lesson2 = self.create_lesson(self.subject, self.teacher, self.school_class)
-        self.create_exact_lesson(self.lesson)
-        exact2 = self.create_exact_lesson(lesson2, datetime.date(2015, 2, 2))
+        self.create_lesson_session(self.lesson)
+        session2 = self.create_lesson_session(lesson2, datetime.date(2015, 2, 2))
 
-        response = self.client.get(
-            f"{reverse('lessons:teacher_lessons')}?date=2015-02-02"
-        )
+        response = self.client.get(f"{reverse('lessons:sessions')}?date=2015-02-02")
 
-        exact_lessons = response.context["lessons"]
-        self.assertEqual(len(exact_lessons), 1)
-        self.assertEqual(exact_lessons[0], exact2)
+        sessions = response.context["lesson_sessions"]
+        self.assertEqual(len(sessions), 1)
+        self.assertEqual(sessions[0], session2)
 
     def test_displays_appropriate_message_when_there_are_no_lessons_in_given_date(
         self,
     ):
         self.login(self.teacher)
 
-        response = self.client.get(reverse("lessons:teacher_lessons"))
+        response = self.client.get(reverse("lessons:sessions"))
 
         self.assertContains(
             response, "There are no lessons in the given range of time."
@@ -210,7 +208,7 @@ class TeacherLessonsListView(
 
     def test_performs_optimal_number_of_queries(self):
         self.login(self.teacher)
-        [self.create_exact_lesson(self.lesson) for _ in range(5)]
+        [self.create_lesson_session(self.lesson) for _ in range(5)]
 
         with self.assertNumQueries(6):
-            self.client.get(reverse("lessons:teacher_lessons"))
+            self.client.get(reverse("lessons:sessions"))

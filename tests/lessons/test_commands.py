@@ -3,7 +3,7 @@ import datetime
 from django.core.management import call_command
 from django.test import TestCase
 
-from django_school.apps.lessons.models import ExactLesson, Presence
+from django_school.apps.lessons.models import LessonSession, Presence
 from tests.utils import ClassesMixin, LessonsMixin, UsersMixin
 
 
@@ -16,7 +16,7 @@ class DateMock(datetime.date):
 datetime.date = DateMock
 
 
-class TestGenerateExactLessons(LessonsMixin, UsersMixin, ClassesMixin, TestCase):
+class TestGenerateLessonSession(LessonsMixin, UsersMixin, ClassesMixin, TestCase):
     def setUp(self):
         self.subject = self.create_subject()
         self.teacher = self.create_teacher()
@@ -25,19 +25,19 @@ class TestGenerateExactLessons(LessonsMixin, UsersMixin, ClassesMixin, TestCase)
             username="Student123", school_class=self.school_class
         )
 
-    def test_creates_exact_lessons_for_today_and_presences(self):
+    def test_creates_lesson_sessions_for_today_and_presences(self):
         friday_lesson = self.create_lesson(
             self.subject, self.teacher, self.school_class, weekday="fri"
         )
         self.create_lesson(self.subject, self.teacher, self.school_class, weekday="mon")
 
-        call_command("generate_exact_lessons")
+        call_command("create_session_lessons")
 
-        exact_lesson = ExactLesson.objects.all()[0]
-        presence = Presence.objects.get(exact_lesson=exact_lesson)
-        self.assertEqual(exact_lesson.lesson, friday_lesson)
+        lesson_session = LessonSession.objects.all()[0]
+        presence = Presence.objects.get(lesson_session=lesson_session)
+        self.assertEqual(lesson_session.lesson, friday_lesson)
         self.assertEqual(presence.student, self.student)
-        self.assertEqual(presence.exact_lesson, exact_lesson)
+        self.assertEqual(presence.lesson_session, lesson_session)
         self.assertEqual(presence.status, "none")
 
     def test_performs_optimal_number_of_queries(self):
@@ -52,4 +52,4 @@ class TestGenerateExactLessons(LessonsMixin, UsersMixin, ClassesMixin, TestCase)
         ]
 
         with self.assertNumQueries(12):
-            call_command("generate_exact_lessons")
+            call_command("create_session_lessons")
