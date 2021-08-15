@@ -1,1 +1,1 @@
-[{"model": "auth.group", "pk": 1, "fields": {"name": "teachers", "permissions": [8, 12, 40, 36, 4]}}]
+[{"model": "auth.group", "pk": 1, "fields": {"name": "teachers", "permissions": [["view_class", "classes", "class"], ["view_address", "common", "address"], ["change_exactlesson", "lessons", "exactlesson"], ["view_exactlesson", "lessons", "exactlesson"], ["view_lesson", "lessons", "lesson"], ["view_subject", "lessons", "subject"], ["view_user", "users", "user"]]}}]

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}
+  Lessons
+{% endblock %}
+
+{% block content %}
+  <h1>Lessons</h1>
+  <div class="row">
+    <div class="col-9">
+      <ul class="list-group">
+        {% for lesson in lessons %}
+          <li class="list-group-item">
+            <a href="#">{{ lesson.lesson }}</a>
+          </li>
+        {% empty %}
+          <p>There are no lessons in the given range of time.</p>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="col-3">
+      <form method="get" action="{% url "lessons:teacher_lessons" %}">
+        <label for="date_to">Date:</label>
+        <input type="date" name="date" id="date" class="form-control" value="{% now "Y-m-d" %}">
+        <input type="submit" class="btn btn-outline-success my-3" value="Filter">
+      </form>
+    </div>
+  </div>
+
+
+
+{% endblock %}

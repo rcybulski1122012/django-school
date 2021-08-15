@@ -1,10 +1,14 @@
+import datetime
+
 from django.contrib.auth import get_user_model
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.http import Http404
 from django.shortcuts import render
 from django.views.generic import DetailView, ListView
 
 from django_school.apps.classes.models import Class
-from django_school.apps.lessons.models import LESSONS_TIMES, WEEKDAYS
+from django_school.apps.lessons.models import (LESSONS_TIMES, WEEKDAYS,
+                                               ExactLesson)
 
 User = get_user_model()
 
@@ -54,3 +58,23 @@ class TeacherTimetableView(TimetableContextMixin, DetailView):
             raise Http404
 
         return user
+
+
+class TeacherLessonsListView(PermissionRequiredMixin, ListView):
+    model = ExactLesson
+    permission_required = "lessons.view_exactlesson"
+    template_name = "lessons/teacher_lessons_list.html"
+    context_object_name = "lessons"
+
+    def get_queryset(self):
+        date = self.request.GET.get("date", datetime.date.today())
+
+        qs = (
+            super()
+            .get_queryset()
+            .select_related("lesson__teacher")
+            .filter(lesson__teacher=self.request.user)
+            .filter(date=date)
+        )
+
+        return qs

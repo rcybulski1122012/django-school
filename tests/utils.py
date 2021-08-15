@@ -4,7 +4,7 @@ from django.contrib.auth.models import Group
 
 from django_school.apps.classes.models import Class
 from django_school.apps.common.models import Address
-from django_school.apps.lessons.models import Lesson, Subject
+from django_school.apps.lessons.models import ExactLesson, Lesson, Subject
 
 User = get_user_model()
 
@@ -21,7 +21,7 @@ class UsersMixin:
         )
 
     def login(self, user):
-        self.client.login(username=user.username, password=self.DEFAULT_PASSWORD)
+        return self.client.login(username=user.username, password=self.DEFAULT_PASSWORD)
 
     def logout(self):
         self.client.logout()
@@ -114,3 +114,14 @@ class LessonsMixin:
             weekday=weekday,
             classroom=classroom,
         )
+
+    @staticmethod
+    def create_exact_lesson(lesson, date=None, **kwargs):
+        if date:
+            exact_lesson = ExactLesson.objects.create(lesson=lesson, **kwargs)
+            exact_lesson.date = date
+            exact_lesson.save()
+        else:
+            exact_lesson = ExactLesson.objects.create(lesson=lesson, **kwargs)
+
+        return exact_lesson

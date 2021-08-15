@@ -2,7 +2,8 @@ from datetime import date
 
 from django.core.management import BaseCommand
 
-from django_school.apps.lessons.models import ExactLesson, Lesson, Presence
+from django_school.apps.lessons.models import Lesson
+from django_school.apps.lessons.utils import generate_exact_lesson
 
 
 class Command(BaseCommand):
@@ -17,11 +18,4 @@ class Command(BaseCommand):
         )
 
         for lesson in lessons:
-            exact_lesson = ExactLesson.objects.create(lesson=lesson)
-
-            presences = [
-                Presence(student=student, exact_lesson=exact_lesson, status="none")
-                for student in lesson.school_class.students.all()
-            ]
-
-            Presence.objects.bulk_create(presences)
+            generate_exact_lesson(lesson)

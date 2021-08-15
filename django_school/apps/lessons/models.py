@@ -62,7 +62,7 @@ class Lesson(models.Model):
 
 
 class ExactLesson(models.Model):
-    topic = models.CharField(max_length=128, blank=True)
+    topic = models.CharField(max_length=128, blank=True, null=True)
     date = models.DateField(auto_now_add=True)
 
     lesson = models.ForeignKey(

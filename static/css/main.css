@@ -23,3 +23,7 @@
 .lesson-details {
     font-size: 0.75em;
 }
+
+input {
+    margin-bottom: 0.5em;
+}
