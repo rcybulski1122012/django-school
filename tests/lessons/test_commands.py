@@ -31,7 +31,7 @@ class TestGenerateLessonSession(LessonsMixin, UsersMixin, ClassesMixin, TestCase
         )
         self.create_lesson(self.subject, self.teacher, self.school_class, weekday="mon")
 
-        call_command("create_session_lessons")
+        call_command("create_lesson_sessions")
 
         lesson_session = LessonSession.objects.all()[0]
         presence = Presence.objects.get(lesson_session=lesson_session)
@@ -52,4 +52,4 @@ class TestGenerateLessonSession(LessonsMixin, UsersMixin, ClassesMixin, TestCase
         ]
 
         with self.assertNumQueries(12):
-            call_command("create_session_lessons")
+            call_command("create_lesson_sessions")

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load crispy_forms_filters %}
+
+{% block title %}
+  {{ lesson_session }}
+{% endblock %}
+
+{% block content %}
+  <h1>{{ lesson_session }}</h1>
+  <form action="{% url "lessons:session_detail" lesson_session.pk %}" method="post">
+    {{ formset.management_form }}
+    {{ form|crispy }}
+
+    <hr>
+    <h3>Presences:</h3>
+
+    {% for presence_form in formset %}
+      <label for="{{ presence_form.status.id_for_label }}">{{ presence_form.instance.student }}</label>
+      {{ presence_form|crispy }}
+    {% endfor %}
+
+    <input type="submit" value="Update" class="btn btn-outline-success mt-2">
+
+    {% csrf_token %}
+  </form>
+{% endblock %}

@@ -1,10 +1,11 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.db import transaction
 
 from django_school.apps.classes.models import Class
 from django_school.apps.common.models import Address
-from django_school.apps.lessons.models import Lesson, LessonSession, Subject
+from django_school.apps.lessons.models import Lesson, LessonSession, Presence, Subject
 
 User = get_user_model()
 
@@ -125,3 +126,14 @@ class LessonsMixin:
             lesson_session = LessonSession.objects.create(lesson=lesson, **kwargs)
 
         return lesson_session
+
+    @staticmethod
+    def create_presences(lesson_session, students):
+        presences = [
+            Presence(lesson_session=lesson_session, student=student)
+            for student in students
+        ]
+
+        with transaction.atomic():
+            Presence.objects.bulk_create(presences)
+            return Presence.objects.order_by("-id")[: len(presences)]

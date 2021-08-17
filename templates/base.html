@@ -24,8 +24,16 @@
               <a class="nav-link" href="{% url "lessons:timetables_list" %}">Timetables</a>
               {% if request.user.is_authenticated %}
                 {% if request.user|is_in_group:"teachers" %}
-                  <a class="nav-link" href="{% url "classes:list" %}">Classes</a>
-                  <a class="nav-link" href="{% url "lessons:sessions" %}">Lesson Sessions</a>
+                  <div class="nav-item dropdown">
+                  <a class="nav-link dropdown-toggle" href="#" id="teachingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Teaching
+                  </a>
+                  <div class="dropdown-menu" aria-labelledby="teachingDropdown">
+                    <a class="dropdown-item" href="{% url "classes:list" %}">Classes</a>
+                    <a class="dropdown-item" href="{% url "lessons:sessions" %}">Lesson Sessions</a>
+                  </div>
+                </div>
+
                 {% endif %}
                 <div class="nav-item dropdown">
                   <a class="nav-link dropdown-toggle" href="#" id="accountDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">

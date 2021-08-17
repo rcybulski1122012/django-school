@@ -1,15 +1,23 @@
 import datetime
 
+from django.contrib import messages
 from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.core.exceptions import PermissionDenied
 from django.http import Http404
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView
 
 from django_school.apps.classes.models import Class
+from django_school.apps.lessons.forms import LessonSessionForm, PresenceFormSet
 from django_school.apps.lessons.models import LESSONS_TIMES, WEEKDAYS, LessonSession
 
 User = get_user_model()
+
+SUCCESS_LESSON_SESSION_UPDATE_MESSAGE = (
+    "The lesson session has been saved successfully."
+)
 
 
 def timetable_list_view(request):
@@ -77,3 +85,30 @@ class TeacherLessonSessionListView(PermissionRequiredMixin, ListView):
         )
 
         return qs
+
+
+@login_required
+@permission_required("lessons.change_lessonsession", raise_exception=True)
+def lesson_session_detail_view(request, pk):
+    lesson_session = get_object_or_404(LessonSession, pk=pk)
+
+    if request.user != lesson_session.lesson.teacher:
+        raise PermissionDenied()
+
+    if request.method == "POST":
+        form = LessonSessionForm(request.POST, instance=lesson_session)
+        formset = PresenceFormSet(request.POST, instance=lesson_session)
+        if form.is_valid() and formset.is_valid():
+            form.save()
+            formset.save()
+            messages.success(request, SUCCESS_LESSON_SESSION_UPDATE_MESSAGE)
+            return redirect("lessons:sessions")
+    else:
+        form = LessonSessionForm(instance=lesson_session)
+        formset = PresenceFormSet(instance=lesson_session)
+
+    return render(
+        request,
+        "lessons/lesson_session_detail.html",
+        {"form": form, "lesson_session": lesson_session, "formset": formset},
+    )

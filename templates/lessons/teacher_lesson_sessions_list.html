@@ -11,7 +11,7 @@
       <ul class="list-group">
         {% for session in lesson_sessions %}
           <li class="list-group-item">
-            <a href="#">{{ session.lesson }}</a>
+            <a href="{% url "lessons:session_detail" session.pk %}">{{ session.lesson }}</a>
           </li>
         {% empty %}
           <p>There are no lessons in the given range of time.</p>

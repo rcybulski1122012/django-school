@@ -24,6 +24,9 @@ class User(AbstractUser):
         Class, models.SET_NULL, null=True, blank=True, related_name="students"
     )
 
+    def __str__(self):
+        return self.full_name
+
     def get_absolute_url(self):
         return reverse("users:detail", args=[self.pk])
 

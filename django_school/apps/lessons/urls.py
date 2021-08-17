@@ -3,6 +3,7 @@ from django.urls import path
 from django_school.apps.lessons.views import (ClassTimetableView,
                                               TeacherLessonSessionListView,
                                               TeacherTimetableView,
+                                              lesson_session_detail_view,
                                               timetable_list_view)
 
 app_name = "lessons"
@@ -23,5 +24,10 @@ urlpatterns = [
         "sessions/",
         TeacherLessonSessionListView.as_view(),
         name="sessions",
+    ),
+    path(
+        "sessions/<int:pk>/",
+        lesson_session_detail_view,
+        name="session_detail",
     ),
 ]
