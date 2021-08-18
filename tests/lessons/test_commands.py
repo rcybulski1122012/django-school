@@ -25,7 +25,7 @@ class TestGenerateLessonSession(LessonsMixin, UsersMixin, ClassesMixin, TestCase
             username="Student123", school_class=self.school_class
         )
 
-    def test_creates_lesson_sessions_for_today_and_presences(self):
+    def test_creates_lesson_sessions_and_presences_for_today(self):
         friday_lesson = self.create_lesson(
             self.subject, self.teacher, self.school_class, weekday="fri"
         )

@@ -8,13 +8,13 @@
 {% block content %}
   <h1>{{ lesson_session }}</h1>
   <form action="{% url "lessons:session_detail" lesson_session.pk %}" method="post">
-    {{ formset.management_form }}
-    {{ form|crispy }}
+    {{ presences_formset.management_form }}
+    {{ lesson_session_form|crispy }}
 
     <hr>
     <h3>Presences:</h3>
 
-    {% for presence_form in formset %}
+    {% for presence_form in presences_formset %}
       <label for="{{ presence_form.status.id_for_label }}">{{ presence_form.instance.student }}</label>
       {{ presence_form|crispy }}
     {% endfor %}

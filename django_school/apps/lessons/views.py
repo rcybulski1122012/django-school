@@ -11,7 +11,7 @@ from django.views.generic import DetailView, ListView
 
 from django_school.apps.classes.models import Class
 from django_school.apps.lessons.forms import LessonSessionForm, PresenceFormSet
-from django_school.apps.lessons.models import LESSONS_TIMES, WEEKDAYS, LessonSession
+from django_school.apps.lessons.models import Lesson, LessonSession
 
 User = get_user_model()
 
@@ -20,22 +20,11 @@ SUCCESS_LESSON_SESSION_UPDATE_MESSAGE = (
 )
 
 
-def timetable_list_view(request):
-    teachers = User.objects.filter(groups__name="teachers").order_by("first_name")
-    school_classes = Class.objects.order_by("number")
-
-    return render(
-        request,
-        "lessons/timetable_list.html",
-        {"teachers": teachers, "school_classes": school_classes},
-    )
-
-
 class TimetableContextMixin:
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["lessons_times"] = LESSONS_TIMES
-        context["weekdays"] = WEEKDAYS
+        context["lessons_times"] = Lesson.LESSONS_TIMES
+        context["weekdays"] = Lesson.WEEKDAYS
 
         return context
 
@@ -65,6 +54,20 @@ class TeacherTimetableView(TimetableContextMixin, DetailView):
             raise Http404
 
         return user
+
+    def get_queryset(self):
+        return super().get_queryset().prefetch_related("lessons__subject")
+
+
+def timetables_list_view(request):
+    teachers = User.objects.filter(groups__name="teachers").order_by("first_name")
+    school_classes = Class.objects.order_by("number")
+
+    return render(
+        request,
+        "lessons/timetable_list.html",
+        {"teachers": teachers, "school_classes": school_classes},
+    )
 
 
 class TeacherLessonSessionListView(PermissionRequiredMixin, ListView):
@@ -96,19 +99,23 @@ def lesson_session_detail_view(request, pk):
         raise PermissionDenied()
 
     if request.method == "POST":
-        form = LessonSessionForm(request.POST, instance=lesson_session)
-        formset = PresenceFormSet(request.POST, instance=lesson_session)
-        if form.is_valid() and formset.is_valid():
-            form.save()
-            formset.save()
+        lesson_session_form = LessonSessionForm(request.POST, instance=lesson_session)
+        presences_formset = PresenceFormSet(request.POST, instance=lesson_session)
+        if lesson_session_form.is_valid() and presences_formset.is_valid():
+            lesson_session_form.save()
+            presences_formset.save()
             messages.success(request, SUCCESS_LESSON_SESSION_UPDATE_MESSAGE)
             return redirect("lessons:sessions")
     else:
-        form = LessonSessionForm(instance=lesson_session)
-        formset = PresenceFormSet(instance=lesson_session)
+        lesson_session_form = LessonSessionForm(instance=lesson_session)
+        presences_formset = PresenceFormSet(instance=lesson_session)
 
     return render(
         request,
         "lessons/lesson_session_detail.html",
-        {"form": form, "lesson_session": lesson_session, "formset": formset},
+        {
+            "lesson_session_form": lesson_session_form,
+            "lesson_session": lesson_session,
+            "presences_formset": presences_formset,
+        },
     )

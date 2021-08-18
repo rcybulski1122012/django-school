@@ -5,14 +5,14 @@ from django.urls import reverse
 from django_school.apps.classes.models import Class
 from django_school.apps.common.models import Address
 
-GENDER_CHOICES = [
-    ("male", "male"),
-    ("female", "female"),
-    ("other", "other"),
-]
-
 
 class User(AbstractUser):
+    GENDER_CHOICES = [
+        ("male", "male"),
+        ("female", "female"),
+        ("other", "other"),
+    ]
+
     personal_id = models.CharField(max_length=16, null=True, blank=True)
     phone_number = models.CharField(max_length=16, null=True, blank=True)
     gender = models.CharField(

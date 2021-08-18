@@ -5,4 +5,4 @@ from django_school.apps.common.models import Address
 
 @admin.register(Address)
 class AddressAdmin(admin.ModelAdmin):
-    pass
+    list_display = ("__str__", "user")

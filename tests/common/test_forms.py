@@ -4,7 +4,7 @@ from django_school.apps.common.forms import AddressForm
 
 
 class TestAddressForm(TestCase):
-    def test_invalid_form_when_blank_fields(self):
+    def test_invalid_empty_form(self):
         form = AddressForm(
             data={
                 "street": "",

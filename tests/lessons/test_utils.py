@@ -18,6 +18,6 @@ class TestCreateLessonSession(LessonsMixin, ClassesMixin, UsersMixin, TestCase):
 
         create_lesson_session(lesson)
 
-        students_with_presence_object = [p.student for p in Presence.objects.all()]
+        students_with_presence = [p.student for p in Presence.objects.all()]
         self.assertEqual(LessonSession.objects.first().lesson, lesson)
-        self.assertEqual(students_with_presence_object, students)
+        self.assertEqual(students_with_presence, students)

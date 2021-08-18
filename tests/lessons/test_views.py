@@ -3,83 +3,87 @@ import datetime
 from django.test import TestCase
 from django.urls import reverse
 
-from django_school.apps.lessons.models import LESSONS_TIMES, WEEKDAYS, Presence
+from django_school.apps.lessons.models import Lesson, Presence
 from django_school.apps.lessons.views import SUCCESS_LESSON_SESSION_UPDATE_MESSAGE
 from tests.utils import ClassesMixin, CommonMixin, LessonsMixin, UsersMixin
 
 
-class TestTimetableView(ClassesMixin, UsersMixin, LessonsMixin, CommonMixin, TestCase):
+class TestClassTimetableView(
+    UsersMixin, ClassesMixin, LessonsMixin, CommonMixin, TestCase
+):
+    def setUp(self):
+        self.teacher = self.create_teacher()
+        self.subject = self.create_subject()
+        self.school_class = self.create_class()
+        self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
+
     def test_returns_404_when_class_does_not_exits(self):
         response = self.client.get(reverse("lessons:class_timetable", args=[100]))
 
         self.assertEqual(response.status_code, 404)
 
     def test_context_contains_school_class(self):
-        school_class = self.create_class()
-
         response = self.client.get(
-            reverse("lessons:class_timetable", args=[school_class.pk])
+            reverse("lessons:class_timetable", args=[self.school_class.pk])
         )
 
-        self.assertEqual(response.context["school_class"], school_class)
+        self.assertEqual(response.context["school_class"], self.school_class)
 
     def test_context_contains_weekdays_and_lessons_times(self):
-        school_class = self.create_class()
-
         response = self.client.get(
-            reverse("lessons:class_timetable", args=[school_class.pk])
+            reverse("lessons:class_timetable", args=[self.school_class.pk])
         )
 
-        self.assertEqual(response.context["weekdays"], WEEKDAYS)
-        self.assertEqual(response.context["lessons_times"], LESSONS_TIMES)
+        self.assertEqual(response.context["weekdays"], Lesson.WEEKDAYS)
+        self.assertEqual(response.context["lessons_times"], Lesson.LESSONS_TIMES)
 
     def test_renders_lessons(self):
-        teacher = self.create_teacher()
-        subject = self.create_subject()
-        school_class = self.create_class()
-        lesson = self.create_lesson(subject, teacher, school_class)
-
         response = self.client.get(
-            reverse("lessons:class_timetable", args=[school_class.pk])
+            reverse("lessons:class_timetable", args=[self.school_class.pk])
         )
 
         self.assertContainsFew(
             response,
-            teacher.full_name,
-            subject.name,
-            school_class.number,
-            lesson.classroom,
+            self.teacher.full_name,
+            self.subject.name,
+            self.school_class.number,
+            self.lesson.classroom,
         )
 
     def test_performs_optimal_number_of_queries(self):
-        teacher = self.create_teacher()
-        subject = self.create_subject()
-        school_class = self.create_class()
-        [
-            self.create_lesson(subject, teacher, school_class, time=time)
-            for time in LESSONS_TIMES
-        ]
+        for time in Lesson.LESSONS_TIMES:
+            self.create_lesson(self.subject, self.teacher, self.school_class, time=time)
 
         with self.assertNumQueries(4):
-            self.client.get(reverse("lessons:class_timetable", args=[school_class.pk]))
+            self.client.get(
+                reverse("lessons:class_timetable", args=[self.school_class.pk])
+            )
 
 
 class TestTeacherTimetableView(
-    ClassesMixin, UsersMixin, LessonsMixin, CommonMixin, TestCase
+    UsersMixin, ClassesMixin, LessonsMixin, CommonMixin, TestCase
 ):
     def setUp(self):
         self.teacher = self.create_teacher()
+        self.student = self.create_user(username="student123")
         self.subject = self.create_subject()
         self.school_class = self.create_class()
+        self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
 
     def test_returns_404_when_user_is_not_a_teacher(self):
-        not_teacher = self.create_user(username="not-a-teacher")
-
         response = self.client.get(
-            reverse("lessons:teacher_timetable", args=[not_teacher.pk])
+            reverse("lessons:teacher_timetable", args=[self.student.pk])
         )
 
         self.assertEqual(response.status_code, 404)
+
+    def test_context_contains_weekdays_and_lessons_times(self):
+        response = self.client.get(
+            reverse("lessons:teacher_timetable", args=[self.teacher.pk])
+        )
+
+        self.assertEqual(response.context["weekdays"], Lesson.WEEKDAYS)
+        self.assertEqual(response.context["lessons_times"], Lesson.LESSONS_TIMES)
 
     def test_context_contains_teacher(self):
         response = self.client.get(
@@ -88,17 +92,7 @@ class TestTeacherTimetableView(
 
         self.assertEqual(response.context["teacher"], self.teacher)
 
-    def test_context_contains_weekdays_and_lessons_times(self):
-        response = self.client.get(
-            reverse("lessons:teacher_timetable", args=[self.teacher.pk])
-        )
-
-        self.assertEqual(response.context["weekdays"], WEEKDAYS)
-        self.assertEqual(response.context["lessons_times"], LESSONS_TIMES)
-
     def test_renders_lessons(self):
-        lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
-
         response = self.client.get(
             reverse("lessons:teacher_timetable", args=[self.teacher.pk])
         )
@@ -107,11 +101,20 @@ class TestTeacherTimetableView(
             response,
             self.teacher.full_name,
             self.subject.name,
-            lesson.classroom,
+            self.lesson.classroom,
         )
 
+    def test_performs_optimal_number_of_queries(self):
+        for _ in range(5):
+            self.create_lesson(self.subject, self.teacher, self.school_class)
 
-class TestTimetableListView(ClassesMixin, UsersMixin, TestCase):
+        with self.assertNumQueries(4):
+            self.client.get(
+                reverse("lessons:teacher_timetable", args=[self.teacher.pk])
+            )
+
+
+class TestTimetablesListView(UsersMixin, ClassesMixin, CommonMixin, TestCase):
     def test_context_contains_lists_of_classes_and_teachers(self):
         school_classes = [self.create_class(number=number) for number in "1234"]
         teachers = [
@@ -126,13 +129,28 @@ class TestTimetableListView(ClassesMixin, UsersMixin, TestCase):
         self.assertQuerysetEqual(response.context["school_classes"], school_classes)
         self.assertQuerysetEqual(response.context["teachers"], teachers)
 
+    def test_renders_links_to_timetables(self):
+        school_class = self.create_class()
+        teacher = self.create_teacher()
+
+        response = self.client.get(reverse("lessons:timetables_list"))
+
+        self.assertContainsFew(
+            response,
+            reverse("lessons:class_timetable", args=[school_class.pk]),
+            reverse("lessons:teacher_timetable", args=[teacher.pk]),
+        )
+
 
 class TestTeacherLessonsListView(
-    UsersMixin, CommonMixin, LessonsMixin, ClassesMixin, TestCase
+    UsersMixin, ClassesMixin, LessonsMixin, CommonMixin, TestCase
 ):
     def setUp(self):
         self.teacher = self.create_teacher()
         self.school_class = self.create_class()
+        self.student = self.create_user(
+            username="student123", school_class=self.school_class
+        )
         self.subject = self.create_subject()
         self.lesson = self.create_lesson(
             self.subject,
@@ -145,12 +163,18 @@ class TestTeacherLessonsListView(
         self.assertRedirectsWhenNotLoggedIn(reverse("lessons:sessions"))
 
     def test_returns_403_when_user_is_not_in_teachers_group(self):
-        not_teacher = self.create_user(username="not-a-teacher")
-        self.login(not_teacher)
+        self.login(self.student)
 
         response = self.client.get(reverse("lessons:sessions"))
 
         self.assertEqual(response.status_code, 403)
+
+    def test_returns_200_when_user_is_in_teachers_group(self):
+        self.login(self.teacher)
+
+        response = self.client.get(reverse("lessons:sessions"))
+
+        self.assertEqual(response.status_code, 200)
 
     def test_context_contain_lesson_session_list(self):
         self.login(self.teacher)
@@ -158,6 +182,16 @@ class TestTeacherLessonsListView(
         response = self.client.get(reverse("lessons:sessions"))
 
         self.assertIn("lesson_sessions", response.context)
+
+    def test_renders_links_to_lesson_session_detail_view(self):
+        self.login(self.teacher)
+        session = self.create_lesson_session(self.lesson)
+
+        response = self.client.get(reverse("lessons:sessions"))
+
+        self.assertContains(
+            response, reverse("lessons:session_detail", args=[session.pk])
+        )
 
     def test_selects_only_lesson_sessions_of_currently_logged_teacher(self):
         self.login(self.teacher)
@@ -211,16 +245,24 @@ class TestTeacherLessonsListView(
 
     def test_performs_optimal_number_of_queries(self):
         self.login(self.teacher)
-        [self.create_lesson_session(self.lesson) for _ in range(5)]
+
+        for _ in range(5):
+            self.create_lesson_session(self.lesson)
 
         with self.assertNumQueries(6):
             self.client.get(reverse("lessons:sessions"))
 
 
-class TestLessonSessionDetailView(UsersMixin, LessonsMixin, ClassesMixin, TestCase):
+class TestLessonSessionDetailView(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
     def setUp(self):
         self.teacher = self.create_teacher()
         self.school_class = self.create_class()
+        self.student = self.create_user(
+            username="student123",
+            school_class=self.school_class,
+            first_name="StudentFirstName",
+            last_name="StudentLastName",
+        )
         self.subject = self.create_subject()
         self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
         self.lesson_session = self.create_lesson_session(self.lesson)
@@ -251,8 +293,7 @@ class TestLessonSessionDetailView(UsersMixin, LessonsMixin, ClassesMixin, TestCa
         )
 
     def test_returns_403_when_user_is_not_in_teachers_group(self):
-        not_teacher = self.create_user(username="not-a-teacher")
-        self.login(not_teacher)
+        self.login(self.student)
 
         response = self.client.get(
             reverse("lessons:session_detail", args=[self.lesson_session.pk])
@@ -293,8 +334,8 @@ class TestLessonSessionDetailView(UsersMixin, LessonsMixin, ClassesMixin, TestCa
             reverse("lessons:session_detail", args=[self.lesson_session.pk])
         )
 
-        self.assertIn("form", response.context)
-        self.assertIn("formset", response.context)
+        self.assertIn("lesson_session_form", response.context)
+        self.assertIn("presences_formset", response.context)
 
     def test_updates_lesson_session_and_presences_when_everything_is_OK(self):
         self.login(self.teacher)
@@ -318,12 +359,12 @@ class TestLessonSessionDetailView(UsersMixin, LessonsMixin, ClassesMixin, TestCa
 
     def test_redirects_to_lesson_sessions_list_after_successful_update(self):
         self.login(self.teacher)
-        student = self.create_user("student123", school_class=self.school_class)
-        presences = self.create_presences(self.lesson_session, [student])
+        presences = self.create_presences(self.lesson_session, [self.student])
 
         data = self._prepare_form_data(
             self.lesson_session, presences, "New Topic", ["absent"]
         )
+
         response = self.client.post(
             reverse("lessons:session_detail", args=[self.lesson_session.pk]), data=data
         )
@@ -332,12 +373,11 @@ class TestLessonSessionDetailView(UsersMixin, LessonsMixin, ClassesMixin, TestCa
 
     def test_displays_success_message_after_successful_update(self):
         self.login(self.teacher)
-        student = self.create_user("student123", school_class=self.school_class)
-        presences = self.create_presences(self.lesson_session, [student])
-
+        presences = self.create_presences(self.lesson_session, [self.student])
         data = self._prepare_form_data(
             self.lesson_session, presences, "New Topic", ["absent"]
         )
+
         response = self.client.post(
             reverse("lessons:session_detail", args=[self.lesson_session.pk]),
             data=data,
@@ -348,15 +388,10 @@ class TestLessonSessionDetailView(UsersMixin, LessonsMixin, ClassesMixin, TestCa
 
     def test_displays_students_full_names_as_labels(self):
         self.login(self.teacher)
-        student = self.create_user(
-            "student123",
-            school_class=self.school_class,
-            first_name="StudentFirstName",
-            last_name="StudentLastName",
-        )
-        presences = self.create_presences(self.lesson_session, [student])
+        self.create_presences(self.lesson_session, [self.student])
+
         response = self.client.get(
             reverse("lessons:session_detail", args=[self.lesson_session.pk]),
         )
 
-        self.assertContains(response, student.full_name)
+        self.assertContains(response, self.student.full_name)

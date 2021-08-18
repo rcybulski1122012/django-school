@@ -5,4 +5,4 @@ from django_school.apps.classes.models import Class
 
 @admin.register(Class)
 class ClassAdmin(admin.ModelAdmin):
-    pass
+    list_display = ("number", "tutor")
