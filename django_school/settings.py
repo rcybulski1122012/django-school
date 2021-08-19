@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "django_school.apps.classes",
     "django_school.apps.common",
     "django_school.apps.lessons",
+    "django_school.apps.grades",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
