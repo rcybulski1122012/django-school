@@ -22,5 +22,6 @@ urlpatterns = [
     path("users/", include("django_school.apps.users.urls", namespace="users")),
     path("classes/", include("django_school.apps.classes.urls", namespace="classes")),
     path("lessons/", include("django_school.apps.lessons.urls", namespace="lessons")),
+    path("grades/", include("django_school.apps.grades.urls", namespace="grades")),
     path("admin/", admin.site.urls),
 ]

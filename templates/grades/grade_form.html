@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load crispy_forms_filters %}
+
+{% block title %}
+  Add grade
+{% endblock %}
+
+{% block content %}
+  <h1>Add grade</h1>
+  <form action="{% url "grades:add" number %}" method="POST">
+    {{ form|crispy }}
+
+    <input type="submit" value="Add" class="btn btn-success my-3">
+
+    {% csrf_token %}
+  </form>
+{% endblock %}
