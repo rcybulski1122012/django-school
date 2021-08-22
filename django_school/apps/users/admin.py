@@ -6,7 +6,7 @@ from django_school.apps.users.models import User
 
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
-
+    prepopulated_fields = {"slug": ("first_name", "last_name")}
     fieldsets = UserAdmin.fieldsets + (
         (
             None,
@@ -17,6 +17,7 @@ class CustomUserAdmin(UserAdmin):
                     "gender",
                     "address",
                     "school_class",
+                    "slug",
                 )
             },
         ),
@@ -34,6 +35,7 @@ class CustomUserAdmin(UserAdmin):
                     "gender",
                     "address",
                     "school_class",
+                    "slug",
                 )
             },
         ),

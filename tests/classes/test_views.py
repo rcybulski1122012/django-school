@@ -50,8 +50,8 @@ class TestClassesListView(UsersMixin, ClassesMixin, CommonMixin, TestCase):
 
         self.assertContainsFew(
             response,
-            reverse("classes:detail", args=[school_class.pk]),
-            reverse("lessons:class_timetable", args=[school_class.pk]),
+            reverse("classes:detail", args=[school_class.slug]),
+            reverse("lessons:class_timetable", args=[school_class.slug]),
         )
 
 
@@ -70,14 +70,14 @@ class TestClassDetailView(UsersMixin, ClassesMixin, CommonMixin, TestCase):
 
     def test_redirects_when_user_is_not_logged_in(self):
         self.assertRedirectsWhenNotLoggedIn(
-            reverse("classes:detail", args=[self.school_class.pk])
+            reverse("classes:detail", args=[self.school_class.slug])
         )
 
     def test_returns_403_when_user_is_not_in_teachers_group(self):
         self.login(self.student)
 
         response = self.client.get(
-            reverse("classes:detail", args=[self.school_class.pk])
+            reverse("classes:detail", args=[self.school_class.slug])
         )
 
         self.assertEqual(response.status_code, 403)
@@ -86,7 +86,7 @@ class TestClassDetailView(UsersMixin, ClassesMixin, CommonMixin, TestCase):
         self.login(self.teacher)
 
         response = self.client.get(
-            reverse("classes:detail", args=[self.school_class.pk])
+            reverse("classes:detail", args=[self.school_class.slug])
         )
 
         self.assertEqual(response.status_code, 200)
@@ -94,7 +94,7 @@ class TestClassDetailView(UsersMixin, ClassesMixin, CommonMixin, TestCase):
     def test_returns_404_when_class_does_not_exist(self):
         self.login(self.teacher)
 
-        response = self.client.get(reverse("classes:detail", args=[100]))
+        response = self.client.get(reverse("classes:detail", args=["slug"]))
 
         self.assertEqual(response.status_code, 404)
 
@@ -102,7 +102,7 @@ class TestClassDetailView(UsersMixin, ClassesMixin, CommonMixin, TestCase):
         self.login(self.teacher)
 
         response = self.client.get(
-            reverse("classes:detail", args=[self.school_class.pk])
+            reverse("classes:detail", args=[self.school_class.slug])
         )
 
         self.assertEqual(response.context["school_class"], self.school_class)
@@ -111,7 +111,7 @@ class TestClassDetailView(UsersMixin, ClassesMixin, CommonMixin, TestCase):
         self.login(self.teacher)
 
         response = self.client.get(
-            reverse("classes:detail", args=[self.school_class.pk])
+            reverse("classes:detail", args=[self.school_class.slug])
         )
 
         self.assertContainsFew(
@@ -122,7 +122,7 @@ class TestClassDetailView(UsersMixin, ClassesMixin, CommonMixin, TestCase):
         self.login(self.teacher)
 
         response = self.client.get(
-            reverse("classes:detail", args=[self.school_class.pk])
+            reverse("classes:detail", args=[self.school_class.slug])
         )
 
         self.assertContains(response, self.student.full_name)
@@ -131,4 +131,4 @@ class TestClassDetailView(UsersMixin, ClassesMixin, CommonMixin, TestCase):
         self.login(self.teacher)
 
         with self.assertNumQueries(7):
-            self.client.get(reverse("classes:detail", args=[self.school_class.pk]))
+            self.client.get(reverse("classes:detail", args=[self.school_class.slug]))

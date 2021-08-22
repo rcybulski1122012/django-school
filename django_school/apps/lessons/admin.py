@@ -6,7 +6,7 @@ from django_school.apps.lessons.models import (Lesson, LessonSession, Presence,
 
 @admin.register(Subject)
 class SubjectAdmin(admin.ModelAdmin):
-    pass
+    prepopulated_fields = {"slug": ("name",)}
 
 
 @admin.register(Lesson)

@@ -7,7 +7,7 @@
 
 {% block content %}
   <h1>{{ lesson_session }}</h1>
-  <form action="{% url "lessons:session_detail" lesson_session.pk %}" method="post">
+  <form action="{{ lesson_session.get_absolute_url }}" method="post">
     {{ presences_formset.management_form }}
     {{ lesson_session_form|crispy }}
 

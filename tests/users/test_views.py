@@ -25,41 +25,41 @@ class TestUserDetailView(UsersMixin, ClassesMixin, CommonMixin, TestCase):
 
     def test_redirects_when_user_is_not_logged_in(self):
         self.assertRedirectsWhenNotLoggedIn(
-            reverse("users:detail", args=[self.student.pk])
+            reverse("users:detail", args=[self.student.slug])
         )
 
     def test_returns_403_when_user_is_not_in_teachers_group(self):
         self.login(self.student)
 
-        response = self.client.get(reverse("users:detail", args=[self.student.pk]))
+        response = self.client.get(reverse("users:detail", args=[self.student.slug]))
 
         self.assertEqual(response.status_code, 403)
 
     def test_returns_200_when_user_is_in_teachers_group(self):
         self.login(self.teacher)
 
-        response = self.client.get(reverse("users:detail", args=[self.student.pk]))
+        response = self.client.get(reverse("users:detail", args=[self.student.slug]))
 
         self.assertEqual(response.status_code, 200)
 
     def test_returns_404_when_user_does_not_exist(self):
         self.login(self.teacher)
 
-        response = self.client.get(reverse("users:detail", args=[100]))
+        response = self.client.get(reverse("users:detail", args=["slug"]))
 
         self.assertEqual(response.status_code, 404)
 
     def test_context_contains_user(self):
         self.login(self.teacher)
 
-        response = self.client.get(reverse("users:detail", args=[self.student.pk]))
+        response = self.client.get(reverse("users:detail", args=[self.student.slug]))
 
         self.assertEqual(response.context["user"], self.student)
 
     def test_renders_user_information(self):
         self.login(self.teacher)
 
-        response = self.client.get(reverse("users:detail", args=[self.student.pk]))
+        response = self.client.get(reverse("users:detail", args=[self.student.slug]))
 
         self.assertContainsFew(
             response,
@@ -74,7 +74,7 @@ class TestUserDetailView(UsersMixin, ClassesMixin, CommonMixin, TestCase):
         self.login(self.teacher)
 
         with self.assertNumQueries(6):
-            self.client.get(reverse("users:detail", args=[self.student.pk]))
+            self.client.get(reverse("users:detail", args=[self.student.slug]))
 
 
 class TestProfileView(UsersMixin, CommonMixin, TestCase):

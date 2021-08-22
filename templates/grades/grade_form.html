@@ -7,7 +7,7 @@
 
 {% block content %}
   <h1>Add grade</h1>
-  <form action="{% url "grades:add" number %}" method="POST">
+  <form action="{% url "grades:add" slug %}" method="POST">
     {{ form|crispy }}
 
     <input type="submit" value="Add" class="btn btn-success my-3">

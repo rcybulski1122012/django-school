@@ -32,8 +32,8 @@ class GradeCreateView(PermissionRequiredMixin, SuccessMessageMixin, CreateView):
 
     def get_form(self, **kwargs):
         form = super().get_form(**kwargs)
-        number = self.kwargs["number"]
-        school_class = get_object_or_404(Class, number=number)
+        slug = self.kwargs["slug"]
+        school_class = get_object_or_404(Class, slug=slug)
 
         taught_subjects = Subject.objects.filter(
             lessons__teacher=self.request.user, lessons__school_class=school_class
@@ -50,7 +50,7 @@ class GradeCreateView(PermissionRequiredMixin, SuccessMessageMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["number"] = self.kwargs["number"]
+        context["slug"] = self.kwargs["slug"]
 
         return context
 

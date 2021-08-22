@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.db import transaction
+from django.utils.text import slugify
 
 from django_school.apps.classes.models import Class
 from django_school.apps.common.models import Address
@@ -17,8 +18,13 @@ class UsersMixin:
 
     @classmethod
     def create_user(cls, username=DEFAULT_USERNAME, **kwargs):
+        if "slug" not in kwargs:
+            kwargs["slug"] = slugify(username)
+
         return User.objects.create_user(
-            username=username, password=cls.DEFAULT_PASSWORD, **kwargs
+            username=username,
+            password=cls.DEFAULT_PASSWORD,
+            **kwargs,
         )
 
     def login(self, user):
@@ -52,8 +58,8 @@ class ClassesMixin:
     DEFAULT_NUMBER = "1a"
 
     @staticmethod
-    def create_class(number=DEFAULT_NUMBER, tutor=None):
-        return Class.objects.create(number=number, tutor=tutor)
+    def create_class(number=DEFAULT_NUMBER, tutor=None, **kwargs):
+        return Class.objects.create(number=number, tutor=tutor, **kwargs)
 
 
 class CommonMixin:
@@ -95,8 +101,8 @@ class LessonsMixin:
     DEFAULT_CLASSROOM = 123
 
     @staticmethod
-    def create_subject(name=DEFAULT_SUBJECT_NAME):
-        return Subject.objects.create(name=name)
+    def create_subject(name=DEFAULT_SUBJECT_NAME, **kwargs):
+        return Subject.objects.create(name=name, **kwargs)
 
     @staticmethod
     def create_lesson(

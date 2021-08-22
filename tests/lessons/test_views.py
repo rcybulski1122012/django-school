@@ -18,20 +18,20 @@ class TestClassTimetableView(
         self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
 
     def test_returns_404_when_class_does_not_exits(self):
-        response = self.client.get(reverse("lessons:class_timetable", args=[100]))
+        response = self.client.get(reverse("lessons:class_timetable", args=["slug"]))
 
         self.assertEqual(response.status_code, 404)
 
     def test_context_contains_school_class(self):
         response = self.client.get(
-            reverse("lessons:class_timetable", args=[self.school_class.pk])
+            reverse("lessons:class_timetable", args=[self.school_class.slug])
         )
 
         self.assertEqual(response.context["school_class"], self.school_class)
 
     def test_context_contains_weekdays_and_lessons_times(self):
         response = self.client.get(
-            reverse("lessons:class_timetable", args=[self.school_class.pk])
+            reverse("lessons:class_timetable", args=[self.school_class.slug])
         )
 
         self.assertEqual(response.context["weekdays"], Lesson.WEEKDAYS)
@@ -39,7 +39,7 @@ class TestClassTimetableView(
 
     def test_renders_lessons(self):
         response = self.client.get(
-            reverse("lessons:class_timetable", args=[self.school_class.pk])
+            reverse("lessons:class_timetable", args=[self.school_class.slug])
         )
 
         self.assertContainsFew(
@@ -56,7 +56,7 @@ class TestClassTimetableView(
 
         with self.assertNumQueries(4):
             self.client.get(
-                reverse("lessons:class_timetable", args=[self.school_class.pk])
+                reverse("lessons:class_timetable", args=[self.school_class.slug])
             )
 
 
@@ -72,14 +72,14 @@ class TestTeacherTimetableView(
 
     def test_returns_404_when_user_is_not_a_teacher(self):
         response = self.client.get(
-            reverse("lessons:teacher_timetable", args=[self.student.pk])
+            reverse("lessons:teacher_timetable", args=[self.student.slug])
         )
 
         self.assertEqual(response.status_code, 404)
 
     def test_context_contains_weekdays_and_lessons_times(self):
         response = self.client.get(
-            reverse("lessons:teacher_timetable", args=[self.teacher.pk])
+            reverse("lessons:teacher_timetable", args=[self.teacher.slug])
         )
 
         self.assertEqual(response.context["weekdays"], Lesson.WEEKDAYS)
@@ -87,14 +87,14 @@ class TestTeacherTimetableView(
 
     def test_context_contains_teacher(self):
         response = self.client.get(
-            reverse("lessons:teacher_timetable", args=[self.teacher.pk])
+            reverse("lessons:teacher_timetable", args=[self.teacher.slug])
         )
 
         self.assertEqual(response.context["teacher"], self.teacher)
 
     def test_renders_lessons(self):
         response = self.client.get(
-            reverse("lessons:teacher_timetable", args=[self.teacher.pk])
+            reverse("lessons:teacher_timetable", args=[self.teacher.slug])
         )
 
         self.assertContainsFew(
@@ -110,7 +110,7 @@ class TestTeacherTimetableView(
 
         with self.assertNumQueries(4):
             self.client.get(
-                reverse("lessons:teacher_timetable", args=[self.teacher.pk])
+                reverse("lessons:teacher_timetable", args=[self.teacher.slug])
             )
 
 
@@ -137,8 +137,8 @@ class TestTimetablesListView(UsersMixin, ClassesMixin, CommonMixin, TestCase):
 
         self.assertContainsFew(
             response,
-            reverse("lessons:class_timetable", args=[school_class.pk]),
-            reverse("lessons:teacher_timetable", args=[teacher.pk]),
+            reverse("lessons:class_timetable", args=[school_class.slug]),
+            reverse("lessons:teacher_timetable", args=[teacher.slug]),
         )
 
 

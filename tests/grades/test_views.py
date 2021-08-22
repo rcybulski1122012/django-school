@@ -29,24 +29,20 @@ class TestGradeCreateView(
 
     def test_redirects_when_user_is_not_logged_in(self):
         self.assertRedirectsWhenNotLoggedIn(
-            reverse("grades:add", args=[self.school_class.number])
+            reverse("grades:add", args=[self.school_class.slug])
         )
 
     def test_returns_403_when_user_is_not_in_teachers_group(self):
         self.login(self.student)
 
-        response = self.client.get(
-            reverse("grades:add", args=[self.school_class.number])
-        )
+        response = self.client.get(reverse("grades:add", args=[self.school_class.slug]))
 
         self.assertEqual(response.status_code, 403)
 
     def test_returns_200_when_user_is_in_teachers_group(self):
         self.login(self.teacher)
 
-        response = self.client.get(
-            reverse("grades:add", args=[self.school_class.number])
-        )
+        response = self.client.get(reverse("grades:add", args=[self.school_class.slug]))
 
         self.assertEqual(response.status_code, 200)
 
@@ -54,7 +50,7 @@ class TestGradeCreateView(
         self.login(self.teacher)
         school_class2 = self.create_class(number="2c")
 
-        response = self.client.get(reverse("grades:add", args=[school_class2.number]))
+        response = self.client.get(reverse("grades:add", args=[school_class2.slug]))
 
         self.assertEqual(response.status_code, 403)
 
@@ -68,11 +64,9 @@ class TestGradeCreateView(
     def test_context_contains_class_number(self):
         self.login(self.teacher)
 
-        response = self.client.get(
-            reverse("grades:add", args=[self.school_class.number])
-        )
+        response = self.client.get(reverse("grades:add", args=[self.school_class.slug]))
 
-        self.assertIn("number", response.context)
+        self.assertIn("slug", response.context)
 
     # form subject queryset should contains given class learning subjects
     # which are taught by the currently logged teacher
@@ -90,9 +84,7 @@ class TestGradeCreateView(
         subject3 = self.create_subject(name="subject3")
         self.create_lesson(subject3, teacher2, self.school_class)
 
-        response = self.client.get(
-            reverse("grades:add", args=[self.school_class.number])
-        )
+        response = self.client.get(reverse("grades:add", args=[self.school_class.slug]))
 
         subject_qs = response.context["form"].fields["subject"].queryset
         self.assertQuerysetEqual(subject_qs, [self.subject])
@@ -102,9 +94,7 @@ class TestGradeCreateView(
         school_class2 = self.create_class(number="class2")
         self.create_user(username="student2", school_class=school_class2)
 
-        response = self.client.get(
-            reverse("grades:add", args=[self.school_class.number])
-        )
+        response = self.client.get(reverse("grades:add", args=[self.school_class.slug]))
 
         students_qs = response.context["form"].fields["student"].queryset
         self.assertQuerysetEqual(students_qs, [self.student])
@@ -113,7 +103,7 @@ class TestGradeCreateView(
         self.login(self.teacher)
         data = self._get_example_form_data()
 
-        self.client.post(reverse("grades:add", args=[self.school_class.number]), data)
+        self.client.post(reverse("grades:add", args=[self.school_class.slug]), data)
 
         self.assertTrue(Grade.objects.exists())
 
@@ -122,7 +112,7 @@ class TestGradeCreateView(
         data = self._get_example_form_data()
 
         response = self.client.post(
-            reverse("grades:add", args=[self.school_class.number]), data
+            reverse("grades:add", args=[self.school_class.slug]), data
         )
 
         self.assertRedirects(response, reverse("classes:list"))
@@ -132,7 +122,7 @@ class TestGradeCreateView(
         data = self._get_example_form_data()
 
         response = self.client.post(
-            reverse("grades:add", args=[self.school_class.number]), data, follow=True
+            reverse("grades:add", args=[self.school_class.slug]), data, follow=True
         )
 
         self.assertContains(response, SUCCESS_GRADE_CREATE_MESSAGE)
@@ -140,7 +130,7 @@ class TestGradeCreateView(
     def test_set_initial_data_to_form_if_given(self):
         self.login(self.teacher)
         url = (
-            f'{reverse("grades:add", args=[self.school_class.number])}'
+            f'{reverse("grades:add", args=[self.school_class.slug])}'
             f"?subject={self.subject.pk}&student={self.student.pk}"
         )
 

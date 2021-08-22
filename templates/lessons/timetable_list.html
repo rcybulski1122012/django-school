@@ -16,7 +16,7 @@
 
   <h3>By teacher</h3>
   {% for teacher in teachers %}
-    <li class="list-group-item"><a href="{% url "lessons:teacher_timetable" teacher.pk %}">{{ teacher.full_name }}</a>
+    <li class="list-group-item"><a href="{% url "lessons:teacher_timetable" teacher.slug %}">{{ teacher.full_name }}</a>
     </li>
   {% endfor %}
 {% endblock %}

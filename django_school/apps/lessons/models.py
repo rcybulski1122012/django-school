@@ -1,4 +1,6 @@
 from django.db import models
+from django.urls import reverse
+from django.utils.text import slugify
 
 from django_school import settings
 from django_school.apps.classes.models import Class
@@ -6,9 +8,15 @@ from django_school.apps.classes.models import Class
 
 class Subject(models.Model):
     name = models.CharField(max_length=64)
+    slug = models.SlugField(max_length=64, unique=True)
 
     def __str__(self):
         return self.name
+
+    def save(self, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(**kwargs)
 
 
 class Lesson(models.Model):
@@ -66,6 +74,9 @@ class LessonSession(models.Model):
         return (
             f"{self.lesson.subject.name} {self.lesson.school_class.number}, {self.date}"
         )
+
+    def get_absolute_url(self):
+        return reverse("lessons:session_detail", args=[self.pk])
 
 
 class Presence(models.Model):
