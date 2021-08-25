@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load crispy_forms_filters %}
+
+{% block title %}
+  {{ school_class.number }} | {{ subject.name }}
+{% endblock %}
+
+{% block content %}
+  <h1>Class: {{ school_class.number }} | Subject: {{ subject.name }}</h1>
+  <table class="table table-bordered table-hover" id="grades">
+    <thead>
+        <tr>
+          <th>Student</th>
+          <th style="width:10%"> </th>
+          {% for category in categories %}
+            <th>{{ category.name }}</th>
+          {% endfor %}
+          <tr></tr>
+        </tr>
+    </thead>
+    <tbody>
+     {% for student in students %}
+       <tr class="_{{ student.pk }}">
+         <td>{{ student.full_name }}</td>
+         <td class="text-center">
+           <a href="{% url "grades:add" school_class.slug %}?subject={{ subject.pk }}&student={{ student.pk }}" class="btn btn-outline-primary">
+             +
+           </a>
+         </td>
+         {% for category in categories %}
+           <td class="_{{ category.pk }}"></td>
+         {% endfor %}
+       </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <script>
+    grades = document.querySelector("#grades");
+      {% for student in students %}
+        {% for grade in student.grades_gotten.all %}
+            {
+                td = grades.querySelector("._{{ student.pk }} ._{{ grade.category.pk }}");
+                td.innerText = "{{ grade.get_grade_display }}";
+            }
+        {% endfor %}
+      {% endfor %}
+  </script>
+{% endblock %}

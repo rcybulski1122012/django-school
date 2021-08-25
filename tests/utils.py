@@ -6,7 +6,9 @@ from django.utils.text import slugify
 
 from django_school.apps.classes.models import Class
 from django_school.apps.common.models import Address
-from django_school.apps.lessons.models import Lesson, LessonSession, Presence, Subject
+from django_school.apps.grades.models import Grade, GradeCategory
+from django_school.apps.lessons.models import (Lesson, LessonSession, Presence,
+                                               Subject)
 
 User = get_user_model()
 
@@ -143,3 +145,36 @@ class LessonsMixin:
         with transaction.atomic():
             Presence.objects.bulk_create(presences)
             return Presence.objects.order_by("-id")[: len(presences)]
+
+
+class GradesMixin:
+    DEFAULT_GRADE_CATEGORY_NAME = "Exam"
+
+    DEFAULT_GRADE = "3"
+    DEFAULT_WEIGHT = "1"
+
+    @staticmethod
+    def create_grade_category(subject, school_class, name=DEFAULT_GRADE_CATEGORY_NAME):
+        return GradeCategory.objects.create(
+            subject=subject, school_class=school_class, name=name
+        )
+
+    @staticmethod
+    def create_grade(
+        category,
+        subject,
+        student,
+        teacher,
+        grade=DEFAULT_GRADE,
+        weight=DEFAULT_WEIGHT,
+        **kwargs,
+    ):
+        return Grade.objects.create(
+            category=category,
+            subject=subject,
+            student=student,
+            teacher=teacher,
+            grade=grade,
+            weight=weight,
+            **kwargs,
+        )

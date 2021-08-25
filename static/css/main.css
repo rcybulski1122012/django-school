@@ -27,3 +27,8 @@
 input, select {
     margin-bottom: 0.5em;
 }
+
+table {
+    table-layout: fixed;
+    word-wrap: break-word;
+}

@@ -1,13 +1,13 @@
 from django.test import TestCase
 from django.urls import reverse
 
-from django_school.apps.grades.models import Grade
+from django_school.apps.grades.models import GRADE_ALREADY_EXISTS_MESSAGE, Grade
 from django_school.apps.grades.views import SUCCESS_GRADE_CREATE_MESSAGE
-from tests.utils import ClassesMixin, CommonMixin, LessonsMixin, UsersMixin
+from tests.utils import ClassesMixin, CommonMixin, GradesMixin, LessonsMixin, UsersMixin
 
 
 class TestGradeCreateView(
-    UsersMixin, ClassesMixin, LessonsMixin, CommonMixin, TestCase
+    UsersMixin, ClassesMixin, LessonsMixin, GradesMixin, CommonMixin, TestCase
 ):
     def setUp(self):
         self.teacher = self.create_teacher()
@@ -17,6 +17,9 @@ class TestGradeCreateView(
         )
         self.subject = self.create_subject()
         self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
+        self.grade_category = self.create_grade_category(
+            self.subject, self.school_class
+        )
 
     def _get_example_form_data(self):
         return {
@@ -25,6 +28,7 @@ class TestGradeCreateView(
             "comment": "Math Exam",
             "subject": self.subject.pk,
             "student": self.student.pk,
+            "category": self.grade_category.pk,
         }
 
     def test_redirects_when_user_is_not_logged_in(self):
@@ -99,6 +103,16 @@ class TestGradeCreateView(
         students_qs = response.context["form"].fields["student"].queryset
         self.assertQuerysetEqual(students_qs, [self.student])
 
+    def test_for_categories_queryset(self):
+        self.login(self.teacher)
+        school_class2 = self.create_class(number="class2")
+        self.create_grade_category(self.subject, school_class2)
+
+        response = self.client.get(reverse("grades:add", args=[self.school_class.slug]))
+
+        categories_qs = response.context["form"].fields["category"].queryset
+        self.assertQuerysetEqual(categories_qs, [self.grade_category])
+
     def test_creates_grade(self):
         self.login(self.teacher)
         data = self._get_example_form_data()
@@ -115,7 +129,12 @@ class TestGradeCreateView(
             reverse("grades:add", args=[self.school_class.slug]), data
         )
 
-        self.assertRedirects(response, reverse("classes:list"))
+        self.assertRedirects(
+            response,
+            reverse(
+                "grades:class_grades", args=[self.school_class.slug, self.subject.slug]
+            ),
+        )
 
     def test_displays_success_message_after_successful_create(self):
         self.login(self.teacher)
@@ -139,3 +158,120 @@ class TestGradeCreateView(
         form = response.context["form"]
         expected = {"student": f"{self.student.pk}", "subject": f"{self.subject.pk}"}
         self.assertEqual(form.initial, expected)
+
+    def test_displays_error_after_adding_a_grade_which_already_exist(self):
+        self.login(self.teacher)
+        self.create_grade(self.grade_category, self.subject, self.student, self.teacher)
+        data = self._get_example_form_data()
+
+        response = self.client.post(
+            reverse("grades:add", args=[self.school_class.slug]), data=data
+        )
+
+        self.assertContains(response, GRADE_ALREADY_EXISTS_MESSAGE, html=True)
+
+
+class TestClassGradesView(
+    UsersMixin, ClassesMixin, LessonsMixin, GradesMixin, CommonMixin, TestCase
+):
+    def setUp(self):
+        self.teacher = self.create_teacher()
+        self.school_class = self.create_class()
+        self.student = self.create_user(
+            username="student", school_class=self.school_class
+        )
+        self.subject = self.create_subject()
+        self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
+        self.grade_category = self.create_grade_category(
+            self.subject, self.school_class
+        )
+
+    def test_redirects_when_user_is_not_logged_in(self):
+        self.assertRedirectsWhenNotLoggedIn(
+            reverse(
+                "grades:class_grades", args=[self.school_class.slug, self.subject.slug]
+            )
+        )
+
+    def test_returns_403_when_user_is_not_in_teachers_group(self):
+        self.login(self.student)
+
+        response = self.client.get(
+            reverse(
+                "grades:class_grades", args=[self.school_class.slug, self.subject.slug]
+            )
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_returns_200_when_user_is_in_teachers_group(self):
+        self.login(self.teacher)
+
+        response = self.client.get(
+            reverse(
+                "grades:class_grades", args=[self.school_class.slug, self.subject.slug]
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_return_403_when_the_teacher_is_not_teaching_the_class(self):
+        self.login(self.teacher)
+        teacher2 = self.create_teacher(username="teacher2")
+        school_class2 = self.create_class(number="2c")
+        self.create_lesson(self.subject, teacher2, school_class2)
+
+        response = self.client.get(
+            reverse("grades:class_grades", args=[school_class2.slug, self.subject.slug])
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_returns_404_when_class_with_given_number_does_not_exist(self):
+        self.login(self.teacher)
+
+        response = self.client.get(
+            reverse("grades:class_grades", args=["1234", self.subject.slug])
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_returns_404_when_the_class_does_not_learning_the_subject(self):
+        self.login(self.teacher)
+        self.lesson.delete()
+
+        response = self.client.get(
+            reverse(
+                "grades:class_grades", args=[self.school_class.slug, self.subject.slug]
+            )
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_context_contains_list_of_given_class_students(self):
+        self.login(self.teacher)
+        school_class2 = self.create_class(number="2c")
+        self.create_user(username="student2", school_class=school_class2)
+
+        response = self.client.get(
+            reverse(
+                "grades:class_grades", args=[self.school_class.slug, self.subject.slug]
+            )
+        )
+
+        self.assertQuerysetEqual(response.context["students"], [self.student])
+
+    def test_context_contains_list_of_grade_categories_of_class_and_subject(self):
+        self.login(self.teacher)
+        subject2 = self.create_subject(name="sub2")
+        school_class2 = self.create_class(number="2c")
+        self.create_grade_category(self.subject, school_class2)
+        self.create_grade_category(subject2, self.school_class)
+
+        response = self.client.get(
+            reverse(
+                "grades:class_grades", args=[self.school_class.slug, self.subject.slug]
+            )
+        )
+
+        self.assertQuerysetEqual(response.context["categories"], [self.grade_category])
