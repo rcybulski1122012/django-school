@@ -1,9 +1,18 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.text import slugify
 
 from django_school import settings
 from django_school.apps.classes.models import Class
+
+TWO_LESSONS_AT_THE_SAME_TIME_MESSAGE = (
+    "The teacher can't have two lessons at the same time."
+)
+TEACHER_NOT_IN_TEACHERS_GROUP_MESSAGE = "Given teacher is not in teachers group."
+STUDENT_CLASS_IS_NOT_LESSON_SESSION_CLASS_MESSAGE = (
+    "Student is not in lesson session class."
+)
 
 
 class Subject(models.Model):
@@ -60,6 +69,17 @@ class Lesson(models.Model):
     def __str__(self):
         return f"{self.school_class}: {self.subject.name}, {self.weekday}: {self.time}"
 
+    def clean(self):
+        super().clean()
+
+        if Lesson.objects.filter(
+            time=self.time, weekday=self.weekday, teacher=self.teacher
+        ):
+            raise ValidationError(TWO_LESSONS_AT_THE_SAME_TIME_MESSAGE)
+
+        if not self.teacher.is_teacher:
+            raise ValidationError(TEACHER_NOT_IN_TEACHERS_GROUP_MESSAGE)
+
 
 class LessonSession(models.Model):
     topic = models.CharField(max_length=128, blank=True, null=True)
@@ -91,3 +111,9 @@ class Presence(models.Model):
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     lesson_session = models.ForeignKey(LessonSession, on_delete=models.CASCADE)
     status = models.CharField(max_length=16, choices=PRESENCE_STATUSES, default="none")
+
+    def clean(self):
+        super().clean()
+
+        if self.student.school_class != self.lesson_session.lesson.school_class:
+            raise ValidationError(STUDENT_CLASS_IS_NOT_LESSON_SESSION_CLASS_MESSAGE)

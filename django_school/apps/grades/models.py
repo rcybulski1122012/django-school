@@ -3,12 +3,19 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 from django_school.apps.classes.models import Class
-from django_school.apps.lessons.models import Subject
+from django_school.apps.lessons.models import Lesson, Subject
 
 GRADE_ALREADY_EXISTS_MESSAGE = (
     "You can't add a grade, because a grade with this category,"
     " for this student already exists."
 )
+CLASS_IS_NOT_LEARNING_SUBJECT_MESSAGE = (
+    "You can't create a grade category, because given class "
+    "is not learning given subject."
+)
+TEACHER_NOT_IN_TEACHERS_GROUP_MESSAGE = "Given teacher is not in teachers group."
+STUDENT_IN_TEACHERS_GROUP_MESSAGE = "Given student is in teachers group."
+STUDENT_IS_NOT_LEARNING_THE_SUBJECT_MESSAGE = "The student is not learning the subject."
 
 
 class GradeCategory(models.Model):
@@ -26,6 +33,14 @@ class GradeCategory(models.Model):
 
     def __str__(self):
         return self.name
+
+    def clean(self):
+        super().clean()
+
+        if not Lesson.objects.filter(
+            school_class=self.school_class, subject=self.subject
+        ).exists():
+            raise ValidationError(CLASS_IS_NOT_LEARNING_SUBJECT_MESSAGE)
 
 
 class Grade(models.Model):
@@ -64,9 +79,8 @@ class Grade(models.Model):
     )
     teacher = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         related_name="grades_added",
-        null=True,
     )
 
     def __str__(self):
@@ -77,3 +91,14 @@ class Grade(models.Model):
 
         if Grade.objects.filter(category=self.category, student=self.student).exists():
             raise ValidationError(GRADE_ALREADY_EXISTS_MESSAGE)
+
+        if not self.teacher.is_teacher:
+            raise ValidationError(TEACHER_NOT_IN_TEACHERS_GROUP_MESSAGE)
+
+        if self.student.is_teacher:
+            raise ValidationError(STUDENT_IN_TEACHERS_GROUP_MESSAGE)
+
+        if not Lesson.objects.filter(
+            school_class=self.student.school_class, subject=self.subject
+        ).exists():
+            raise ValidationError(STUDENT_IS_NOT_LEARNING_THE_SUBJECT_MESSAGE)

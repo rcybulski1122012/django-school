@@ -1,9 +1,12 @@
+from django.forms import HiddenInput
 from django.test import TestCase
 from django.urls import reverse
 
-from django_school.apps.grades.models import GRADE_ALREADY_EXISTS_MESSAGE, Grade
+from django_school.apps.grades.models import (GRADE_ALREADY_EXISTS_MESSAGE,
+                                              Grade)
 from django_school.apps.grades.views import SUCCESS_GRADE_CREATE_MESSAGE
-from tests.utils import ClassesMixin, CommonMixin, GradesMixin, LessonsMixin, UsersMixin
+from tests.utils import (ClassesMixin, CommonMixin, GradesMixin, LessonsMixin,
+                         UsersMixin)
 
 
 class TestGradeCreateView(
@@ -29,6 +32,7 @@ class TestGradeCreateView(
             "subject": self.subject.pk,
             "student": self.student.pk,
             "category": self.grade_category.pk,
+            "teacher": self.teacher.pk,
         }
 
     def test_redirects_when_user_is_not_logged_in(self):
@@ -135,6 +139,17 @@ class TestGradeCreateView(
                 "grades:class_grades", args=[self.school_class.slug, self.subject.slug]
             ),
         )
+
+    def test_teacher_input_is_hidden(self):
+        self.login(self.teacher)
+
+        response = self.client.get(reverse("grades:add", args=[self.school_class.slug]))
+        field = response.context["form"].fields["teacher"]
+
+        self.assertContains(
+            response, "<input type='hidden' name='teacher' id='id_teacher'>", html=True
+        )
+        self.assertIsInstance(field.widget, HiddenInput)
 
     def test_displays_success_message_after_successful_create(self):
         self.login(self.teacher)

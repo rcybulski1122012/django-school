@@ -1,7 +1,10 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.text import slugify
+
+TEACHER_NOT_IN_TEACHERS_GROUP_MESSAGE = "Given teacher is not in teachers group."
 
 
 class Class(models.Model):
@@ -25,3 +28,9 @@ class Class(models.Model):
         if not self.slug:
             self.slug = slugify(self.number)
         super().save(**kwargs)
+
+    def clean(self):
+        super().clean()
+
+        if not self.tutor.is_teacher:
+            raise ValidationError(TEACHER_NOT_IN_TEACHERS_GROUP_MESSAGE)

@@ -1,3 +1,4 @@
+from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -6,7 +7,7 @@ from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
-from django.views.generic import CreateView, DetailView, TemplateView
+from django.views.generic import CreateView
 
 from django_school.apps.classes.models import Class
 from django_school.apps.grades.models import Grade, GradeCategory
@@ -19,24 +20,22 @@ SUCCESS_GRADE_CREATE_MESSAGE = "Grade was added successfully."
 
 class GradeCreateView(PermissionRequiredMixin, SuccessMessageMixin, CreateView):
     model = Grade
-    fields = ("grade", "category", "weight", "comment", "subject", "student")
+    fields = ("grade", "category", "weight", "comment", "subject", "student", "teacher")
     permission_required = "grades.add_grade"
     success_message = SUCCESS_GRADE_CREATE_MESSAGE
     slug_url_kwarg = "class_slug"
 
-    def get_form_kwargs(self):
-        form_kwargs = super().get_form_kwargs()
-        form_kwargs["initial"] = {
+    def get_initial(self):
+        return {
             "subject": self.request.GET.get("subject"),
             "student": self.request.GET.get("student"),
         }
 
-        return form_kwargs
-
     def get_form(self, **kwargs):
         form = super().get_form(**kwargs)
-        slug = self.kwargs["class_slug"]
-        school_class = get_object_or_404(Class, slug=slug)
+        form.fields["teacher"].widget = forms.HiddenInput()
+
+        school_class = get_object_or_404(Class, slug=self.kwargs["class_slug"])
 
         taught_subjects = Subject.objects.filter(
             lessons__teacher=self.request.user, lessons__school_class=school_class

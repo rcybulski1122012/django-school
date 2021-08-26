@@ -40,3 +40,7 @@ class User(AbstractUser):
     @property
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
+
+    @property
+    def is_teacher(self):
+        return self.groups.filter(name="teachers").exists()
