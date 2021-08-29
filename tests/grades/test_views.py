@@ -2,11 +2,9 @@ from django.forms import HiddenInput
 from django.test import TestCase
 from django.urls import reverse
 
-from django_school.apps.grades.models import (GRADE_ALREADY_EXISTS_MESSAGE,
-                                              Grade)
+from django_school.apps.grades.models import GRADE_ALREADY_EXISTS_MESSAGE, Grade
 from django_school.apps.grades.views import SUCCESS_GRADE_CREATE_MESSAGE
-from tests.utils import (ClassesMixin, CommonMixin, GradesMixin, LessonsMixin,
-                         UsersMixin)
+from tests.utils import ClassesMixin, CommonMixin, GradesMixin, LessonsMixin, UsersMixin
 
 
 class TestGradeCreateView(
@@ -230,7 +228,7 @@ class TestClassGradesView(
 
         self.assertEqual(response.status_code, 200)
 
-    def test_return_403_when_the_teacher_is_not_teaching_the_class(self):
+    def test_return_404_when_the_teacher_is_not_teaching_the_class(self):
         self.login(self.teacher)
         teacher2 = self.create_teacher(username="teacher2")
         school_class2 = self.create_class(number="2c")
@@ -238,15 +236,6 @@ class TestClassGradesView(
 
         response = self.client.get(
             reverse("grades:class_grades", args=[school_class2.slug, self.subject.slug])
-        )
-
-        self.assertEqual(response.status_code, 403)
-
-    def test_returns_404_when_class_with_given_number_does_not_exist(self):
-        self.login(self.teacher)
-
-        response = self.client.get(
-            reverse("grades:class_grades", args=["1234", self.subject.slug])
         )
 
         self.assertEqual(response.status_code, 404)
@@ -259,6 +248,24 @@ class TestClassGradesView(
             reverse(
                 "grades:class_grades", args=[self.school_class.slug, self.subject.slug]
             )
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_returns_404_when_class_with_given_number_does_not_exist(self):
+        self.login(self.teacher)
+
+        response = self.client.get(
+            reverse("grades:class_grades", args=["1234", self.subject.slug])
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_returns_404_when_subject_with_given_slug_does_not_exists(self):
+        self.login(self.teacher)
+
+        response = self.client.get(
+            reverse("grades:class_grades", args=[self.school_class.slug, "1234"])
         )
 
         self.assertEqual(response.status_code, 404)

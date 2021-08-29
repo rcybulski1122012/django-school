@@ -50,15 +50,6 @@ class TestClassTimetableView(
             self.lesson.classroom,
         )
 
-    def test_performs_optimal_number_of_queries(self):
-        for time in Lesson.LESSONS_TIMES:
-            self.create_lesson(self.subject, self.teacher, self.school_class, time=time)
-
-        with self.assertNumQueries(4):
-            self.client.get(
-                reverse("lessons:class_timetable", args=[self.school_class.slug])
-            )
-
 
 class TestTeacherTimetableView(
     UsersMixin, ClassesMixin, LessonsMixin, CommonMixin, TestCase
@@ -103,15 +94,6 @@ class TestTeacherTimetableView(
             self.subject.name,
             self.lesson.classroom,
         )
-
-    def test_performs_optimal_number_of_queries(self):
-        for _ in range(5):
-            self.create_lesson(self.subject, self.teacher, self.school_class)
-
-        with self.assertNumQueries(4):
-            self.client.get(
-                reverse("lessons:teacher_timetable", args=[self.teacher.slug])
-            )
 
 
 class TestTimetablesListView(UsersMixin, ClassesMixin, CommonMixin, TestCase):
@@ -242,15 +224,6 @@ class TestTeacherLessonsListView(
         self.assertContains(
             response, "There are no lessons in the given range of time."
         )
-
-    def test_performs_optimal_number_of_queries(self):
-        self.login(self.teacher)
-
-        for _ in range(5):
-            self.create_lesson_session(self.lesson)
-
-        with self.assertNumQueries(6):
-            self.client.get(reverse("lessons:sessions"))
 
 
 class TestLessonSessionDetailView(UsersMixin, ClassesMixin, LessonsMixin, TestCase):

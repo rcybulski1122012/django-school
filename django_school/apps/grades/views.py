@@ -11,7 +11,7 @@ from django.views.generic import CreateView
 
 from django_school.apps.classes.models import Class
 from django_school.apps.grades.models import Grade, GradeCategory
-from django_school.apps.lessons.models import Subject
+from django_school.apps.lessons.models import Lesson, Subject
 
 User = get_user_model()
 
@@ -32,25 +32,28 @@ class GradeCreateView(PermissionRequiredMixin, SuccessMessageMixin, CreateView):
         }
 
     def get_form(self, **kwargs):
+        # TODO: this view should also accept subject_slug as an url parameter
         form = super().get_form(**kwargs)
         form.fields["teacher"].widget = forms.HiddenInput()
 
         school_class = get_object_or_404(Class, slug=self.kwargs["class_slug"])
+        # subject = get_object_or_404(Subject, slug=self.kwargs["subject_slug"])
 
-        taught_subjects = Subject.objects.filter(
+        subjects_qs = Subject.objects.filter(
             lessons__teacher=self.request.user, lessons__school_class=school_class
         ).distinct()
-        taught_classes_students = User.objects.filter(school_class=school_class)
-        grades_categories = GradeCategory.objects.filter(
-            subject__in=taught_subjects, school_class=school_class
+        students_qs = User.objects.filter(school_class=school_class)
+
+        grades_categories_qs = GradeCategory.objects.filter(
+            subject__in=subjects_qs, school_class=school_class
         )
 
-        if not taught_subjects.exists():
+        if not subjects_qs.exists():
             raise PermissionDenied
 
-        form.fields["subject"].queryset = taught_subjects
-        form.fields["student"].queryset = taught_classes_students
-        form.fields["category"].queryset = grades_categories
+        form.fields["subject"].queryset = subjects_qs
+        form.fields["student"].queryset = students_qs
+        form.fields["category"].queryset = grades_categories_qs
 
         return form
 
@@ -78,26 +81,18 @@ def class_grades_view(request, class_slug, subject_slug):
     school_class = get_object_or_404(Class, slug=class_slug)
     subject = get_object_or_404(Subject, slug=subject_slug)
 
-    # is class learning the subject
-    if not Subject.objects.filter(
-        slug=subject_slug, lessons__school_class__slug=class_slug
+    if not Lesson.objects.filter(
+        subject=subject, school_class=school_class, teacher=request.user
     ).exists():
         raise Http404
 
-    # is current logged teacher teaching the class
-    if not Class.objects.filter(
-        slug=class_slug, lessons__teacher=request.user
-    ).exists():
-        raise PermissionDenied
-
     categories = GradeCategory.objects.filter(
-        subject__slug=subject_slug, school_class__slug=class_slug
+        subject=subject, school_class=school_class
     )
-    students = (
-        User.objects.select_related("school_class")
-        .prefetch_related("grades_gotten__category")
-        .filter(school_class__slug=class_slug)
+    students = User.objects.with_nested_student_resources().filter(
+        school_class=school_class
     )
+
     return render(
         request,
         "grades/class_grades.html",

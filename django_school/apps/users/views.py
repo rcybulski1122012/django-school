@@ -23,7 +23,7 @@ class UserDetailView(PermissionRequiredMixin, DetailView):
     context_object_name = "user"
 
     def get_queryset(self):
-        return super().get_queryset().select_related("school_class__tutor", "address")
+        return User.objects.with_nested_resources()
 
 
 @login_required

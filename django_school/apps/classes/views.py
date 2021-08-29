@@ -17,4 +17,4 @@ class ClassDetailView(PermissionRequiredMixin, DetailView):
     context_object_name = "school_class"
 
     def get_queryset(self):
-        return super().get_queryset().select_related("tutor")
+        return super().get_queryset().with_nested_resources()

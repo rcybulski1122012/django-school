@@ -126,9 +126,3 @@ class TestClassDetailView(UsersMixin, ClassesMixin, CommonMixin, TestCase):
         )
 
         self.assertContains(response, self.student.full_name)
-
-    def test_performs_optimal_number_of_queries(self):
-        self.login(self.teacher)
-
-        with self.assertNumQueries(7):
-            self.client.get(reverse("classes:detail", args=[self.school_class.slug]))

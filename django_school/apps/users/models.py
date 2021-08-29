@@ -1,10 +1,31 @@
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, UserManager
 from django.db import models
 from django.urls import reverse
 from django.utils.text import slugify
 
 from django_school.apps.classes.models import Class
 from django_school.apps.common.models import Address
+
+
+class CustomUserManager(UserManager):
+    def with_nested_resources(self):
+        return super().get_queryset().select_related("address")
+
+    def with_nested_student_resources(self):
+        return (
+            super()
+            .get_queryset()
+            .select_related("address", "school_class__tutor")
+            .prefetch_related("grades_gotten__category")
+        )
+
+    def with_nested_teacher_resources(self):
+        return (
+            super()
+            .get_queryset()
+            .select_related("address", "teacher_class")
+            .prefetch_related("grades_added__category", "lessons")
+        )
 
 
 class User(AbstractUser):
@@ -25,6 +46,8 @@ class User(AbstractUser):
     school_class = models.ForeignKey(
         Class, models.SET_NULL, null=True, blank=True, related_name="students"
     )
+
+    objects = CustomUserManager()
 
     def __str__(self):
         return self.full_name

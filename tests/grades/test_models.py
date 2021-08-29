@@ -7,9 +7,9 @@ from tests.utils import ClassesMixin, GradesMixin, LessonsMixin, UsersMixin
 
 class TestGradeModel(UsersMixin, ClassesMixin, LessonsMixin, GradesMixin, TestCase):
     def setUp(self):
-        self.student = self.create_user()
         self.teacher = self.create_teacher(username="teacher")
         self.school_class = self.create_class()
+        self.student = self.create_user(school_class=self.school_class)
         self.subject = self.create_subject()
         self.category = self.create_grade_category(self.subject, self.school_class)
 
@@ -69,13 +69,30 @@ class TestGradeModel(UsersMixin, ClassesMixin, LessonsMixin, GradesMixin, TestCa
                 teacher=self.teacher,
             ).clean()
 
+    def test_with_nested_resources(self):
+        grade = self.create_grade(
+            self.category, self.subject, self.student, self.teacher
+        )
 
-class TestGradeCategoryModel(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
+        with self.assertNumQueries(1):
+            grade_ = list(Grade.objects.with_nested_resources())[0]
+
+        with self.assertNumQueries(0):
+            category = grade_.category
+            subject = grade_.subject
+            student = grade_.student
+            teacher = grade_.teacher
+
+
+class TestGradeCategoryModel(
+    UsersMixin, ClassesMixin, LessonsMixin, GradesMixin, TestCase
+):
+    def setUp(self):
+        self.school_class = self.create_class()
+        self.subject = self.create_subject()
+
     def test_clean_raises_ValidationError_if_class_is_not_learning_the_subject(self):
-        school_class = self.create_class()
-        subject = self.create_subject()
-
         with self.assertRaises(ValidationError):
             GradeCategory(
-                subject=subject, school_class=school_class, name="Category"
+                subject=self.subject, school_class=self.school_class, name="Category"
             ).clean()

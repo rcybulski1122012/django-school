@@ -43,6 +43,11 @@ class GradeCategory(models.Model):
             raise ValidationError(CLASS_IS_NOT_LEARNING_SUBJECT_MESSAGE)
 
 
+class GradeQuerySet(models.QuerySet):
+    def with_nested_resources(self):
+        return self.select_related("category", "subject", "student", "teacher")
+
+
 class Grade(models.Model):
     GRADES = [
         (1.0, "1"),
@@ -83,6 +88,8 @@ class Grade(models.Model):
         related_name="grades_added",
     )
 
+    objects = GradeQuerySet.as_manager()
+
     def __str__(self):
         return f"{self.student}: {self.subject} - {self.grade}"
 
@@ -100,5 +107,5 @@ class Grade(models.Model):
 
         if not Lesson.objects.filter(
             school_class=self.student.school_class, subject=self.subject
-        ).exists():
+        ):
             raise ValidationError(STUDENT_IS_NOT_LEARNING_THE_SUBJECT_MESSAGE)

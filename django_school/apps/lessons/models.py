@@ -1,9 +1,9 @@
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.text import slugify
 
-from django_school import settings
 from django_school.apps.classes.models import Class
 
 TWO_LESSONS_AT_THE_SAME_TIME_MESSAGE = (
@@ -26,6 +26,11 @@ class Subject(models.Model):
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(**kwargs)
+
+
+class LessonQuerySet(models.QuerySet):
+    def with_nested_resources(self):
+        return self.select_related("subject", "teacher", "school_class")
 
 
 class Lesson(models.Model):
@@ -66,6 +71,8 @@ class Lesson(models.Model):
         Class, on_delete=models.CASCADE, related_name="lessons"
     )
 
+    objects = LessonQuerySet.as_manager()
+
     def __str__(self):
         return f"{self.school_class}: {self.subject.name}, {self.weekday}: {self.time}"
 
@@ -74,11 +81,23 @@ class Lesson(models.Model):
 
         if Lesson.objects.filter(
             time=self.time, weekday=self.weekday, teacher=self.teacher
-        ):
+        ).exists():
             raise ValidationError(TWO_LESSONS_AT_THE_SAME_TIME_MESSAGE)
 
         if not self.teacher.is_teacher:
             raise ValidationError(TEACHER_NOT_IN_TEACHERS_GROUP_MESSAGE)
+
+
+class LessonSessionQuerySet(models.QuerySet):
+    def with_nested_resources(self):
+        return self.select_related(
+            "lesson__teacher",
+            "lesson__school_class",
+            "lesson__subject",
+        ).prefetch_related(
+            "presences",
+            "lesson__school_class__students",
+        )
 
 
 class LessonSession(models.Model):
@@ -89,6 +108,8 @@ class LessonSession(models.Model):
         Lesson, on_delete=models.CASCADE, related_name="sessions"
     )
     presences = models.ManyToManyField(settings.AUTH_USER_MODEL, through="Presence")
+
+    objects = LessonSessionQuerySet.as_manager()
 
     def __str__(self):
         return (

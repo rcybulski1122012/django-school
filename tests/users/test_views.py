@@ -1,10 +1,8 @@
 from django.test import TestCase
 from django.urls import reverse
 
-from django_school.apps.users.views import (
-    SUCCESS_PASSWORD_CHANGE_MESSAGE,
-    SUCCESS_PROFILE_UPDATE_MESSAGE,
-)
+from django_school.apps.users.views import (SUCCESS_PASSWORD_CHANGE_MESSAGE,
+                                            SUCCESS_PROFILE_UPDATE_MESSAGE)
 from tests.utils import ClassesMixin, CommonMixin, UsersMixin
 
 
@@ -69,12 +67,6 @@ class TestUserDetailView(UsersMixin, ClassesMixin, CommonMixin, TestCase):
             self.student.full_name,
             str(self.address),
         )
-
-    def test_performs_optimal_number_of_queries(self):
-        self.login(self.teacher)
-
-        with self.assertNumQueries(6):
-            self.client.get(reverse("users:detail", args=[self.student.slug]))
 
 
 class TestProfileView(UsersMixin, CommonMixin, TestCase):
