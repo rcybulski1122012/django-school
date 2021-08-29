@@ -45,9 +45,11 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "crispy_forms",
+    "debug_toolbar",
 ]
 
 MIDDLEWARE = [
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -144,3 +146,8 @@ LOGIN_REDIRECT_URL = reverse_lazy("index")
 LOGIN_URL = reverse_lazy("users:login")
 
 AUTH_USER_MODEL = "users.user"
+
+# Debug Toolbar
+INTERNAL_IPS = [
+    "127.0.0.1",
+]
