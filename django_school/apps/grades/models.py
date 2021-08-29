@@ -107,5 +107,5 @@ class Grade(models.Model):
 
         if not Lesson.objects.filter(
             school_class=self.student.school_class, subject=self.subject
-        ):
+        ).exists():
             raise ValidationError(STUDENT_IS_NOT_LEARNING_THE_SUBJECT_MESSAGE)

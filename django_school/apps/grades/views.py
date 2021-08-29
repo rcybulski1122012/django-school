@@ -35,6 +35,7 @@ class GradeCreateView(PermissionRequiredMixin, SuccessMessageMixin, CreateView):
         # TODO: this view should also accept subject_slug as an url parameter
         form = super().get_form(**kwargs)
         form.fields["teacher"].widget = forms.HiddenInput()
+        form.fields["teacher"].initial = self.request.user.pk
 
         school_class = get_object_or_404(Class, slug=self.kwargs["class_slug"])
         # subject = get_object_or_404(Subject, slug=self.kwargs["subject_slug"])
