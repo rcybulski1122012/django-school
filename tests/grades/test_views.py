@@ -189,7 +189,7 @@ class TestGradeCreateView(
 
         self.assertContains(response, SUCCESS_GRADE_CREATE_MESSAGE)
 
-    def test_set_initial_data_to_form_if_given(self):
+    def test_set_student_initial_data_to_form_if_given(self):
         self.login(self.teacher)
         url = (
             f'{reverse("grades:add", args=[self.school_class.slug, self.subject.slug])}'
@@ -200,7 +200,8 @@ class TestGradeCreateView(
 
         form = response.context["form"]
         expected = {"student": f"{self.student.pk}"}
-        self.assertEqual(form.initial, expected)
+        self.assertIn("student", form.initial),
+        self.assertEqual(form.initial["student"], str(self.student.pk))
 
     def test_displays_error_after_adding_a_grade_which_already_exist(self):
         self.login(self.teacher)

@@ -1,15 +1,14 @@
-from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.views.generic import CreateView
 
 from django_school.apps.classes.models import Class
+from django_school.apps.grades.forms import GradeForm
 from django_school.apps.grades.models import Grade, GradeCategory
 from django_school.apps.lessons.models import Lesson, Subject
 
@@ -20,40 +19,39 @@ SUCCESS_GRADE_CREATE_MESSAGE = "Grade was added successfully."
 
 class GradeCreateView(PermissionRequiredMixin, SuccessMessageMixin, CreateView):
     model = Grade
-    fields = ("grade", "category", "weight", "comment", "student", "subject", "teacher")
+    form_class = GradeForm
     permission_required = "grades.add_grade"
     success_message = SUCCESS_GRADE_CREATE_MESSAGE
 
-    def get_object(self, queryset=None):
-        return get_object_or_404(
-            self.model,
-            school_class__slug=self.kwargs["class_slug"],
-            subject__slug=self.kwargs["subject_slug"],
-        )
+    def dispatch(self, request, *args, **kwargs):
+        self.school_class = get_object_or_404(Class, slug=self.kwargs["class_slug"])
+        self.subject = get_object_or_404(Subject, slug=self.kwargs["subject_slug"])
+
+        return super().dispatch(request, *args, **kwargs)
 
     def get_initial(self):
         return {
             "student": self.request.GET.get("student"),
+            "teacher": self.request.user.pk,
+            "subject": self.subject.pk,
         }
 
+    def does_the_teacher_teach_the_subject_to_the_class(self):
+        return Lesson.objects.filter(
+            school_class=self.school_class,
+            subject=self.subject,
+            teacher=self.request.user,
+        ).exists()
+
     def get_form(self, **kwargs):
-        school_class = get_object_or_404(Class, slug=self.kwargs["class_slug"])
-        subject = get_object_or_404(Subject, slug=self.kwargs["subject_slug"])
-
         form = super().get_form(**kwargs)
-        form.fields["teacher"].widget = forms.HiddenInput()
-        form.fields["subject"].widget = forms.HiddenInput()
-        form.fields["teacher"].initial = self.request.user.pk
-        form.fields["subject"].initial = subject.pk
 
-        if not Lesson.objects.filter(
-            school_class=school_class, subject=subject, teacher=self.request.user
-        ).exists():
+        if not self.does_the_teacher_teach_the_subject_to_the_class():
             raise Http404
 
-        students_qs = User.objects.filter(school_class=school_class)
+        students_qs = User.objects.filter(school_class=self.school_class)
         grades_categories_qs = GradeCategory.objects.filter(
-            subject=subject, school_class=school_class
+            subject=self.subject, school_class=self.school_class
         )
 
         form.fields["student"].queryset = students_qs
