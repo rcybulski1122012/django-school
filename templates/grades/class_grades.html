@@ -23,7 +23,7 @@
        <tr class="_{{ student.pk }}">
          <td>{{ student.full_name }}</td>
          <td class="text-center">
-           <a href="{% url "grades:add" school_class.slug subject.slug %}?student={{ student.pk }}" class="btn btn-outline-primary">
+           <a href="{% url "grades:add" class_slug subject_slug %}?student={{ student.pk }}" class="btn btn-outline-primary">
              +
            </a>
          </td>

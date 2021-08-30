@@ -5,7 +5,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.http import Http404
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
-from django.views.generic import CreateView
+from django.views.generic import CreateView, TemplateView
 
 from django_school.apps.classes.models import Class
 from django_school.apps.grades.forms import GradeForm
@@ -17,24 +17,15 @@ User = get_user_model()
 SUCCESS_GRADE_CREATE_MESSAGE = "Grade was added successfully."
 
 
-class GradeCreateView(PermissionRequiredMixin, SuccessMessageMixin, CreateView):
-    model = Grade
-    form_class = GradeForm
-    permission_required = "grades.add_grade"
-    success_message = SUCCESS_GRADE_CREATE_MESSAGE
-
+class GradesViewMixin:
     def dispatch(self, request, *args, **kwargs):
         self.school_class = get_object_or_404(Class, slug=self.kwargs["class_slug"])
         self.subject = get_object_or_404(Subject, slug=self.kwargs["subject_slug"])
 
-        return super().dispatch(request, *args, **kwargs)
+        if not self.does_the_teacher_teach_the_subject_to_the_class():
+            raise Http404
 
-    def get_initial(self):
-        return {
-            "student": self.request.GET.get("student"),
-            "teacher": self.request.user.pk,
-            "subject": self.subject.pk,
-        }
+        return super().dispatch(request, *args, **kwargs)
 
     def does_the_teacher_teach_the_subject_to_the_class(self):
         return Lesson.objects.filter(
@@ -42,22 +33,6 @@ class GradeCreateView(PermissionRequiredMixin, SuccessMessageMixin, CreateView):
             subject=self.subject,
             teacher=self.request.user,
         ).exists()
-
-    def get_form(self, **kwargs):
-        form = super().get_form(**kwargs)
-
-        if not self.does_the_teacher_teach_the_subject_to_the_class():
-            raise Http404
-
-        students_qs = User.objects.filter(school_class=self.school_class)
-        grades_categories_qs = GradeCategory.objects.filter(
-            subject=self.subject, school_class=self.school_class
-        )
-
-        form.fields["student"].queryset = students_qs
-        form.fields["category"].queryset = grades_categories_qs
-
-        return form
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -70,6 +45,35 @@ class GradeCreateView(PermissionRequiredMixin, SuccessMessageMixin, CreateView):
 
         return context
 
+
+class GradeCreateView(
+    PermissionRequiredMixin, SuccessMessageMixin, GradesViewMixin, CreateView
+):
+    model = Grade
+    form_class = GradeForm
+    permission_required = "grades.add_grade"
+    success_message = SUCCESS_GRADE_CREATE_MESSAGE
+
+    def get_initial(self):
+        return {
+            "student": self.request.GET.get("student"),
+            "teacher": self.request.user.pk,
+            "subject": self.subject.pk,
+        }
+
+    def get_form(self, **kwargs):
+        form = super().get_form(**kwargs)
+
+        students_qs = User.objects.filter(school_class=self.school_class)
+        grades_categories_qs = GradeCategory.objects.filter(
+            subject=self.subject, school_class=self.school_class
+        )
+
+        form.fields["student"].queryset = students_qs
+        form.fields["category"].queryset = grades_categories_qs
+
+        return form
+
     def get_success_url(self):
         return reverse(
             "grades:class_grades",
@@ -77,31 +81,21 @@ class GradeCreateView(PermissionRequiredMixin, SuccessMessageMixin, CreateView):
         )
 
 
-@login_required
-@permission_required("grades.add_grade", raise_exception=True)
-def class_grades_view(request, class_slug, subject_slug):
-    school_class = get_object_or_404(Class, slug=class_slug)
-    subject = get_object_or_404(Subject, slug=subject_slug)
+class ClassGradesView(PermissionRequiredMixin, GradesViewMixin, TemplateView):
+    permission_required = "grades.view_grade"
+    template_name = "grades/class_grades.html"
 
-    if not Lesson.objects.filter(
-        subject=subject, school_class=school_class, teacher=request.user
-    ).exists():
-        raise Http404
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "categories": GradeCategory.objects.filter(
+                    subject=self.subject, school_class=self.school_class
+                ),
+                "students": User.objects.with_nested_student_resources().filter(
+                    school_class=self.school_class
+                ),
+            }
+        )
 
-    categories = GradeCategory.objects.filter(
-        subject=subject, school_class=school_class
-    )
-    students = User.objects.with_nested_student_resources().filter(
-        school_class=school_class
-    )
-
-    return render(
-        request,
-        "grades/class_grades.html",
-        {
-            "categories": categories,
-            "students": students,
-            "school_class": school_class,
-            "subject": subject,
-        },
-    )
+        return context
