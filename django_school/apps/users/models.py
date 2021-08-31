@@ -24,7 +24,7 @@ class CustomUserManager(UserManager):
             super()
             .get_queryset()
             .select_related("address", "teacher_class")
-            .prefetch_related("grades_added__category", "lessons")
+            .prefetch_related("grades_added__category", "lessons__subject")
         )
 
 

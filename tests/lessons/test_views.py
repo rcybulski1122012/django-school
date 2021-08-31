@@ -165,6 +165,15 @@ class TestTeacherLessonsListView(
 
         self.assertIn("lesson_sessions", response.context)
 
+    def test_context_contains_given_date(self):
+        self.login(self.teacher)
+        url = f'{reverse("lessons:sessions")}?date=2021-01-01'
+
+        response = self.client.get(url)
+
+        self.assertIn("date", response.context)
+        self.assertEqual(response.context["date"], "2021-01-01")
+
     def test_renders_links_to_lesson_session_detail_view(self):
         self.login(self.teacher)
         session = self.create_lesson_session(self.lesson)

@@ -22,7 +22,7 @@
     <div class="col-3">
       <form method="get" action="{% url "lessons:sessions" %}">
         <label for="date_to">Date:</label>
-        <input type="date" name="date" id="date" class="form-control" value="{% now "Y-m-d" %}">
+        <input type="date" name="date" id="date" class="form-control" value="{% if date %}{{ date }}{% else %}{% now "Y-m-d" %}{% endif %}">
         <input type="submit" class="btn btn-outline-success my-3" value="Filter">
       </form>
     </div>

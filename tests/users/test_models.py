@@ -2,7 +2,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.test import TestCase
 
-from tests.utils import ClassesMixin, CommonMixin, GradesMixin, LessonsMixin, UsersMixin
+from tests.utils import (ClassesMixin, CommonMixin, GradesMixin, LessonsMixin,
+                         UsersMixin)
 
 User = get_user_model()
 
@@ -78,7 +79,7 @@ class TestUserModel(
         grade = self.create_grade(grade_category, subject, student, teacher)
         lesson = self.create_lesson(subject, teacher, school_class)
 
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(5):
             users = list(
                 User.objects.with_nested_teacher_resources().filter(pk=teacher.pk)
             )
@@ -89,4 +90,5 @@ class TestUserModel(
             teacher_class = teacher_.teacher_class
             grade_ = teacher_.grades_added.all()[0]
             grade_category_ = grade_.category
-            lessons = teacher_.lessons
+            lessons = teacher_.lessons.all()
+            lesson_subject = lessons[0].subject

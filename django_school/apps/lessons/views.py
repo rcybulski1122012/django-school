@@ -35,11 +35,7 @@ class ClassTimetableView(TimetableContextMixin, DetailView):
     template_name = "lessons/class_timetable.html"
 
     def get_queryset(self):
-        return (
-            super()
-            .get_queryset()
-            .prefetch_related("lessons__subject", "lessons__teacher")
-        )
+        return super().get_queryset().with_lessons()
 
 
 class TeacherTimetableView(TimetableContextMixin, DetailView):
@@ -56,7 +52,7 @@ class TeacherTimetableView(TimetableContextMixin, DetailView):
         return user
 
     def get_queryset(self):
-        return super().get_queryset().prefetch_related("lessons__subject")
+        return self.model.objects.with_nested_teacher_resources()
 
 
 def timetables_list_view(request):
@@ -82,12 +78,17 @@ class TeacherLessonSessionListView(PermissionRequiredMixin, ListView):
         qs = (
             super()
             .get_queryset()
-            .select_related("lesson__subject", "lesson__school_class")
-            .filter(lesson__teacher=self.request.user)
-            .filter(date=date)
+            .with_nested_resources()
+            .filter(lesson__teacher=self.request.user, date=date)
         )
 
         return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["date"] = self.request.GET.get("date")
+
+        return context
 
 
 @login_required
