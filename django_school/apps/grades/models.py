@@ -96,7 +96,11 @@ class Grade(models.Model):
     def clean(self):
         super().clean()
 
-        if Grade.objects.filter(category=self.category, student=self.student).exists():
+        if (
+            Grade.objects.filter(category=self.category, student=self.student)
+            .exclude(pk=self.pk)
+            .exists()
+        ):
             raise ValidationError(GRADE_ALREADY_EXISTS_MESSAGE)
 
         if not self.teacher.is_teacher:
