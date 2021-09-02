@@ -2,11 +2,16 @@ from django.forms import HiddenInput
 from django.test import TestCase
 from django.urls import reverse
 
-from django_school.apps.grades.models import (GRADE_ALREADY_EXISTS_MESSAGE,
-                                              Grade)
+from django_school.apps.grades.models import GRADE_ALREADY_EXISTS_MESSAGE, Grade
 from django_school.apps.grades.views import SUCCESS_GRADE_CREATE_MESSAGE
-from tests.utils import (ClassesMixin, GradesMixin, LessonsMixin,
-                         ResourceViewMixin, TeacherViewMixin, UsersMixin)
+from tests.utils import (
+    ClassesMixin,
+    GradesMixin,
+    LessonsMixin,
+    ResourceViewMixin,
+    TeacherViewMixin,
+    UsersMixin,
+)
 
 
 class GradeViewTestMixin(
@@ -54,13 +59,13 @@ class GradeViewTestMixin(
 
         self.assertEqual(response.status_code, 404)
 
-    def test_context_contains_class_slug_and_subject_slug(self):
+    def test_context_contains_school_class_and_subject(self):
         self.login(self.teacher)
 
         response = self.client.get(self.get_url())
 
-        self.assertIn("class_slug", response.context)
-        self.assertIn("subject_slug", response.context)
+        self.assertIn("school_class", response.context)
+        self.assertIn("subject", response.context)
 
 
 class TestGradeCreateView(GradeViewTestMixin, TestCase):

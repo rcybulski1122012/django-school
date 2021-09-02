@@ -6,8 +6,8 @@
 {% endblock %}
 
 {% block content %}
-  <h1>Add grade</h1>
-  <form action="{% url "grades:add" class_slug subject_slug %}" method="POST">
+  <h1>Add grade | Class: {{ school_class.number }} | Subject: {{ subject.name }}</h1>
+  <form action="{% url "grades:add" school_class.slug subject.slug %}" method="POST">
     {{ form|crispy }}
 
     <input type="submit" value="Add" class="btn btn-success my-3">

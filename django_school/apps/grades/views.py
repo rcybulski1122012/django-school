@@ -37,8 +37,8 @@ class GradesViewMixin:
         context = super().get_context_data(**kwargs)
         context.update(
             {
-                "class_slug": self.kwargs["class_slug"],
-                "subject_slug": self.kwargs["subject_slug"],
+                "school_class": self.school_class,
+                "subject": self.subject,
             }
         )
 
