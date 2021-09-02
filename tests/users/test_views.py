@@ -1,21 +1,13 @@
 from django.test import TestCase
 from django.urls import reverse
 
-from django_school.apps.users.views import (
-    SUCCESS_PASSWORD_CHANGE_MESSAGE,
-    SUCCESS_PROFILE_UPDATE_MESSAGE,
-)
-from tests.utils import (
-    ClassesMixin,
-    CommonMixin,
-    LoginRequiredViewMixin,
-    ResourceViewMixin,
-    TeacherViewMixin,
-    UsersMixin,
-)
+from django_school.apps.users.views import (SUCCESS_PASSWORD_CHANGE_MESSAGE,
+                                            SUCCESS_PROFILE_UPDATE_MESSAGE)
+from tests.utils import (ClassesMixin, CommonMixin, LoginRequiredViewMixin,
+                         ResourceViewMixin, TeacherViewMixin, UsersMixin)
 
 
-class TestUserDetailView(
+class TestStudentDetailView(
     TeacherViewMixin, ResourceViewMixin, UsersMixin, ClassesMixin, CommonMixin, TestCase
 ):
     path_name = "users:detail"
@@ -41,6 +33,13 @@ class TestUserDetailView(
 
     def get_nonexistent_resource_url(self):
         return self.get_url(user_slug="does-not-exist")
+
+    def test_returns_404_if_user_is_a_teacher(self):
+        self.login(self.teacher)
+
+        response = self.client.get(self.get_url(self.teacher.slug))
+
+        self.assertEquals(response.status_code, 404)
 
     def test_context_contains_user(self):
         self.login(self.teacher)

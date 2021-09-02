@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.auth.views import PasswordChangeView
 from django.contrib.messages.views import SuccessMessageMixin
+from django.http import Http404
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.views.generic import DetailView
@@ -17,10 +18,17 @@ SUCCESS_PROFILE_UPDATE_MESSAGE = "Your profile info has been updated successfull
 SUCCESS_PASSWORD_CHANGE_MESSAGE = "Your password has been changed successfully."
 
 
-class UserDetailView(PermissionRequiredMixin, DetailView):
+class StudentDetailView(PermissionRequiredMixin, DetailView):
     model = User
+    template_name = "users/student_detail.html"
     permission_required = "users.view_user"
     context_object_name = "user"
+
+    def dispatch(self, request, *args, **kwargs):
+        if self.get_object().is_teacher:
+            raise Http404()
+
+        return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         return User.objects.with_nested_resources()

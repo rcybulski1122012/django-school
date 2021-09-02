@@ -2,7 +2,7 @@ from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import path
 
 from django_school.apps.users.views import (PasswordChangeWithMessageView,
-                                            UserDetailView, profile_view)
+                                            StudentDetailView, profile_view)
 
 app_name = "users"
 
@@ -15,5 +15,5 @@ urlpatterns = [
         PasswordChangeWithMessageView.as_view(),
         name="password_change",
     ),
-    path("<slug:slug>/", UserDetailView.as_view(), name="detail"),
+    path("<slug:slug>/", StudentDetailView.as_view(), name="detail"),
 ]
