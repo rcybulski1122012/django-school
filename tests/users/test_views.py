@@ -1,12 +1,25 @@
 from django.test import TestCase
 from django.urls import reverse
 
-from django_school.apps.users.views import (SUCCESS_PASSWORD_CHANGE_MESSAGE,
-                                            SUCCESS_PROFILE_UPDATE_MESSAGE)
-from tests.utils import ClassesMixin, CommonMixin, UsersMixin
+from django_school.apps.users.views import (
+    SUCCESS_PASSWORD_CHANGE_MESSAGE,
+    SUCCESS_PROFILE_UPDATE_MESSAGE,
+)
+from tests.utils import (
+    ClassesMixin,
+    CommonMixin,
+    LoginRequiredViewMixin,
+    ResourceViewMixin,
+    TeacherViewMixin,
+    UsersMixin,
+)
 
 
-class TestUserDetailView(UsersMixin, ClassesMixin, CommonMixin, TestCase):
+class TestUserDetailView(
+    TeacherViewMixin, ResourceViewMixin, UsersMixin, ClassesMixin, CommonMixin, TestCase
+):
+    path_name = "users:detail"
+
     def setUp(self):
         self.teacher = self.create_teacher()
         self.school_class = self.create_class(tutor=self.teacher)
@@ -21,36 +34,18 @@ class TestUserDetailView(UsersMixin, ClassesMixin, CommonMixin, TestCase):
             last_name="TestLast",
         )
 
-    def test_redirects_when_user_is_not_logged_in(self):
-        self.assertRedirectsWhenNotLoggedIn(
-            reverse("users:detail", args=[self.student.slug])
-        )
+    def get_url(self, user_slug=None):
+        user_slug = user_slug or self.student.slug
 
-    def test_returns_403_when_user_is_not_in_teachers_group(self):
-        self.login(self.student)
+        return reverse(self.path_name, args=[user_slug])
 
-        response = self.client.get(reverse("users:detail", args=[self.student.slug]))
-
-        self.assertEqual(response.status_code, 403)
-
-    def test_returns_200_when_user_is_in_teachers_group(self):
-        self.login(self.teacher)
-
-        response = self.client.get(reverse("users:detail", args=[self.student.slug]))
-
-        self.assertEqual(response.status_code, 200)
-
-    def test_returns_404_when_user_does_not_exist(self):
-        self.login(self.teacher)
-
-        response = self.client.get(reverse("users:detail", args=["slug"]))
-
-        self.assertEqual(response.status_code, 404)
+    def get_nonexistent_resource_url(self):
+        return self.get_url(user_slug="does-not-exist")
 
     def test_context_contains_user(self):
         self.login(self.teacher)
 
-        response = self.client.get(reverse("users:detail", args=[self.student.slug]))
+        response = self.client.get(self.get_url())
 
         self.assertEqual(response.context["user"], self.student)
 
@@ -59,28 +54,27 @@ class TestUserDetailView(UsersMixin, ClassesMixin, CommonMixin, TestCase):
 
         response = self.client.get(reverse("users:detail", args=[self.student.slug]))
 
-        self.assertContainsFew(
-            response,
-            self.school_class.number,
-            "TestNumber",
-            "TestEmailAddr@gmail.com",
-            self.student.full_name,
-            str(self.address),
-        )
+        self.assertContains(response, self.school_class.number)
+        self.assertContains(response, "TestNumber")
+        self.assertContains(response, "TestEmailAddr@gmail.com")
+        self.assertContains(response, self.student.full_name)
+        self.assertContains(response, str(self.address))
 
 
-class TestProfileView(UsersMixin, CommonMixin, TestCase):
+class TestProfileView(LoginRequiredViewMixin, UsersMixin, CommonMixin, TestCase):
+    path_name = "users:profile"
+
     def setUp(self):
         self.address = self.create_address()
         self.student = self.create_user(address=self.address)
 
-    def test_redirects_when_user_is_not_logged_in(self):
-        self.assertRedirectsWhenNotLoggedIn(reverse("users:profile"))
+    def get_url(self):
+        return reverse(self.path_name)
 
     def test_context_contains_user_info_and_address_form(self):
         self.login(self.student)
 
-        response = self.client.get(reverse("users:profile"))
+        response = self.client.get(self.get_url())
 
         self.assertIn("user_info_form", response.context)
         self.assertIn("address_form", response.context)
@@ -100,29 +94,31 @@ class TestProfileView(UsersMixin, CommonMixin, TestCase):
             "country": "new-country",
         }
         response = self.client.post(
-            reverse("users:profile"), {**user_data, **address_data}, follow=True
+            self.get_url(), {**user_data, **address_data}, follow=True
         )
         self.student.refresh_from_db()
         self.address.refresh_from_db()
 
-        self.assertModelFieldsEqual(self.student, **user_data)
-        self.assertModelFieldsEqual(self.address, **address_data)
+        self.assertTrue(user_data.items() <= self.student.__dict__.items())
+        self.assertTrue(address_data.items() <= self.address.__dict__.items())
         self.assertContains(response, SUCCESS_PROFILE_UPDATE_MESSAGE)
 
     def test_displays_error_message_when_data_is_incorrect(self):
         self.login(self.student)
 
-        response = self.client.post(reverse("users:profile"), {"incorrect": "data"})
+        response = self.client.post(self.get_url(), {"incorrect": "data"})
 
         self.assertContains(response, "This field is required")
 
 
 class TestPasswordChangeWithMessageView(UsersMixin, TestCase):
+    path_name = "users:password_change"
+
     def setUp(self):
         self.user = self.create_user()
 
-    def test_redirects_when_user_is_not_logged_in(self):
-        self.assertRedirectsWhenNotLoggedIn(reverse("users:password_change"))
+    def get_url(self):
+        return reverse(self.path_name)
 
     def test_redirects_to_profile(self):
         self.login(self.user)
@@ -132,7 +128,7 @@ class TestPasswordChangeWithMessageView(UsersMixin, TestCase):
             "new_password2": "NewPassword1!",
         }
 
-        response = self.client.post(reverse("users:password_change"), data)
+        response = self.client.post(self.get_url(), data)
 
         self.assertRedirects(response, reverse("users:profile"))
 
@@ -144,6 +140,6 @@ class TestPasswordChangeWithMessageView(UsersMixin, TestCase):
             "new_password2": "NewPassword1!",
         }
 
-        response = self.client.post(reverse("users:password_change"), data, follow=True)
+        response = self.client.post(self.get_url(), data, follow=True)
 
         self.assertContains(response, SUCCESS_PASSWORD_CHANGE_MESSAGE)

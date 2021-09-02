@@ -46,7 +46,7 @@ class TeacherTimetableView(TimetableContextMixin, DetailView):
     def get_object(self, queryset=None):
         user = super().get_object()
 
-        if not user.groups.filter(name="teachers").exists():
+        if not user.is_teacher:
             raise Http404
 
         return user

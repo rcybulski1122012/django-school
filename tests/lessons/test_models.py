@@ -1,19 +1,11 @@
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from django_school.apps.lessons.models import Lesson, LessonSession, Presence, Subject
+from django_school.apps.lessons.models import Lesson, Presence
 from tests.utils import ClassesMixin, LessonsMixin, UsersMixin
 
 
-class TestSubjectModel(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_user(
-            username="student", school_class=self.school_class
-        )
-        self.subject = self.create_subject()
-
+class TestSubjectModel(LessonsMixin, TestCase):
     def test_slugify_on_save_if_slug_not_given(self):
         subject = self.create_subject(name="Computer Science")
 
@@ -37,61 +29,14 @@ class TestLessonModel(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
     def test_clean_raises_ValidationError_when_the_teacher_already_have_lesson_in_given_time(
         self,
     ):
-        lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
+        self.create_lesson(self.subject, self.teacher, self.school_class)
 
         with self.assertRaises(ValidationError):
-            Lesson(
-                subject=self.subject,
-                teacher=self.teacher,
-                school_class=self.school_class,
-                time=self.DEFAULT_TIME,
-                weekday=self.DEFAULT_WEEKDAY,
-            ).clean()
+            self.create_lesson(self.subject, self.teacher, self.school_class).clean()
 
     def test_clean_raises_ValidationError_if_teacher_is_not_in_teachers_group(self):
         with self.assertRaises(ValidationError):
-            Lesson(
-                subject=self.subject,
-                teacher=self.student,
-                school_class=self.school_class,
-                time=self.DEFAULT_TIME,
-                weekday=self.DEFAULT_WEEKDAY,
-            ).clean()
-
-    def test_with_nested_resources(self):
-        lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
-
-        with self.assertNumQueries(1):
-            lesson_ = list(Lesson.objects.with_nested_resources())[0]
-
-        with self.assertNumQueries(0):
-            subject = lesson_.subject
-            teacher = lesson_.teacher
-            school_class = lesson_.school_class
-
-
-class TestLessonSessionModel(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_user(username="student")
-        self.subject = self.create_subject()
-        self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
-
-    def test_with_nested_resources(self):
-        lesson_session = self.create_lesson_session(self.lesson)
-        presence = self.create_presences(lesson_session, [self.student])[0]
-
-        with self.assertNumQueries(3):
-            lesson_session_ = list(LessonSession.objects.with_nested_resources())[0]
-
-        with self.assertNumQueries(0):
-            lesson = lesson_session_.lesson
-            presences = lesson_session.presences.all()
-            teacher = lesson.teacher
-            subject = lesson.subject
-            school_class = lesson.school_class
-            students = lesson.school_class.students.all()
+            self.create_lesson(self.subject, self.student, self.school_class).clean()
 
 
 class TestPresenceModel(UsersMixin, ClassesMixin, LessonsMixin, TestCase):

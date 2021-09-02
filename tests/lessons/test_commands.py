@@ -7,16 +7,16 @@ from django_school.apps.lessons.models import LessonSession, Presence
 from tests.utils import ClassesMixin, LessonsMixin, UsersMixin
 
 
-class DateMock(datetime.date):
+class DateStub(datetime.date):
     @classmethod
     def today(cls):
         return cls(year=2021, month=1, day=1)
 
 
-datetime.date = DateMock
+datetime.date = DateStub
 
 
-class TestGenerateLessonSession(LessonsMixin, UsersMixin, ClassesMixin, TestCase):
+class TestGenerateLessonSession(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
     def setUp(self):
         self.subject = self.create_subject()
         self.teacher = self.create_teacher()
@@ -41,15 +41,11 @@ class TestGenerateLessonSession(LessonsMixin, UsersMixin, ClassesMixin, TestCase
         self.assertEqual(presence.status, "none")
 
     def test_performs_optimal_number_of_queries(self):
-        student2 = self.create_user(
-            username="Student321", school_class=self.school_class
-        )
-        lessons = [
+        self.create_user(username="Student321", school_class=self.school_class)
+        for _ in range(5):
             self.create_lesson(
                 self.subject, self.teacher, self.school_class, weekday="fri"
             )
-            for _ in range(5)
-        ]
 
         with self.assertNumQueries(12):
             call_command("create_lesson_sessions")

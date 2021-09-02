@@ -7,8 +7,7 @@ from django.utils.text import slugify
 from django_school.apps.classes.models import Class
 from django_school.apps.common.models import Address
 from django_school.apps.grades.models import Grade, GradeCategory
-from django_school.apps.lessons.models import (Lesson, LessonSession, Presence,
-                                               Subject)
+from django_school.apps.lessons.models import Lesson, LessonSession, Presence, Subject
 
 User = get_user_model()
 
@@ -47,14 +46,6 @@ class UsersMixin:
 
         return teacher
 
-    def assertRedirectsWhenNotLoggedIn(self, url, method="get"):
-        expected_url = f"{settings.LOGIN_URL}?next={url}"
-        method = method.lower()
-
-        response = getattr(self.client, method)(url)
-
-        self.assertRedirects(response, expected_url)
-
 
 class ClassesMixin:
     DEFAULT_NUMBER = "1a"
@@ -78,6 +69,7 @@ class CommonMixin:
         apartment_number=DEFAULT_APARTMENT_NUMBER,
         city=DEFAULT_CITY,
         country=DEFAULT_COUNTRY,
+        **kwargs,
     ):
         return Address.objects.create(
             street=street,
@@ -85,15 +77,8 @@ class CommonMixin:
             apartment_number=apartment_number,
             city=city,
             country=country,
+            **kwargs,
         )
-
-    def assertContainsFew(self, response, *strings):
-        for string in strings:
-            self.assertContains(response, string)
-
-    def assertModelFieldsEqual(self, instance, **fields):
-        for key, value in fields.items():
-            self.assertEqual(getattr(instance, key), value)
 
 
 class LessonsMixin:
@@ -114,6 +99,7 @@ class LessonsMixin:
         time=DEFAULT_TIME,
         weekday=DEFAULT_WEEKDAY,
         classroom=DEFAULT_CLASSROOM,
+        **kwargs,
     ):
         return Lesson.objects.create(
             subject=subject,
@@ -122,6 +108,7 @@ class LessonsMixin:
             time=time,
             weekday=weekday,
             classroom=classroom,
+            **kwargs,
         )
 
     @staticmethod
@@ -154,9 +141,11 @@ class GradesMixin:
     DEFAULT_WEIGHT = "1"
 
     @staticmethod
-    def create_grade_category(subject, school_class, name=DEFAULT_GRADE_CATEGORY_NAME):
+    def create_grade_category(
+        subject, school_class, name=DEFAULT_GRADE_CATEGORY_NAME, **kwargs
+    ):
         return GradeCategory.objects.create(
-            subject=subject, school_class=school_class, name=name
+            subject=subject, school_class=school_class, name=name, **kwargs
         )
 
     @staticmethod
@@ -178,3 +167,48 @@ class GradesMixin:
             weight=weight,
             **kwargs,
         )
+
+
+class LoginRequiredViewMixin:
+    def get_url(self):
+        raise NotImplementedError("get_url must be overridden")
+
+    def test_redirects_when_user_is_not_logged_in(self):
+        expected_url = f"{settings.LOGIN_URL}?next={self.get_url()}"
+
+        response = self.client.get(self.get_url())
+
+        self.assertRedirects(response, expected_url)
+
+
+class TeacherViewMixin(LoginRequiredViewMixin):
+    def test_returns_403_when_user_is_not_in_teachers_group(self):
+        self.login(self.student)
+
+        response = self.client.get(self.get_url())
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_returns_200_when_user_is_in_teachers_group(self):
+        self.login(self.teacher)
+
+        response = self.client.get(self.get_url())
+
+        self.assertEqual(response.status_code, 200)
+
+
+class ResourceViewMixin:
+    def get_nonexistent_resource_url(self):
+        raise NotImplementedError("get_nonexistent_resource_url must be overridden")
+
+    def test_returns_404_if_object_does_not_exist(self):
+        mro = super().__self_class__.__mro__
+
+        if TeacherViewMixin in mro:
+            self.login(self.teacher)
+        elif LoginRequiredViewMixin in mro:
+            self.login(self.student)
+
+        response = self.client.get(self.get_nonexistent_resource_url())
+
+        self.assertEqual(response.status_code, 404)
