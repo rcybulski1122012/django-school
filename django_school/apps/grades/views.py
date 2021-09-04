@@ -60,18 +60,15 @@ class GradeCreateView(
             "subject": self.subject.pk,
         }
 
-    def get_form(self, **kwargs):
-        form = super().get_form(**kwargs)
-
-        students_qs = User.objects.filter(school_class=self.school_class)
-        grades_categories_qs = GradeCategory.objects.filter(
-            subject=self.subject, school_class=self.school_class
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {
+                "school_class": self.school_class,
+                "subject": self.subject,
+            }
         )
-
-        form.fields["student"].queryset = students_qs
-        form.fields["category"].queryset = grades_categories_qs
-
-        return form
+        return kwargs
 
     def get_success_url(self):
         return reverse(
