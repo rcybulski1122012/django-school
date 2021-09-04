@@ -16,6 +16,13 @@ class PresenceForm(forms.ModelForm):
         fields = ["status"]
 
 
+class BasePresenceFormSet(forms.BaseInlineFormSet):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.queryset = self.queryset.select_related("student")
+
+
 PresenceFormSet = inlineformset_factory(
     LessonSession,
     Presence,
@@ -23,4 +30,5 @@ PresenceFormSet = inlineformset_factory(
     can_delete=False,
     max_num=0,
     labels={"status": ""},
+    formset=BasePresenceFormSet,
 )

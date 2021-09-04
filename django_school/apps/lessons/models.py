@@ -94,9 +94,6 @@ class LessonSessionQuerySet(models.QuerySet):
             "lesson__teacher",
             "lesson__school_class",
             "lesson__subject",
-        ).prefetch_related(
-            "presences",
-            "lesson__school_class__students",
         )
 
 

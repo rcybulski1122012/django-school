@@ -25,13 +25,18 @@ class StudentDetailView(PermissionRequiredMixin, DetailView):
     context_object_name = "user"
 
     def dispatch(self, request, *args, **kwargs):
-        if self.get_object().is_teacher:
+        if self._is_the_user_in_teachers_group():
             raise Http404()
 
         return super().dispatch(request, *args, **kwargs)
 
+    def _is_the_user_in_teachers_group(self):
+        return User.objects.filter(
+            slug=self.kwargs[self.slug_url_kwarg], groups__name="teachers"
+        ).exists()
+
     def get_queryset(self):
-        return User.objects.with_nested_resources()
+        return User.objects.with_nested_student_resources()
 
 
 @login_required

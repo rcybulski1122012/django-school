@@ -94,7 +94,10 @@ class TeacherLessonSessionListView(PermissionRequiredMixin, ListView):
 @login_required
 @permission_required("lessons.change_lessonsession", raise_exception=True)
 def lesson_session_detail_view(request, pk):
-    lesson_session = get_object_or_404(LessonSession, pk=pk)
+    lesson_session = get_object_or_404(
+        LessonSession.objects.with_nested_resources(),
+        pk=pk,
+    )
 
     if request.user != lesson_session.lesson.teacher:
         raise PermissionDenied()

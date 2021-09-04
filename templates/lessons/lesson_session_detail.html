@@ -17,7 +17,9 @@
     <h3>Presences:</h3>
 
     {% for presence_form in presences_formset %}
-      <label for="{{ presence_form.status.id_for_label }}">{{ presence_form.instance.student }}</label>
+      <label for="{{ presence_form.status.id_for_label }}">
+        {{ presence_form.instance.student }}
+      </label>
       {{ presence_form|crispy }}
     {% endfor %}
 

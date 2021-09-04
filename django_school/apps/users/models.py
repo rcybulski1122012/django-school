@@ -12,20 +12,10 @@ class CustomUserManager(UserManager):
         return super().get_queryset().select_related("address")
 
     def with_nested_student_resources(self):
-        return (
-            super()
-            .get_queryset()
-            .select_related("address", "school_class__tutor")
-            .prefetch_related("grades_gotten__category")
-        )
+        return super().get_queryset().select_related("address", "school_class__tutor")
 
     def with_nested_teacher_resources(self):
-        return (
-            super()
-            .get_queryset()
-            .select_related("address", "teacher_class")
-            .prefetch_related("grades_added__category", "lessons__subject")
-        )
+        return super().get_queryset().select_related("address", "teacher_class")
 
 
 class User(AbstractUser):
