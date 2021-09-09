@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load crispy_forms_filters %}
+
+{% block title %}
+  Add grades in bulk
+{% endblock %}
+
+{% block content %}
+  <h1>Add grades in bulk | Class: {{ school_class.number }} | Subject: {{ subject.name }}</h1>
+
+  <form action="{% url "grades:create_grades_in_bulk" school_class.slug subject.slug %}" method="POST">
+    {{ grades_formset.management_form }}
+    {{ common_form|crispy }}
+    <hr>
+
+    {% for grade_form in grades_formset %}
+      <label for="{{ grade_form.grade.id_for_label }}">
+        {{ grade_form.student_label }}
+      </label>
+      {{ grade_form|crispy }}
+    {% endfor %}
+
+    <input type="submit" value="Add" class="btn btn-success my-3">
+    {% csrf_token %}
+  </form>
+
+{% endblock %}

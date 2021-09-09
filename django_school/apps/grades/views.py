@@ -1,19 +1,26 @@
+from django.contrib import messages
 from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.http import Http404
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.generic import CreateView, TemplateView
 
 from django_school.apps.classes.models import Class
-from django_school.apps.grades.forms import GradeForm
+from django_school.apps.grades.forms import (
+    BulkGradeCreationCommonInfoForm,
+    BulkGradeCreationFormSet,
+    GradeForm,
+)
 from django_school.apps.grades.models import Grade, GradeCategory
 from django_school.apps.lessons.models import Lesson, Subject
 
 User = get_user_model()
 
 SUCCESS_GRADE_CREATE_MESSAGE = "Grade was added successfully."
+SUCCESS_IN_BULK_GRADE_CREATE_MESSAGE = "Grades were added successfully."
 
 
 class GradesViewMixin:
@@ -95,3 +102,62 @@ class ClassGradesView(PermissionRequiredMixin, GradesViewMixin, TemplateView):
         )
 
         return context
+
+
+@login_required
+@permission_required("grades.add_grade", raise_exception=True)
+def create_grades_in_bulk_view(request, class_slug, subject_slug):
+    school_class = get_object_or_404(Class, slug=class_slug)
+    subject = get_object_or_404(Subject, slug=subject_slug)
+    students = User.objects.filter(school_class=school_class)
+    initial = {"category": request.GET.get("category")}
+
+    if not Lesson.objects.filter(
+        school_class=school_class, subject=subject, teacher=request.user
+    ).exists():
+        raise Http404
+
+    if request.method == "POST":
+        common_form = BulkGradeCreationCommonInfoForm(
+            request.POST,
+            teacher=request.user,
+            subject=subject,
+            school_class=school_class,
+            initial=initial,
+        )
+
+        grades_formset = BulkGradeCreationFormSet(
+            request.POST,
+            students=students,
+        )
+        if common_form.is_valid():
+            grades_formset.set_common_data(common_data=common_form.cleaned_data)
+            if grades_formset.is_valid():
+                grades_formset.save()
+
+                messages.success(request, SUCCESS_IN_BULK_GRADE_CREATE_MESSAGE)
+                return redirect(
+                    reverse(
+                        "grades:class_grades", args=[school_class.slug, subject.slug]
+                    )
+                )
+
+    else:
+        common_form = BulkGradeCreationCommonInfoForm(
+            teacher=request.user,
+            subject=subject,
+            school_class=school_class,
+            initial=initial,
+        )
+        grades_formset = BulkGradeCreationFormSet(students=students)
+
+    return render(
+        request,
+        "grades/create_grades_in_bulk.html",
+        {
+            "common_form": common_form,
+            "grades_formset": grades_formset,
+            "school_class": school_class,
+            "subject": subject,
+        },
+    )

@@ -3,7 +3,10 @@ from django.test import TestCase
 from django.urls import reverse
 
 from django_school.apps.grades.models import GRADE_ALREADY_EXISTS_MESSAGE, Grade
-from django_school.apps.grades.views import SUCCESS_GRADE_CREATE_MESSAGE
+from django_school.apps.grades.views import (
+    SUCCESS_GRADE_CREATE_MESSAGE,
+    SUCCESS_IN_BULK_GRADE_CREATE_MESSAGE,
+)
 from tests.utils import (
     ClassesMixin,
     GradesMixin,
@@ -82,26 +85,6 @@ class TestGradeCreateView(GradeViewTestMixin, TestCase):
             "teacher": self.teacher.pk,
         }
 
-    def test_form_student_queryset(self):
-        self.login(self.teacher)
-        school_class2 = self.create_class(number="class2")
-        self.create_user(username="student2", school_class=school_class2)
-
-        response = self.client.get(self.get_url())
-
-        students_qs = response.context["form"].fields["student"].queryset
-        self.assertQuerysetEqual(students_qs, [self.student])
-
-    def test_for_categories_queryset(self):
-        self.login(self.teacher)
-        school_class2 = self.create_class(number="class2")
-        self.create_grade_category(self.subject, school_class2)
-
-        response = self.client.get(self.get_url())
-
-        categories_qs = response.context["form"].fields["category"].queryset
-        self.assertQuerysetEqual(categories_qs, [self.grade_category])
-
     def test_creates_grade(self):
         self.login(self.teacher)
         data = self.get_example_form_data()
@@ -158,7 +141,6 @@ class TestGradeCreateView(GradeViewTestMixin, TestCase):
         response = self.client.get(url)
 
         form = response.context["form"]
-        self.assertIn("student", form.initial),
         self.assertEqual(form.initial["student"], str(self.student.pk))
 
     def test_displays_error_after_adding_a_grade_which_already_exist(self):
@@ -193,3 +175,86 @@ class TestClassGradesView(GradeViewTestMixin, TestCase):
         response = self.client.get(self.get_url())
 
         self.assertQuerysetEqual(response.context["categories"], [self.grade_category])
+
+
+class TestCreateGradesInBulkView(GradeViewTestMixin, TestCase):
+    path_name = "grades:create_grades_in_bulk"
+
+    def get_url(self, class_slug=None, subject_slug=None, category_pk=None):
+        url = super().get_url(class_slug, subject_slug)
+
+        if category_pk:
+            url += f"?category={category_pk}"
+
+        return url
+
+    def prepare_form_data(self, students):
+        students_count = len(students)
+        data = {
+            "weight": 1,
+            "comment": "Math Exam",
+            "subject": self.subject.pk,
+            "category": self.grade_category.pk,
+            "teacher": self.teacher.pk,
+            "form-TOTAL_FORMS": students_count,
+            "form-INITIAL_FORMS": 0,
+        }
+
+        for i, student in enumerate(students):
+            data.update(
+                {
+                    f"form-{i}-student": student.pk,
+                    f"form-{i}-grade": "3.0",
+                    f"form-{i}-id": "",
+                }
+            )
+
+        return data
+
+    def test_set_category_initial_data_to_form_if_given(self):
+        self.login(self.teacher)
+
+        response = self.client.get(self.get_url(category_pk=self.grade_category.pk))
+
+        form = response.context["common_form"]
+        self.assertEqual(form.initial["category"], str(self.grade_category.pk))
+
+    def test_creates_grades(self):
+        self.login(self.teacher)
+        data = self.prepare_form_data([self.student])
+
+        self.client.post(self.get_url(), data)
+
+        self.assertTrue(Grade.objects.exists())
+
+    def test_redirects_to_class_grades_after_successful_create(self):
+        self.login(self.teacher)
+        data = self.prepare_form_data([self.student])
+
+        response = self.client.post(self.get_url(), data)
+
+        self.assertRedirects(
+            response,
+            reverse(
+                "grades:class_grades", args=[self.school_class.slug, self.subject.slug]
+            ),
+        )
+
+    def test_displays_success_message_after_successful_create(self):
+        self.login(self.teacher)
+        data = self.prepare_form_data([self.student])
+
+        response = self.client.post(self.get_url(), data, follow=True)
+
+        self.assertContains(response, SUCCESS_IN_BULK_GRADE_CREATE_MESSAGE)
+
+    def test_displays_error_when_students_already_have_grade_in_this_category(self):
+        self.login(self.teacher)
+        self.create_grade(self.grade_category, self.subject, self.student, self.teacher)
+        data = self.prepare_form_data([self.student])
+
+        response = self.client.post(self.get_url(), data)
+        print(response.status_code)
+        print(response.content)
+
+        self.assertContains(response, GRADE_ALREADY_EXISTS_MESSAGE, html=True)

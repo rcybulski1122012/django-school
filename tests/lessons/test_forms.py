@@ -46,7 +46,7 @@ class TestPresenceFormSet(ClassesMixin, UsersMixin, LessonsMixin, TestCase):
 
         self.assertEqual(len(formset.forms), 6)
 
-    def test_form_html_does_not_contain_default_label(self):
+    def test_formset_html_does_not_contain_default_label(self):
         formset = PresenceFormSet(instance=self.lesson_session)
 
         self.assertNotIn(

@@ -1,5 +1,4 @@
 from django import forms
-from django.forms import inlineformset_factory
 
 from django_school.apps.lessons.models import LessonSession, Presence
 
@@ -23,7 +22,7 @@ class BasePresenceFormSet(forms.BaseInlineFormSet):
         self.queryset = self.queryset.select_related("student")
 
 
-PresenceFormSet = inlineformset_factory(
+PresenceFormSet = forms.inlineformset_factory(
     LessonSession,
     Presence,
     fields=("status",),
