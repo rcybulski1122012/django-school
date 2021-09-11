@@ -5,45 +5,80 @@
   {{ school_class.number }} | {{ subject.name }}
 {% endblock %}
 
+
 {% block content %}
   <h1>Class: {{ school_class.number }} | Subject: {{ subject.name }}</h1>
-  <table class="table table-bordered table-hover" id="grades">
-    <thead>
-        <tr>
-          <th>Student</th>
-          <th style="width:10%"> </th>
-          {% for category in categories %}
-            <th>{{ category.name }}</th>
-          {% endfor %}
-          <tr></tr>
-        </tr>
-    </thead>
-    <tbody>
-     {% for student in students %}
-       <tr class="_{{ student.pk }}">
-         <td>{{ student.full_name }}</td>
-         <td class="text-center">
-           <a href="{% url "grades:add" class_slug subject_slug %}?student={{ student.pk }}" class="btn btn-outline-primary">
-             +
-           </a>
-         </td>
-         {% for category in categories %}
-           <td class="_{{ category.pk }}"></td>
-         {% endfor %}
-       </tr>
-    {% endfor %}
-    </tbody>
-  </table>
+  <div class="table-responsive">
+    <table class="table table-bordered table-responsive" id="grades">
+      <thead>
+          <tr>
+            <th>Student</th>
+            <th style="width:10%"> </th>
+            {% for category in categories %}
+              <th>
+                {{ category.name }}
+                <a href="{% url "grades:create_grades_in_bulk" school_class.slug subject.slug %}?category={{ category.pk }}" class="badge bg-primary text-white link-unstyled float-end">
+                  +
+                </a>
+              </th>
 
-  <script>
-    grades = document.querySelector("#grades");
-      {% for student in students %}
-        {% for grade in student.grades_gotten.all %}
-            {
-                td = grades.querySelector("._{{ student.pk }} ._{{ grade.category.pk }}");
-                td.innerText = "{{ grade.get_grade_display }}";
-            }
-        {% endfor %}
+            {% endfor %}
+            <tr></tr>
+          </tr>
+      </thead>
+      <tbody>
+       {% for student in students %}
+         <tr class="student-{{ student.pk }}">
+           <td>{{ student.full_name }}</td>
+           <td class="text-center">
+             <a href="{% url "grades:add" class_slug subject_slug %}?student={{ student.pk }}" class="btn btn-outline-primary">
+               +
+             </a>
+           </td>
+           {% for category in categories %}
+             <td class="category-{{ category.pk }}"></td>
+           {% endfor %}
+         </tr>
       {% endfor %}
-  </script>
+      </tbody>
+    </table>
+  </div>
+{% endblock %}
+
+{% block js %}
+    const grades = document.querySelector("#grades");
+
+    function createGrade(studentPk, categoryPk, grade, gradePk, gradeComment) {
+        const td = grades.querySelector(`.student-${studentPk} .category-${categoryPk}`);
+        const update_url = "{% url "grades:update" pk=12345 %}".replace(/12345/, gradePk.toString());
+
+        td.innerText = grade;
+        td.dataset.bsToggle = "popover";
+        td.dataset.bsContent = `
+            <h3>${gradeComment}</h3>
+            <a href="${update_url}" class="btn btn-outline-primary">Update</a>
+            <a href="#" class="btn btn-outline-danger">Delete</a>
+        `;
+    }
+
+    {% for student in students %}
+        {% for grade in student.grades_gotten.all %}
+            createGrade({{ grade.student.pk }},
+                        {{ grade.category.pk }},
+                        "{{ grade.get_grade_display }}",
+                        {{ grade.pk }},
+                        "{{ grade.comment }}",
+            );
+        {% endfor %}
+    {% endfor %}
+
+    bootstrap.Tooltip.Default.allowList.h1 = ["*"]
+    const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+    const popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+        return new bootstrap.Popover(popoverTriggerEl, {
+            container: "body",
+            sanitize: false,
+            html: true,
+        })
+    })
 {% endblock %}

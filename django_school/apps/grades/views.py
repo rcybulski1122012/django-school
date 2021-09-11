@@ -6,21 +6,20 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.views.generic import CreateView, TemplateView
+from django.views.generic import CreateView, TemplateView, UpdateView
 
 from django_school.apps.classes.models import Class
-from django_school.apps.grades.forms import (
-    BulkGradeCreationCommonInfoForm,
-    BulkGradeCreationFormSet,
-    GradeForm,
-)
+from django_school.apps.grades.forms import (BulkGradeCreationCommonInfoForm,
+                                             BulkGradeCreationFormSet,
+                                             GradeForm)
 from django_school.apps.grades.models import Grade, GradeCategory
 from django_school.apps.lessons.models import Lesson, Subject
 
 User = get_user_model()
 
 SUCCESS_GRADE_CREATE_MESSAGE = "Grade was added successfully."
-SUCCESS_IN_BULK_GRADE_CREATE_MESSAGE = "Grades were added successfully."
+SUCCESS_IN_BULK_GRADES_CREATE_MESSAGE = "Grades were added successfully."
+SUCCESS_GRADE_UPDATE_MESSAGE = "Grade was updated successfully."
 
 
 class GradesViewMixin:
@@ -135,7 +134,7 @@ def create_grades_in_bulk_view(request, class_slug, subject_slug):
             if grades_formset.is_valid():
                 grades_formset.save()
 
-                messages.success(request, SUCCESS_IN_BULK_GRADE_CREATE_MESSAGE)
+                messages.success(request, SUCCESS_IN_BULK_GRADES_CREATE_MESSAGE)
                 return redirect(
                     reverse(
                         "grades:class_grades", args=[school_class.slug, subject.slug]
@@ -161,3 +160,22 @@ def create_grades_in_bulk_view(request, class_slug, subject_slug):
             "subject": subject,
         },
     )
+
+
+class GradeUpdateView(PermissionRequiredMixin, SuccessMessageMixin, UpdateView):
+    model = Grade
+    fields = ["grade", "weight", "comment"]
+    template_name = "grades/grade_update.html"
+    context_object_name = "grade"
+    permission_required = "grades.change_grade"
+    success_message = SUCCESS_GRADE_UPDATE_MESSAGE
+
+    def get_success_url(self):
+        grade = self.get_object()
+        return reverse(
+            "grades:class_grades",
+            args=[grade.student.school_class.slug, grade.subject.slug],
+        )
+
+    def get_queryset(self):
+        return super().get_queryset().with_nested_resources()

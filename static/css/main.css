@@ -32,3 +32,8 @@ table {
     table-layout: fixed;
     word-wrap: break-word;
 }
+
+.link-unstyled, .link-unstyled:link, .link-unstyled:hover {
+  color: inherit;
+  text-decoration: inherit;
+}

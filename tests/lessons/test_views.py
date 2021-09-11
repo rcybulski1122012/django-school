@@ -4,10 +4,14 @@ from django.test import TestCase
 from django.urls import reverse
 
 from django_school.apps.lessons.models import Lesson, Presence
-from django_school.apps.lessons.views import \
-    SUCCESS_LESSON_SESSION_UPDATE_MESSAGE
-from tests.utils import (ClassesMixin, LessonsMixin, ResourceViewMixin,
-                         TeacherViewMixin, UsersMixin)
+from django_school.apps.lessons.views import SUCCESS_LESSON_SESSION_UPDATE_MESSAGE
+from tests.utils import (
+    ClassesMixin,
+    LessonsMixin,
+    ResourceViewMixin,
+    TeacherViewMixin,
+    UsersMixin,
+)
 
 
 class TimetableViewMixin(
@@ -266,7 +270,7 @@ class TestLessonSessionDetailView(
         self.assertIn("lesson_session_form", response.context)
         self.assertIn("presences_formset", response.context)
 
-    def test_updates_lesson_session_and_presences_when_everything_is_OK(self):
+    def test_updates_lesson_session_and_presences_when_data_is_correct(self):
         self.login(self.teacher)
         presences = self.create_presences(self.lesson_session, [self.student])
         expected_statuses = ["absent"]

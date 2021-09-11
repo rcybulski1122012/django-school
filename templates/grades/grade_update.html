@@ -2,11 +2,12 @@
 {% load crispy_forms_filters %}
 
 {% block title %}
-  Add grade
+  Update Grade
 {% endblock %}
 
 {% block content %}
-  <h1>Add grade | Class: {{ school_class.number }} | Subject: {{ subject.name }}</h1>
+  <h1>
+    Update Grade | Student: {{ grade.student.full_name }} | Category: {{ grade.category.name }}</h1>
   <form action="." method="POST">
     {{ form|crispy }}
 

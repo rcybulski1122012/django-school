@@ -45,7 +45,9 @@ class GradeCategory(models.Model):
 
 class GradeQuerySet(models.QuerySet):
     def with_nested_resources(self):
-        return self.select_related("category", "subject", "student", "teacher")
+        return self.select_related(
+            "category", "subject", "student__school_class", "teacher"
+        )
 
 
 class Grade(models.Model):

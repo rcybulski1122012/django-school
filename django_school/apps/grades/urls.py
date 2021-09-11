@@ -1,6 +1,7 @@
 from django.urls import path
 
 from django_school.apps.grades.views import (ClassGradesView, GradeCreateView,
+                                             GradeUpdateView,
                                              create_grades_in_bulk_view)
 
 app_name = "grades"
@@ -11,6 +12,7 @@ urlpatterns = [
         GradeCreateView.as_view(),
         name="add",
     ),
+    path("update/<int:pk>/", GradeUpdateView.as_view(), name="update"),
     path(
         "<slug:class_slug>/<slug:subject_slug>/",
         ClassGradesView.as_view(),

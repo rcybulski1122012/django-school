@@ -2,19 +2,13 @@ from django.forms import HiddenInput
 from django.test import TestCase
 from django.urls import reverse
 
-from django_school.apps.grades.models import GRADE_ALREADY_EXISTS_MESSAGE, Grade
+from django_school.apps.grades.models import (GRADE_ALREADY_EXISTS_MESSAGE,
+                                              Grade)
 from django_school.apps.grades.views import (
-    SUCCESS_GRADE_CREATE_MESSAGE,
-    SUCCESS_IN_BULK_GRADE_CREATE_MESSAGE,
-)
-from tests.utils import (
-    ClassesMixin,
-    GradesMixin,
-    LessonsMixin,
-    ResourceViewMixin,
-    TeacherViewMixin,
-    UsersMixin,
-)
+    SUCCESS_GRADE_CREATE_MESSAGE, SUCCESS_GRADE_UPDATE_MESSAGE,
+    SUCCESS_IN_BULK_GRADES_CREATE_MESSAGE)
+from tests.utils import (ClassesMixin, GradesMixin, LessonsMixin,
+                         ResourceViewMixin, TeacherViewMixin, UsersMixin)
 
 
 class GradeViewTestMixin(
@@ -246,7 +240,7 @@ class TestCreateGradesInBulkView(GradeViewTestMixin, TestCase):
 
         response = self.client.post(self.get_url(), data, follow=True)
 
-        self.assertContains(response, SUCCESS_IN_BULK_GRADE_CREATE_MESSAGE)
+        self.assertContains(response, SUCCESS_IN_BULK_GRADES_CREATE_MESSAGE)
 
     def test_displays_error_when_students_already_have_grade_in_this_category(self):
         self.login(self.teacher)
@@ -258,3 +252,84 @@ class TestCreateGradesInBulkView(GradeViewTestMixin, TestCase):
         print(response.content)
 
         self.assertContains(response, GRADE_ALREADY_EXISTS_MESSAGE, html=True)
+
+
+class TestGradeUpdateView(
+    TeacherViewMixin,
+    ResourceViewMixin,
+    UsersMixin,
+    ClassesMixin,
+    LessonsMixin,
+    GradesMixin,
+    TestCase,
+):
+    path_name = "grades:update"
+
+    def setUp(self):
+        self.teacher = self.create_teacher()
+        self.school_class = self.create_class()
+        self.student = self.create_user(
+            username="student123", school_class=self.school_class
+        )
+        self.subject = self.create_subject()
+        self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
+        self.grade_category = self.create_grade_category(
+            self.subject, self.school_class
+        )
+        self.grade = self.create_grade(
+            self.grade_category, self.subject, self.student, self.teacher
+        )
+
+    def get_url(self, grade_pk=None):
+        if grade_pk:
+            return reverse(self.path_name, args=[grade_pk])
+        else:
+            return reverse(self.path_name, args=[self.grade.pk])
+
+    def get_nonexistent_resource_url(self):
+        return self.get_url(grade_pk=12345)
+
+    def get_example_form_data(self):
+        return {
+            "grade": 5.0,
+            "weight": 5,
+            "comment": "Updated comment",
+        }
+
+    def test_updates_grade_when_data_is_correct(self):
+        self.login(self.teacher)
+        data = self.get_example_form_data()
+
+        self.client.post(self.get_url(), data)
+
+        self.grade.refresh_from_db()
+        self.assertTrue(data.items() <= self.grade.__dict__.items())
+
+    def test_redirects_to_class_grades_after_successful_update(self):
+        self.login(self.teacher)
+        data = self.get_example_form_data()
+
+        response = self.client.post(self.get_url(), data)
+
+        self.assertRedirects(
+            response,
+            reverse(
+                "grades:class_grades", args=[self.school_class.slug, self.subject.slug]
+            ),
+        )
+
+    def test_displays_success_message_after_successful_update(self):
+        self.login(self.teacher)
+        data = self.get_example_form_data()
+
+        response = self.client.post(self.get_url(), data, follow=True)
+        print(response.content)
+
+        self.assertContains(response, SUCCESS_GRADE_UPDATE_MESSAGE)
+
+    def test_renders_student_name_and_category_name(self):
+        self.login(self.teacher)
+        response = self.client.get(self.get_url())
+
+        self.assertContains(response, self.student.full_name)
+        self.assertContains(response, self.grade_category.name)
