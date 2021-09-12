@@ -51,13 +51,14 @@
     function createGrade(studentPk, categoryPk, grade, gradePk, gradeComment) {
         const td = grades.querySelector(`.student-${studentPk} .category-${categoryPk}`);
         const update_url = "{% url "grades:update" pk=12345 %}".replace(/12345/, gradePk.toString());
+        const delete_url = "{% url "grades:delete" pk=12345 %}".replace(/12345/, gradePk.toString());
 
         td.innerText = grade;
         td.dataset.bsToggle = "popover";
         td.dataset.bsContent = `
             <h3>${gradeComment}</h3>
             <a href="${update_url}" class="btn btn-outline-primary">Update</a>
-            <a href="#" class="btn btn-outline-danger">Delete</a>
+            <a href="${delete_url}" class="btn btn-outline-danger">Delete</a>
         `;
     }
 

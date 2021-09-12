@@ -1,12 +1,14 @@
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required, permission_required
-from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.auth.mixins import (PermissionRequiredMixin,
+                                        UserPassesTestMixin)
 from django.contrib.messages.views import SuccessMessageMixin
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.views.generic import CreateView, TemplateView, UpdateView
+from django.views.generic import (CreateView, DeleteView, TemplateView,
+                                  UpdateView)
 
 from django_school.apps.classes.models import Class
 from django_school.apps.grades.forms import (BulkGradeCreationCommonInfoForm,
@@ -20,6 +22,7 @@ User = get_user_model()
 SUCCESS_GRADE_CREATE_MESSAGE = "Grade was added successfully."
 SUCCESS_IN_BULK_GRADES_CREATE_MESSAGE = "Grades were added successfully."
 SUCCESS_GRADE_UPDATE_MESSAGE = "Grade was updated successfully."
+SUCCESS_GRADE_DELETE_MESSAGE = "Grade was deleted successfully."
 
 
 class GradesViewMixin:
@@ -162,13 +165,42 @@ def create_grades_in_bulk_view(request, class_slug, subject_slug):
     )
 
 
-class GradeUpdateView(PermissionRequiredMixin, SuccessMessageMixin, UpdateView):
+class GradeUpdateView(
+    PermissionRequiredMixin, UserPassesTestMixin, SuccessMessageMixin, UpdateView
+):
     model = Grade
     fields = ["grade", "weight", "comment"]
     template_name = "grades/grade_update.html"
     context_object_name = "grade"
     permission_required = "grades.change_grade"
     success_message = SUCCESS_GRADE_UPDATE_MESSAGE
+
+    def test_func(self):
+        return self.get_object().teacher == self.request.user
+
+    def get_success_url(self):
+        grade = self.get_object()
+        return reverse(
+            "grades:class_grades",
+            args=[grade.student.school_class.slug, grade.subject.slug],
+        )
+
+    def get_queryset(self):
+        return super().get_queryset().with_nested_resources()
+
+
+class GradeDeleteView(PermissionRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Grade
+    context_object_name = "grade"
+    permission_required = "grades.delete_grade"
+    success_message = SUCCESS_GRADE_DELETE_MESSAGE
+
+    def test_func(self):
+        return self.get_object().teacher == self.request.user
+
+    def delete(self, *args, **kwargs):
+        messages.success(self.request, self.success_message)
+        return super().delete(*args, **kwargs)
 
     def get_success_url(self):
         grade = self.get_object()
