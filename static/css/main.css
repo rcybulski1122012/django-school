@@ -37,3 +37,9 @@ table {
   color: inherit;
   text-decoration: inherit;
 }
+
+.table{
+   display: block !important;
+   overflow-x: auto !important;
+   width: 100% !important;
+ }
