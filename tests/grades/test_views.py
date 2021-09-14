@@ -2,21 +2,13 @@ from django.forms import HiddenInput
 from django.test import TestCase
 from django.urls import reverse
 
-from django_school.apps.grades.models import GRADE_ALREADY_EXISTS_MESSAGE, Grade
+from django_school.apps.grades.models import (GRADE_ALREADY_EXISTS_MESSAGE,
+                                              Grade)
 from django_school.apps.grades.views import (
-    SUCCESS_GRADE_CREATE_MESSAGE,
-    SUCCESS_GRADE_DELETE_MESSAGE,
-    SUCCESS_GRADE_UPDATE_MESSAGE,
-    SUCCESS_IN_BULK_GRADES_CREATE_MESSAGE,
-)
-from tests.utils import (
-    ClassesMixin,
-    GradesMixin,
-    LessonsMixin,
-    ResourceViewMixin,
-    TeacherViewMixin,
-    UsersMixin,
-)
+    SUCCESS_GRADE_CREATE_MESSAGE, SUCCESS_GRADE_DELETE_MESSAGE,
+    SUCCESS_GRADE_UPDATE_MESSAGE, SUCCESS_IN_BULK_GRADES_CREATE_MESSAGE)
+from tests.utils import (ClassesMixin, GradesMixin, LessonsMixin,
+                         ResourceViewMixin, TeacherViewMixin, UsersMixin)
 
 
 class GradeViewTestMixin(
@@ -177,6 +169,18 @@ class TestClassGradesView(GradeViewTestMixin, TestCase):
         response = self.client.get(self.get_url())
 
         self.assertQuerysetEqual(response.context["categories"], [self.grade_category])
+
+    def test_renders_avg_of_students_grades_with_precision_to_2_numbers(self):
+        self.login(self.teacher)
+        for grade in [1.5, 3.75, 5.5]:
+            self.create_grade(
+                self.grade_category, self.subject, self.student, self.teacher, grade
+            )
+        expected_avg = "3.58"
+
+        response = self.client.get(self.get_url())
+
+        self.assertContains(response, expected_avg)
 
 
 class TestCreateGradesInBulkView(GradeViewTestMixin, TestCase):

@@ -16,6 +16,9 @@ CLASS_IS_NOT_LEARNING_SUBJECT_MESSAGE = (
 TEACHER_NOT_IN_TEACHERS_GROUP_MESSAGE = "Given teacher is not in teachers group."
 STUDENT_IN_TEACHERS_GROUP_MESSAGE = "Given student is in teachers group."
 STUDENT_IS_NOT_LEARNING_THE_SUBJECT_MESSAGE = "The student is not learning the subject."
+GRADE_CATEGORY_NOT_OF_THE_SUBJECT_MESSAGE = (
+    "The category is not a category of the subject."
+)
 
 
 class GradeCategory(models.Model):
@@ -115,3 +118,6 @@ class Grade(models.Model):
             school_class=self.student.school_class, subject=self.subject
         ).exists():
             raise ValidationError(STUDENT_IS_NOT_LEARNING_THE_SUBJECT_MESSAGE)
+
+        if self.category.subject != self.subject:
+            raise ValidationError(GRADE_CATEGORY_NOT_OF_THE_SUBJECT_MESSAGE)

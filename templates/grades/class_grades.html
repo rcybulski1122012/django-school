@@ -23,7 +23,9 @@
               </th>
 
             {% endfor %}
-            <tr></tr>
+            <th>
+              Average
+            </th>
           </tr>
       </thead>
       <tbody>
@@ -38,6 +40,14 @@
            {% for category in categories %}
              <td class="category-{{ category.pk }}"></td>
            {% endfor %}
+
+           <td>
+             {% if student.w_avg %}
+                {{ student.w_avg|floatformat:2 }}
+             {% else %}
+                -
+             {% endif %}
+           </td>
          </tr>
       {% endfor %}
       </tbody>
@@ -48,7 +58,7 @@
 {% block js %}
     const grades = document.querySelector("#grades");
 
-    function createGrade(studentPk, categoryPk, grade, gradePk, gradeComment) {
+    function createGrade(studentPk, categoryPk, grade, gradePk, gradeComment, gradeWeight) {
         const td = grades.querySelector(`.student-${studentPk} .category-${categoryPk}`);
         const update_url = "{% url "grades:update" pk=12345 %}".replace(/12345/, gradePk.toString());
         const delete_url = "{% url "grades:delete" pk=12345 %}".replace(/12345/, gradePk.toString());
@@ -57,18 +67,20 @@
         td.dataset.bsToggle = "popover";
         td.dataset.bsContent = `
             <h3>${gradeComment}</h3>
+            <p>Weight: ${gradeWeight}</p>
             <a href="${update_url}" class="btn btn-outline-primary">Update</a>
             <a href="${delete_url}" class="btn btn-outline-danger">Delete</a>
         `;
     }
 
     {% for student in students %}
-        {% for grade in student.grades_gotten.all %}
+        {% for grade in student.subject_grades %}
             createGrade({{ grade.student.pk }},
                         {{ grade.category.pk }},
                         "{{ grade.get_grade_display }}",
                         {{ grade.pk }},
                         "{{ grade.comment }}",
+                        {{ grade.weight }},
             );
         {% endfor %}
     {% endfor %}

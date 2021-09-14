@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import (PermissionRequiredMixin,
                                         UserPassesTestMixin)
 from django.contrib.messages.views import SuccessMessageMixin
+from django.db.models import F, Prefetch, Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -92,14 +93,26 @@ class ClassGradesView(PermissionRequiredMixin, GradesViewMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        students = (
+            User.objects.with_weighted_avg(subject=self.subject)
+            .filter(school_class=self.school_class)
+            .prefetch_related(
+                Prefetch(
+                    "grades_gotten",
+                    queryset=Grade.objects.filter(subject=self.subject).select_related(
+                        "category"
+                    ),
+                    to_attr="subject_grades",
+                )
+            )
+        )
         context.update(
             {
                 "categories": GradeCategory.objects.filter(
                     subject=self.subject, school_class=self.school_class
                 ),
-                "students": User.objects.with_nested_student_resources().filter(
-                    school_class=self.school_class
-                ),
+                # TODO: .with_nested_resources.with_weighted_avg(subject=self.subject).with_subject_grades(self.subject)
+                "students": students,
             }
         )
 

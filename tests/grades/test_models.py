@@ -11,6 +11,7 @@ class TestGradeModel(UsersMixin, ClassesMixin, LessonsMixin, GradesMixin, TestCa
         self.student = self.create_user(school_class=self.school_class)
         self.subject = self.create_subject()
         self.category = self.create_grade_category(self.subject, self.school_class)
+        self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
 
     def test_clean_raises_ValidationError_if_grade_with_same_student_and_category_already_exists(
         self,
@@ -40,10 +41,19 @@ class TestGradeModel(UsersMixin, ClassesMixin, LessonsMixin, GradesMixin, TestCa
 
     def test_clean_raises_ValidationError_if_student_is_not_learning_the_subject(self):
         subject2 = self.create_subject(name="subject2")
+        category2 = self.create_grade_category(subject2, self.school_class)
 
         with self.assertRaises(ValidationError):
+            self.create_grade(category2, subject2, self.student, self.teacher).clean()
+
+    def test_clean_raises_ValidationError_if_category_is_not_a_category_of_the_subject(
+        self,
+    ):
+        subject2 = self.create_subject(name="subject2")
+        category2 = self.create_grade_category(subject2, self.school_class)
+        with self.assertRaises(ValidationError):
             self.create_grade(
-                self.category, subject2, self.student, self.teacher
+                category2, self.subject, self.student, self.teacher
             ).clean()
 
 

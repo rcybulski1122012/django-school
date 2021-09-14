@@ -28,18 +28,16 @@ input, select {
     margin-bottom: 0.5em;
 }
 
-table {
-    table-layout: fixed;
-    word-wrap: break-word;
-}
-
 .link-unstyled, .link-unstyled:link, .link-unstyled:hover {
   color: inherit;
   text-decoration: inherit;
 }
 
+table {
+    word-wrap: break-word;
+}
+
 .table{
-   display: block !important;
    overflow-x: auto !important;
    width: 100% !important;
  }

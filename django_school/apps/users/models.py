@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser, UserManager
 from django.db import models
+from django.db.models import F, Q, Sum
 from django.urls import reverse
 from django.utils.text import slugify
 
@@ -16,6 +17,21 @@ class CustomUserManager(UserManager):
 
     def with_nested_teacher_resources(self):
         return super().get_queryset().select_related("address", "teacher_class")
+
+    def with_weighted_avg(self, subject):
+        return (
+            super()
+            .get_queryset()
+            .annotate(
+                w_avg=Sum(
+                    F("grades_gotten__grade") * F("grades_gotten__weight"),
+                    filter=Q(grades_gotten__subject=subject),
+                )
+                / Sum(
+                    F("grades_gotten__weight"), filter=Q(grades_gotten__subject=subject)
+                ),
+            )
+        )
 
 
 class User(AbstractUser):
