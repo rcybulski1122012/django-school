@@ -6,18 +6,18 @@ from tests.utils import ClassesMixin, GradesMixin, LessonsMixin, UsersMixin
 User = get_user_model()
 
 
-class TestUserModel(UsersMixin, TestCase):
+class UserModelTestCase(UsersMixin, TestCase):
     def test_full_name(self):
         user = self.create_user(first_name="FirstName", last_name="LastName")
 
         self.assertEqual(user.full_name, "FirstName LastName")
 
-    def test_slugify_on_save_if_slug_not_given(self):
+    def test_save_slugify_if_slug_not_given(self):
         user = User.objects.create(first_name="FirstName", last_name="LastName")
 
         self.assertEqual(user.slug, "firstname-lastname")
 
-    def test_does_not_slugify_if_slug_given(self):
+    def test_save_does_not_slugify_if_slug_given(self):
         user = self.create_user(slug="slug")
 
         self.assertEqual(user.slug, "slug")
@@ -31,20 +31,32 @@ class TestUserModel(UsersMixin, TestCase):
 
         self.assertTrue(user.is_teacher)
 
+    def test_is_student(self):
+        user = self.create_user()
 
-class TestCustomUserManager(
+        self.assertFalse(user.is_student)
+
+        self.add_user_to_group(user, "students")
+
+        self.assertTrue(user.is_student)
+
+
+class StudentsManagerTestCase(
     UsersMixin, ClassesMixin, LessonsMixin, GradesMixin, TestCase
 ):
     def setUp(self):
         self.teacher = self.create_teacher()
         self.school_class = self.create_class()
-        self.student = self.create_user(
-            username="student", school_class=self.school_class
-        )
+        self.student = self.create_student(school_class=self.school_class)
         self.subject = self.create_subject()
         self.grade_category = self.create_grade_category(
             self.subject, self.school_class
         )
+
+    def test_selects_only_students(self):
+        students = User.students.all()
+
+        self.assertQuerysetEqual(students, [self.student])
 
     def test_with_weighted_avg_of_given_subject(self):
         subject2 = self.create_subject(name="subject2")
@@ -63,10 +75,10 @@ class TestCustomUserManager(
         ]
 
         w_avg_in_subject1 = (
-            User.objects.with_weighted_avg(self.subject).get(pk=self.student.pk).w_avg
+            User.students.with_weighted_avg(self.subject).get(pk=self.student.pk).w_avg
         )
         w_avg_in_subject2 = (
-            User.objects.with_weighted_avg(subject2).get(pk=self.student.pk).w_avg
+            User.students.with_weighted_avg(subject2).get(pk=self.student.pk).w_avg
         )
 
         self.assertAlmostEqual(w_avg_in_subject1, 3.6875)
@@ -84,21 +96,55 @@ class TestCustomUserManager(
             )
 
         w_avg = (
-            User.objects.with_weighted_avg(self.subject).get(pk=self.student.pk).w_avg
+            User.students.with_weighted_avg(self.subject).get(pk=self.student.pk).w_avg
         )
 
         self.assertAlmostEqual(w_avg, 3.833333333333333)
 
     def test_with_weighted_avg_when_no_grades(self):
-        user = User.objects.with_weighted_avg(self.subject).get(pk=self.student.pk)
+        user = User.students.with_weighted_avg(self.subject).get(pk=self.student.pk)
         self.assertIsNone(user.w_avg)
 
     def test_with_weighted_avg_does_not_filter_users_qs(self):
-        student2 = self.create_user(username="student2")
+        student2 = self.create_student(username="student2")
         self.create_grade(self.grade_category, self.subject, self.student, self.teacher)
-        # TODO: User.students.with_weighted_avg(self.subject)
-        users = User.objects.with_weighted_avg(self.subject).exclude(
-            groups__name="teachers"
-        )
+        users = User.students.with_weighted_avg(self.subject)
 
         self.assertQuerysetEqual(users, [self.student, student2], ordered=False)
+
+    def test_with_subject_grades_selects_grades_of_given_subject(self):
+        subject2 = self.create_subject(name="subject2")
+        grades_of_subject = [
+            self.create_grade(
+                self.grade_category, self.subject, self.student, self.teacher
+            )
+            for _ in range(5)
+        ]
+        grades_of_subject2 = [
+            self.create_grade(self.grade_category, subject2, self.student, self.teacher)
+            for _ in range(5)
+        ]
+
+        grades = User.students.with_subject_grades(self.subject).get().subject_grades
+
+        self.assertQuerysetEqual(grades, grades_of_subject)
+
+    def test_with_subject_grades_performs_optimal_number_of_queries(self):
+        for _ in range(5):
+            self.create_grade(
+                self.grade_category, self.subject, self.student, self.teacher
+            )
+
+        with self.assertNumQueries(2):
+            _ = User.students.with_subject_grades(self.subject).get().subject_grades
+
+
+class TeachersManagerTestCase(UsersMixin, TestCase):
+    def setUp(self):
+        self.teacher = self.create_teacher()
+        self.student = self.create_student()
+
+    def test_selects_only_teachers(self):
+        teachers = User.teachers.all()
+
+        self.assertQuerysetEqual(teachers, [self.teacher])

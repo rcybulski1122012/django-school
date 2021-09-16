@@ -5,21 +5,6 @@ from django.db import models
 from django_school.apps.classes.models import Class
 from django_school.apps.lessons.models import Lesson, Subject
 
-GRADE_ALREADY_EXISTS_MESSAGE = (
-    "You can't add a grade, because a grade with this category,"
-    " for this student already exists."
-)
-CLASS_IS_NOT_LEARNING_SUBJECT_MESSAGE = (
-    "You can't create a grade category, because given class "
-    "is not learning given subject."
-)
-TEACHER_NOT_IN_TEACHERS_GROUP_MESSAGE = "Given teacher is not in teachers group."
-STUDENT_IN_TEACHERS_GROUP_MESSAGE = "Given student is in teachers group."
-STUDENT_IS_NOT_LEARNING_THE_SUBJECT_MESSAGE = "The student is not learning the subject."
-GRADE_CATEGORY_NOT_OF_THE_SUBJECT_MESSAGE = (
-    "The category is not a category of the subject."
-)
-
 
 class GradeCategory(models.Model):
     name = models.CharField(max_length=64)
@@ -43,14 +28,7 @@ class GradeCategory(models.Model):
         if not Lesson.objects.filter(
             school_class=self.school_class, subject=self.subject
         ).exists():
-            raise ValidationError(CLASS_IS_NOT_LEARNING_SUBJECT_MESSAGE)
-
-
-class GradeQuerySet(models.QuerySet):
-    def with_nested_resources(self):
-        return self.select_related(
-            "category", "subject", "student__school_class", "teacher"
-        )
+            raise ValidationError("The student is not learning the given subject")
 
 
 class Grade(models.Model):
@@ -93,8 +71,6 @@ class Grade(models.Model):
         related_name="grades_added",
     )
 
-    objects = GradeQuerySet.as_manager()
-
     def __str__(self):
         return f"{self.student}: {self.subject} - {self.grade}"
 
@@ -106,18 +82,20 @@ class Grade(models.Model):
             .exclude(pk=self.pk)
             .exists()
         ):
-            raise ValidationError(GRADE_ALREADY_EXISTS_MESSAGE)
+            raise ValidationError(
+                "The student already has got a grade in this category."
+            )
 
         if not self.teacher.is_teacher:
-            raise ValidationError(TEACHER_NOT_IN_TEACHERS_GROUP_MESSAGE)
+            raise ValidationError("The teacher is not in teachers group.")
 
-        if self.student.is_teacher:
-            raise ValidationError(STUDENT_IN_TEACHERS_GROUP_MESSAGE)
+        if not self.student.is_student:
+            raise ValidationError("The student is not in students group")
 
         if not Lesson.objects.filter(
             school_class=self.student.school_class, subject=self.subject
         ).exists():
-            raise ValidationError(STUDENT_IS_NOT_LEARNING_THE_SUBJECT_MESSAGE)
+            raise ValidationError("The student is not learning the given subject")
 
         if self.category.subject != self.subject:
-            raise ValidationError(GRADE_CATEGORY_NOT_OF_THE_SUBJECT_MESSAGE)
+            raise ValidationError("The grade category is not a category of the subject")

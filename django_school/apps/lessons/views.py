@@ -2,22 +2,19 @@ import datetime
 
 from django.contrib import messages
 from django.contrib.auth import get_user_model
-from django.contrib.auth.decorators import login_required, permission_required
-from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView
 
 from django_school.apps.classes.models import Class
+from django_school.apps.common.utils import IsTeacherMixin, teacher_view
 from django_school.apps.lessons.forms import LessonSessionForm, PresenceFormSet
 from django_school.apps.lessons.models import Lesson, LessonSession
 
 User = get_user_model()
-
-SUCCESS_LESSON_SESSION_UPDATE_MESSAGE = (
-    "The lesson session has been saved successfully."
-)
 
 
 class TimetableContextMixin:
@@ -31,15 +28,21 @@ class TimetableContextMixin:
 
 class ClassTimetableView(TimetableContextMixin, DetailView):
     model = Class
+    slug_url_kwarg = "class_slug"
     context_object_name = "school_class"
     template_name = "lessons/class_timetable.html"
 
     def get_queryset(self):
-        return super().get_queryset().with_lessons()
+        return (
+            super()
+            .get_queryset()
+            .prefetch_related("lessons__subject", "lessons__teacher")
+        )
 
 
 class TeacherTimetableView(TimetableContextMixin, DetailView):
     model = User
+    slug_url_kwarg = "teacher_slug"
     context_object_name = "teacher"
     template_name = "lessons/teacher_timetable.html"
 
@@ -52,7 +55,7 @@ class TeacherTimetableView(TimetableContextMixin, DetailView):
         return user
 
     def get_queryset(self):
-        return self.model.objects.with_nested_teacher_resources()
+        return self.model.objects.select_related("address", "teacher_class")
 
 
 def timetables_list_view(request):
@@ -66,10 +69,9 @@ def timetables_list_view(request):
     )
 
 
-class TeacherLessonSessionListView(PermissionRequiredMixin, ListView):
+class TeacherLessonSessionsListView(LoginRequiredMixin, IsTeacherMixin, ListView):
     model = LessonSession
-    permission_required = "lessons.view_lessonsession"
-    template_name = "lessons/teacher_lesson_sessions_list.html"
+    template_name = "lessons/teacher_lesson_session_list.html"
     context_object_name = "lesson_sessions"
 
     def get_queryset(self):
@@ -78,7 +80,11 @@ class TeacherLessonSessionListView(PermissionRequiredMixin, ListView):
         qs = (
             super()
             .get_queryset()
-            .with_nested_resources()
+            .select_related(
+                "lesson__teacher",
+                "lesson__school_class",
+                "lesson__subject",
+            )
             .filter(lesson__teacher=self.request.user, date=date)
         )
 
@@ -92,11 +98,15 @@ class TeacherLessonSessionListView(PermissionRequiredMixin, ListView):
 
 
 @login_required
-@permission_required("lessons.change_lessonsession", raise_exception=True)
-def lesson_session_detail_view(request, pk):
+@teacher_view
+def lesson_session_detail_view(request, session_pk):
     lesson_session = get_object_or_404(
-        LessonSession.objects.with_nested_resources(),
-        pk=pk,
+        LessonSession.objects.select_related(
+            "lesson__teacher",
+            "lesson__school_class",
+            "lesson__subject",
+        ),
+        pk=session_pk,
     )
 
     if request.user != lesson_session.lesson.teacher:
@@ -108,8 +118,10 @@ def lesson_session_detail_view(request, pk):
         if lesson_session_form.is_valid() and presences_formset.is_valid():
             lesson_session_form.save()
             presences_formset.save()
-            messages.success(request, SUCCESS_LESSON_SESSION_UPDATE_MESSAGE)
-            return redirect("lessons:sessions")
+            messages.success(
+                request, "The lesson session has been updated successfully."
+            )
+            return redirect("lessons:session_list")
     else:
         lesson_session_form = LessonSessionForm(instance=lesson_session)
         presences_formset = PresenceFormSet(instance=lesson_session)

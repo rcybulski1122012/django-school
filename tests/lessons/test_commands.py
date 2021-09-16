@@ -16,7 +16,7 @@ class DateStub(datetime.date):
 datetime.date = DateStub
 
 
-class TestGenerateLessonSession(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
+class GenerateLessonSessionTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
     def setUp(self):
         self.subject = self.create_subject()
         self.teacher = self.create_teacher()

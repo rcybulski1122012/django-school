@@ -15,5 +15,5 @@ urlpatterns = [
         PasswordChangeWithMessageView.as_view(),
         name="password_change",
     ),
-    path("<slug:slug>/", StudentDetailView.as_view(), name="detail"),
+    path("<slug:student_slug>/", StudentDetailView.as_view(), name="detail"),
 ]

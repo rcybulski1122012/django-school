@@ -8,7 +8,7 @@
 {% block content %}
   <h1>Add grades in bulk | Class: {{ school_class.number }} | Subject: {{ subject.name }}</h1>
 
-  <form action="{% url "grades:create_grades_in_bulk" school_class.slug subject.slug %}" method="POST">
+  <form method="POST">
     {{ grades_formset.management_form }}
     {{ common_form|crispy }}
     <hr>

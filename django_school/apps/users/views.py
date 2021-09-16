@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import PasswordChangeView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.http import Http404
@@ -10,33 +10,31 @@ from django.urls import reverse_lazy
 from django.views.generic import DetailView
 
 from django_school.apps.common.forms import AddressForm
+from django_school.apps.common.utils import IsTeacherMixin
 from django_school.apps.users.forms import UserInfoForm
 
 User = get_user_model()
 
-SUCCESS_PROFILE_UPDATE_MESSAGE = "Your profile info has been updated successfully."
-SUCCESS_PASSWORD_CHANGE_MESSAGE = "Your password has been changed successfully."
 
-
-class StudentDetailView(PermissionRequiredMixin, DetailView):
+class StudentDetailView(LoginRequiredMixin, IsTeacherMixin, DetailView):
     model = User
+    slug_url_kwarg = "student_slug"
     template_name = "users/student_detail.html"
-    permission_required = "users.view_user"
     context_object_name = "user"
 
     def dispatch(self, request, *args, **kwargs):
-        if self._is_the_user_in_teachers_group():
+        if self.is_the_user_in_teachers_group():
             raise Http404()
 
         return super().dispatch(request, *args, **kwargs)
 
-    def _is_the_user_in_teachers_group(self):
+    def is_the_user_in_teachers_group(self):
         return User.objects.filter(
             slug=self.kwargs[self.slug_url_kwarg], groups__name="teachers"
         ).exists()
 
     def get_queryset(self):
-        return User.objects.with_nested_student_resources()
+        return super().get_queryset().select_related("address", "school_class__tutor")
 
 
 @login_required
@@ -49,8 +47,7 @@ def profile_view(request):
             address_form.save()
             messages.success(
                 request,
-                SUCCESS_PROFILE_UPDATE_MESSAGE,
-                extra_tags="success",
+                "The profile information has been updated successfully.",
             )
             return redirect("users:profile")
     else:
@@ -66,4 +63,4 @@ def profile_view(request):
 
 class PasswordChangeWithMessageView(SuccessMessageMixin, PasswordChangeView):
     success_url = reverse_lazy("users:profile")
-    success_message = SUCCESS_PASSWORD_CHANGE_MESSAGE
+    success_message = "The password has been changed successfully."

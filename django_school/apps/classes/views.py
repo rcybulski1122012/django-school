@@ -1,20 +1,24 @@
-from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import DetailView, ListView
 
 from django_school.apps.classes.models import Class
+from django_school.apps.common.utils import IsTeacherMixin
 
 
-class ClassesListView(PermissionRequiredMixin, ListView):
+class ClassesListView(LoginRequiredMixin, IsTeacherMixin, ListView):
     model = Class
     ordering = ["number"]
-    permission_required = "classes.view_class"
     context_object_name = "school_classes"
+    template_name = "classes/class_list.html"
 
 
-class ClassDetailView(PermissionRequiredMixin, DetailView):
+class ClassDetailView(LoginRequiredMixin, IsTeacherMixin, DetailView):
     model = Class
-    permission_required = "classes.view_class"
+    slug_url_kwarg = "class_slug"
     context_object_name = "school_class"
+    template_name = "classes/class_detail.html"
 
     def get_queryset(self):
-        return super().get_queryset().with_nested_resources()
+        return (
+            super().get_queryset().select_related("tutor").prefetch_related("students")
+        )

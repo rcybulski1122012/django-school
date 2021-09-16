@@ -16,6 +16,8 @@ class UsersMixin:
     fixtures = ["groups.json"]
     DEFAULT_USERNAME = "username"
     DEFAULT_PASSWORD = "password"
+    TEACHER_USERNAME = "teacher"
+    STUDENT_USERNAME = "student"
 
     @classmethod
     def create_user(cls, username=DEFAULT_USERNAME, **kwargs):
@@ -40,11 +42,18 @@ class UsersMixin:
         user.groups.add(group)
 
     @classmethod
-    def create_teacher(cls, username=DEFAULT_USERNAME, **kwargs):
+    def create_teacher(cls, username=TEACHER_USERNAME, **kwargs):
         teacher = cls.create_user(username, **kwargs)
         cls.add_user_to_group(teacher, "teachers")
 
         return teacher
+
+    @classmethod
+    def create_student(cls, username=STUDENT_USERNAME, **kwargs):
+        student = cls.create_user(username, **kwargs)
+        cls.add_user_to_group(student, "students")
+
+        return student
 
 
 class ClassesMixin:
@@ -169,11 +178,11 @@ class GradesMixin:
         )
 
 
-class LoginRequiredViewMixin:
+class LoginRequiredTestMixin:
     def get_url(self):
         raise NotImplementedError("get_url must be overridden")
 
-    def test_redirects_when_user_is_not_logged_in(self):
+    def test_redirects_to_login_page_when_user_is_not_logged_in(self):
         expected_url = f"{settings.LOGIN_URL}?next={self.get_url()}"
 
         response = self.client.get(self.get_url())
@@ -181,7 +190,7 @@ class LoginRequiredViewMixin:
         self.assertRedirects(response, expected_url)
 
 
-class TeacherViewMixin(LoginRequiredViewMixin):
+class TeacherViewTestMixin(LoginRequiredTestMixin):
     def test_returns_403_when_user_is_not_in_teachers_group(self):
         self.login(self.student)
 
@@ -197,16 +206,16 @@ class TeacherViewMixin(LoginRequiredViewMixin):
         self.assertEqual(response.status_code, 200)
 
 
-class ResourceViewMixin:
+class ResourceViewTestMixin:
     def get_nonexistent_resource_url(self):
         raise NotImplementedError("get_nonexistent_resource_url must be overridden")
 
     def test_returns_404_if_object_does_not_exist(self):
         mro = super().__self_class__.__mro__
 
-        if TeacherViewMixin in mro:
+        if TeacherViewTestMixin in mro:
             self.login(self.teacher)
-        elif LoginRequiredViewMixin in mro:
+        elif LoginRequiredTestMixin in mro:
             self.login(self.student)
 
         response = self.client.get(self.get_nonexistent_resource_url())

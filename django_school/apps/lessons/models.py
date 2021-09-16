@@ -6,14 +6,6 @@ from django.utils.text import slugify
 
 from django_school.apps.classes.models import Class
 
-TWO_LESSONS_AT_THE_SAME_TIME_MESSAGE = (
-    "The teacher can't have two lessons at the same time."
-)
-TEACHER_NOT_IN_TEACHERS_GROUP_MESSAGE = "Given teacher is not in teachers group."
-STUDENT_CLASS_IS_NOT_LESSON_SESSION_CLASS_MESSAGE = (
-    "Student is not in lesson session class."
-)
-
 
 class Subject(models.Model):
     name = models.CharField(max_length=64)
@@ -26,11 +18,6 @@ class Subject(models.Model):
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(**kwargs)
-
-
-class LessonQuerySet(models.QuerySet):
-    def with_nested_resources(self):
-        return self.select_related("subject", "teacher", "school_class")
 
 
 class Lesson(models.Model):
@@ -71,8 +58,6 @@ class Lesson(models.Model):
         Class, on_delete=models.CASCADE, related_name="lessons"
     )
 
-    objects = LessonQuerySet.as_manager()
-
     def __str__(self):
         return f"{self.school_class}: {self.subject.name}, {self.weekday}: {self.time}"
 
@@ -82,19 +67,12 @@ class Lesson(models.Model):
         if Lesson.objects.filter(
             time=self.time, weekday=self.weekday, teacher=self.teacher
         ).exists():
-            raise ValidationError(TWO_LESSONS_AT_THE_SAME_TIME_MESSAGE)
+            raise ValidationError(
+                "The teacher can't have two lessons at the same time."
+            )
 
         if not self.teacher.is_teacher:
-            raise ValidationError(TEACHER_NOT_IN_TEACHERS_GROUP_MESSAGE)
-
-
-class LessonSessionQuerySet(models.QuerySet):
-    def with_nested_resources(self):
-        return self.select_related(
-            "lesson__teacher",
-            "lesson__school_class",
-            "lesson__subject",
-        )
+            raise ValidationError("The teacher is not in teachers group.")
 
 
 class LessonSession(models.Model):
@@ -105,8 +83,6 @@ class LessonSession(models.Model):
         Lesson, on_delete=models.CASCADE, related_name="sessions"
     )
     presences = models.ManyToManyField(settings.AUTH_USER_MODEL, through="Presence")
-
-    objects = LessonSessionQuerySet.as_manager()
 
     def __str__(self):
         return (
@@ -134,4 +110,4 @@ class Presence(models.Model):
         super().clean()
 
         if self.student.school_class != self.lesson_session.lesson.school_class:
-            raise ValidationError(STUDENT_CLASS_IS_NOT_LESSON_SESSION_CLASS_MESSAGE)
+            raise ValidationError("The student is not in class of the lesson session.")

@@ -8,7 +8,7 @@
 {% block content %}
   <h1>
     Update Grade | Student: {{ grade.student.full_name }} | Category: {{ grade.category.name }}</h1>
-  <form action="." method="POST">
+  <form method="POST">
     {{ form|crispy }}
 
     <input type="submit" value="Update" class="btn btn-success my-3">

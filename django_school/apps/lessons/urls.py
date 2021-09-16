@@ -1,7 +1,7 @@
 from django.urls import path
 
 from django_school.apps.lessons.views import (ClassTimetableView,
-                                              TeacherLessonSessionListView,
+                                              TeacherLessonSessionsListView,
                                               TeacherTimetableView,
                                               lesson_session_detail_view,
                                               timetables_list_view)
@@ -11,22 +11,22 @@ app_name = "lessons"
 urlpatterns = [
     path("timetables/", timetables_list_view, name="timetables_list"),
     path(
-        "class_timetable/<slug:slug>/",
+        "class_timetable/<slug:class_slug>/",
         ClassTimetableView.as_view(),
         name="class_timetable",
     ),
     path(
-        "teacher_timetable/<slug:slug>/",
+        "teacher_timetable/<slug:teacher_slug>/",
         TeacherTimetableView.as_view(),
         name="teacher_timetable",
     ),
     path(
         "sessions/",
-        TeacherLessonSessionListView.as_view(),
-        name="sessions",
+        TeacherLessonSessionsListView.as_view(),
+        name="session_list",
     ),
     path(
-        "sessions/<int:pk>/",
+        "sessions/<int:session_pk>/",
         lesson_session_detail_view,
         name="session_detail",
     ),

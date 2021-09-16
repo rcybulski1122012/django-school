@@ -1,17 +1,17 @@
 from django.test import TestCase
 from django.urls import reverse
 
-from tests.utils import (ClassesMixin, ResourceViewMixin, TeacherViewMixin,
-                         UsersMixin)
+from tests.utils import (ClassesMixin, ResourceViewTestMixin,
+                         TeacherViewTestMixin, UsersMixin)
 
 
-class TestClassesListView(TeacherViewMixin, UsersMixin, ClassesMixin, TestCase):
+class ClassesListViewTestCase(TeacherViewTestMixin, UsersMixin, ClassesMixin, TestCase):
     path_name = "classes:list"
 
     def setUp(self):
         self.teacher = self.create_teacher()
         self.school_class = self.create_class()
-        self.student = self.create_user(username="student123")
+        self.student = self.create_student()
 
     def get_url(self):
         return reverse(self.path_name)
@@ -25,7 +25,7 @@ class TestClassesListView(TeacherViewMixin, UsersMixin, ClassesMixin, TestCase):
             response.context["school_classes"], [self.school_class]
         )
 
-    def test_displays_appropriate_message_when_there_are_no_classes(self):
+    def test_renders_appropriate_message_when_there_are_no_classes(self):
         self.login(self.teacher)
         self.school_class.delete()
 
@@ -47,8 +47,8 @@ class TestClassesListView(TeacherViewMixin, UsersMixin, ClassesMixin, TestCase):
         )
 
 
-class TestClassDetailView(
-    TeacherViewMixin, ResourceViewMixin, UsersMixin, ClassesMixin, TestCase
+class ClassDetailViewTestCase(
+    TeacherViewTestMixin, ResourceViewTestMixin, UsersMixin, ClassesMixin, TestCase
 ):
     path_name = "classes:detail"
 
@@ -57,7 +57,7 @@ class TestClassDetailView(
             first_name="TestClass", last_name="TestTutor"
         )
         self.school_class = self.create_class(tutor=self.teacher)
-        self.student = self.create_user(
+        self.student = self.create_student(
             username="TestStudent123",
             first_name="Student",
             last_name="ForTesting",

@@ -4,11 +4,11 @@ from django.test import TestCase
 from tests.utils import ClassesMixin, GradesMixin, LessonsMixin, UsersMixin
 
 
-class TestGradeModel(UsersMixin, ClassesMixin, LessonsMixin, GradesMixin, TestCase):
+class GradeModelTestCase(UsersMixin, ClassesMixin, LessonsMixin, GradesMixin, TestCase):
     def setUp(self):
-        self.teacher = self.create_teacher(username="teacher")
+        self.teacher = self.create_teacher()
         self.school_class = self.create_class()
-        self.student = self.create_user(school_class=self.school_class)
+        self.student = self.create_student(school_class=self.school_class)
         self.subject = self.create_subject()
         self.category = self.create_grade_category(self.subject, self.school_class)
         self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
@@ -24,7 +24,7 @@ class TestGradeModel(UsersMixin, ClassesMixin, LessonsMixin, GradesMixin, TestCa
             ).clean()
 
     def test_clean_raises_ValidationError_if_teacher_is_not_in_teachers_group(self):
-        student2 = self.create_user(username="student2")
+        student2 = self.create_student(username="student2")
 
         with self.assertRaises(ValidationError):
             self.create_grade(
@@ -57,7 +57,7 @@ class TestGradeModel(UsersMixin, ClassesMixin, LessonsMixin, GradesMixin, TestCa
             ).clean()
 
 
-class TestGradeCategoryModel(
+class GradeCategoryModelTestCase(
     UsersMixin, ClassesMixin, LessonsMixin, GradesMixin, TestCase
 ):
     def setUp(self):

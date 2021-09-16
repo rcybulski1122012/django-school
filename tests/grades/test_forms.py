@@ -1,12 +1,14 @@
 from django.test import TestCase
 
-from django_school.apps.grades.forms import (BulkGradeCreationCommonInfoForm,
-                                             BulkGradeCreationFormSet,
-                                             GradeForm)
+from django_school.apps.grades.forms import (
+    BulkGradeCreationCommonInfoForm,
+    BulkGradeCreationFormSet,
+    GradeForm,
+)
 from tests.utils import ClassesMixin, GradesMixin, LessonsMixin, UsersMixin
 
 
-class TestGradeForm(UsersMixin, ClassesMixin, LessonsMixin, GradesMixin, TestCase):
+class GradeFormTestCase(UsersMixin, ClassesMixin, LessonsMixin, GradesMixin, TestCase):
     def setUp(self):
         self.teacher = self.create_teacher()
         self.school_class = self.create_class()
@@ -39,7 +41,7 @@ class TestGradeForm(UsersMixin, ClassesMixin, LessonsMixin, GradesMixin, TestCas
         self.assertQuerysetEqual(categories_qs, [self.grade_category])
 
 
-class TestBulkGradeCreationCommonInfoForm(
+class BulkGradeCreationCommonInfoFormTestCase(
     UsersMixin, ClassesMixin, LessonsMixin, GradesMixin, TestCase
 ):
     def setUp(self):
@@ -74,7 +76,7 @@ class TestBulkGradeCreationCommonInfoForm(
         self.assertEqual(form.fields["teacher"].initial, self.teacher.pk)
 
 
-class TestBulkGradeCreationFormSet(UsersMixin, TestCase):
+class BulkGradeCreationFormSetTestCase(UsersMixin, TestCase):
     def setUp(self):
         self.students = [self.create_user(username=f"username{i}") for i in range(5)]
         self.formset = BulkGradeCreationFormSet(students=self.students)
@@ -93,7 +95,7 @@ class TestBulkGradeCreationFormSet(UsersMixin, TestCase):
 
         self.assertEqual(students_initial_pks, students_pks)
 
-    def test_set_common_data(self):
+    def test_sets_common_data(self):
         common_data = {"test": 1, "common": 2, "data": 3}
         self.formset.set_common_data(common_data)
 

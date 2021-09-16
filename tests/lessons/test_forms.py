@@ -4,13 +4,12 @@ from django_school.apps.lessons.forms import PresenceFormSet
 from tests.utils import ClassesMixin, LessonsMixin, UsersMixin
 
 
-class TestPresenceFormSet(ClassesMixin, UsersMixin, LessonsMixin, TestCase):
+class PresenceFormSetTestCase(ClassesMixin, UsersMixin, LessonsMixin, TestCase):
     def setUp(self):
         self.teacher = self.create_teacher()
         self.school_class = self.create_class()
         self.subject = self.create_subject()
         self.student = self.create_user(
-            username="student123",
             first_name="StudentFirstName",
             last_name="StudentLastName",
             school_class=self.school_class,

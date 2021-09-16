@@ -5,7 +5,7 @@ from django_school.apps.lessons.utils import create_lesson_session
 from tests.utils import ClassesMixin, LessonsMixin, UsersMixin
 
 
-class TestCreateLessonSession(LessonsMixin, ClassesMixin, UsersMixin, TestCase):
+class CreateLessonSessionTestCase(LessonsMixin, ClassesMixin, UsersMixin, TestCase):
     def test_creates_lesson_session_and_presences(self):
         subject = self.create_subject()
         user = self.create_user()

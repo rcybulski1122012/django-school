@@ -17,7 +17,7 @@
             {% for category in categories %}
               <th>
                 {{ category.name }}
-                <a href="{% url "grades:create_grades_in_bulk" school_class.slug subject.slug %}?category={{ category.pk }}" class="badge bg-primary text-white link-unstyled float-end">
+                <a href="{% url "grades:add_in_bulk" school_class.slug subject.slug %}?category={{ category.pk }}" class="badge bg-primary text-white link-unstyled float-end">
                   +
                 </a>
               </th>
@@ -60,8 +60,8 @@
 
     function createGrade(studentPk, categoryPk, grade, gradePk, gradeComment, gradeWeight) {
         const td = grades.querySelector(`.student-${studentPk} .category-${categoryPk}`);
-        const update_url = "{% url "grades:update" pk=12345 %}".replace(/12345/, gradePk.toString());
-        const delete_url = "{% url "grades:delete" pk=12345 %}".replace(/12345/, gradePk.toString());
+        const update_url = "{% url "grades:update" grade_pk=12345 %}".replace(/12345/, gradePk.toString());
+        const delete_url = "{% url "grades:delete" grade_pk=12345 %}".replace(/12345/, gradePk.toString());
 
         td.innerText = grade;
         td.dataset.bsToggle = "popover";

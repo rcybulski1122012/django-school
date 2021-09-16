@@ -1,32 +1,30 @@
 from django.contrib import messages
 from django.contrib.auth import get_user_model
-from django.contrib.auth.decorators import login_required, permission_required
-from django.contrib.auth.mixins import (PermissionRequiredMixin,
-                                        UserPassesTestMixin)
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.db.models import F, Prefetch, Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.views.generic import (CreateView, DeleteView, TemplateView,
-                                  UpdateView)
+from django.views.generic import CreateView, DeleteView, TemplateView, UpdateView
 
 from django_school.apps.classes.models import Class
-from django_school.apps.grades.forms import (BulkGradeCreationCommonInfoForm,
-                                             BulkGradeCreationFormSet,
-                                             GradeForm)
+from django_school.apps.common.utils import IsTeacherMixin, teacher_view
+from django_school.apps.grades.forms import (
+    BulkGradeCreationCommonInfoForm,
+    BulkGradeCreationFormSet,
+    GradeForm,
+)
 from django_school.apps.grades.models import Grade, GradeCategory
 from django_school.apps.lessons.models import Lesson, Subject
 
 User = get_user_model()
 
-SUCCESS_GRADE_CREATE_MESSAGE = "Grade was added successfully."
-SUCCESS_IN_BULK_GRADES_CREATE_MESSAGE = "Grades were added successfully."
-SUCCESS_GRADE_UPDATE_MESSAGE = "Grade was updated successfully."
-SUCCESS_GRADE_DELETE_MESSAGE = "Grade was deleted successfully."
-
 
 class GradesViewMixin:
+    school_class = None
+    subject = None
+
     def dispatch(self, request, *args, **kwargs):
         self.school_class = get_object_or_404(Class, slug=self.kwargs["class_slug"])
         self.subject = get_object_or_404(Subject, slug=self.kwargs["subject_slug"])
@@ -56,12 +54,12 @@ class GradesViewMixin:
 
 
 class GradeCreateView(
-    PermissionRequiredMixin, SuccessMessageMixin, GradesViewMixin, CreateView
+    LoginRequiredMixin, IsTeacherMixin, GradesViewMixin, SuccessMessageMixin, CreateView
 ):
     model = Grade
     form_class = GradeForm
-    permission_required = "grades.add_grade"
-    success_message = SUCCESS_GRADE_CREATE_MESSAGE
+    template_name = "grades/grade_form.html"
+    success_message = "The grade has been added successfully."
 
     def get_initial(self):
         return {
@@ -87,40 +85,8 @@ class GradeCreateView(
         )
 
 
-class ClassGradesView(PermissionRequiredMixin, GradesViewMixin, TemplateView):
-    permission_required = "grades.view_grade"
-    template_name = "grades/class_grades.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        students = (
-            User.objects.with_weighted_avg(subject=self.subject)
-            .filter(school_class=self.school_class)
-            .prefetch_related(
-                Prefetch(
-                    "grades_gotten",
-                    queryset=Grade.objects.filter(subject=self.subject).select_related(
-                        "category"
-                    ),
-                    to_attr="subject_grades",
-                )
-            )
-        )
-        context.update(
-            {
-                "categories": GradeCategory.objects.filter(
-                    subject=self.subject, school_class=self.school_class
-                ),
-                # TODO: .with_nested_resources.with_weighted_avg(subject=self.subject).with_subject_grades(self.subject)
-                "students": students,
-            }
-        )
-
-        return context
-
-
 @login_required
-@permission_required("grades.add_grade", raise_exception=True)
+@teacher_view
 def create_grades_in_bulk_view(request, class_slug, subject_slug):
     school_class = get_object_or_404(Class, slug=class_slug)
     subject = get_object_or_404(Subject, slug=subject_slug)
@@ -150,7 +116,7 @@ def create_grades_in_bulk_view(request, class_slug, subject_slug):
             if grades_formset.is_valid():
                 grades_formset.save()
 
-                messages.success(request, SUCCESS_IN_BULK_GRADES_CREATE_MESSAGE)
+                messages.success(request, "The grades have been added successfully.")
                 return redirect(
                     reverse(
                         "grades:class_grades", args=[school_class.slug, subject.slug]
@@ -178,15 +144,31 @@ def create_grades_in_bulk_view(request, class_slug, subject_slug):
     )
 
 
-class GradeUpdateView(
-    PermissionRequiredMixin, UserPassesTestMixin, SuccessMessageMixin, UpdateView
+class ClassGradesView(
+    LoginRequiredMixin, IsTeacherMixin, GradesViewMixin, TemplateView
 ):
+    template_name = "grades/class_grades.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "categories": GradeCategory.objects.filter(
+                    subject=self.subject, school_class=self.school_class
+                ),
+                "students": User.students.with_weighted_avg(subject=self.subject)
+                .with_subject_grades(subject=self.subject)
+                .filter(school_class=self.school_class),
+            }
+        )
+
+        return context
+
+
+class SingleGradeMixin(UserPassesTestMixin):
     model = Grade
-    fields = ["grade", "weight", "comment"]
-    template_name = "grades/grade_update.html"
+    pk_url_kwarg = "grade_pk"
     context_object_name = "grade"
-    permission_required = "grades.change_grade"
-    success_message = SUCCESS_GRADE_UPDATE_MESSAGE
 
     def test_func(self):
         return self.get_object().teacher == self.request.user
@@ -199,28 +181,34 @@ class GradeUpdateView(
         )
 
     def get_queryset(self):
-        return super().get_queryset().with_nested_resources()
+        return (
+            super()
+            .get_queryset()
+            .select_related("category", "subject", "student__school_class", "teacher")
+        )
 
 
-class GradeDeleteView(PermissionRequiredMixin, UserPassesTestMixin, DeleteView):
-    model = Grade
-    context_object_name = "grade"
-    permission_required = "grades.delete_grade"
-    success_message = SUCCESS_GRADE_DELETE_MESSAGE
+class GradeUpdateView(
+    LoginRequiredMixin,
+    IsTeacherMixin,
+    SingleGradeMixin,
+    SuccessMessageMixin,
+    UpdateView,
+):
+    fields = ["grade", "weight", "comment"]
+    template_name = "grades/grade_update.html"
+    success_message = "The grade has been updated successfully."
 
-    def test_func(self):
-        return self.get_object().teacher == self.request.user
+
+class GradeDeleteView(
+    LoginRequiredMixin,
+    IsTeacherMixin,
+    SingleGradeMixin,
+    DeleteView,
+):
+    template_name = "grades/grade_confirm_delete.html"
+    success_message = "The grade has been deleted successfully."
 
     def delete(self, *args, **kwargs):
         messages.success(self.request, self.success_message)
         return super().delete(*args, **kwargs)
-
-    def get_success_url(self):
-        grade = self.get_object()
-        return reverse(
-            "grades:class_grades",
-            args=[grade.student.school_class.slug, grade.subject.slug],
-        )
-
-    def get_queryset(self):
-        return super().get_queryset().with_nested_resources()

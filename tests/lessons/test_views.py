@@ -4,18 +4,12 @@ from django.test import TestCase
 from django.urls import reverse
 
 from django_school.apps.lessons.models import Lesson, Presence
-from django_school.apps.lessons.views import SUCCESS_LESSON_SESSION_UPDATE_MESSAGE
-from tests.utils import (
-    ClassesMixin,
-    LessonsMixin,
-    ResourceViewMixin,
-    TeacherViewMixin,
-    UsersMixin,
-)
+from tests.utils import (ClassesMixin, LessonsMixin, ResourceViewTestMixin,
+                         TeacherViewTestMixin, UsersMixin)
 
 
 class TimetableViewMixin(
-    ResourceViewMixin,
+    ResourceViewTestMixin,
     UsersMixin,
     ClassesMixin,
     LessonsMixin,
@@ -23,7 +17,7 @@ class TimetableViewMixin(
     def setUp(self):
         self.teacher = self.create_teacher()
         self.school_class = self.create_class()
-        self.student = self.create_user(username="student")
+        self.student = self.create_student(school_class=self.school_class)
         self.subject = self.create_subject()
         self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
 
@@ -41,7 +35,7 @@ class TimetableViewMixin(
         self.assertContains(response, self.lesson.classroom)
 
 
-class TestClassTimetableView(TimetableViewMixin, TestCase):
+class ClassTimetableViewTestCase(TimetableViewMixin, TestCase):
     path_name = "lessons:class_timetable"
 
     def get_url(self, class_slug=None):
@@ -58,7 +52,7 @@ class TestClassTimetableView(TimetableViewMixin, TestCase):
         self.assertEqual(response.context["school_class"], self.school_class)
 
 
-class TestTeacherTimetableView(TimetableViewMixin, TestCase):
+class TeacherTimetableViewTestCase(TimetableViewMixin, TestCase):
     path_name = "lessons:teacher_timetable"
 
     def get_url(self, teacher_slug=None):
@@ -80,7 +74,7 @@ class TestTeacherTimetableView(TimetableViewMixin, TestCase):
         self.assertEqual(response.context["teacher"], self.teacher)
 
 
-class TestTimetablesListView(UsersMixin, ClassesMixin, TestCase):
+class TimetablesListViewTestCase(UsersMixin, ClassesMixin, TestCase):
     def setUp(self):
         self.teacher = self.create_teacher()
         self.school_class = self.create_class()
@@ -104,21 +98,19 @@ class TestTimetablesListView(UsersMixin, ClassesMixin, TestCase):
         )
 
 
-class TestTeacherLessonsListView(
-    TeacherViewMixin,
+class TeacherLessonSessionsListViewTestCase(
+    TeacherViewTestMixin,
     UsersMixin,
     ClassesMixin,
     LessonsMixin,
     TestCase,
 ):
-    path_name = "lessons:sessions"
+    path_name = "lessons:session_list"
 
     def setUp(self):
         self.teacher = self.create_teacher()
         self.school_class = self.create_class()
-        self.student = self.create_user(
-            username="student123", school_class=self.school_class
-        )
+        self.student = self.create_student(school_class=self.school_class)
         self.subject = self.create_subject()
         self.lesson = self.create_lesson(
             self.subject,
@@ -132,31 +124,6 @@ class TestTeacherLessonsListView(
         if date := kwargs.get("date"):
             return f"{url}?date={date}"
         return url
-
-    def test_context_contain_lesson_session_list(self):
-        self.login(self.teacher)
-
-        response = self.client.get(self.get_url())
-
-        self.assertIn("lesson_sessions", response.context)
-
-    def test_context_contains_given_date(self):
-        self.login(self.teacher)
-        date = "2021-01-01"
-        response = self.client.get(self.get_url(date=date))
-
-        self.assertIn("date", response.context)
-        self.assertEqual(response.context["date"], date)
-
-    def test_renders_links_to_lesson_session_detail_view(self):
-        self.login(self.teacher)
-        session = self.create_lesson_session(self.lesson)
-
-        response = self.client.get(self.get_url())
-
-        self.assertContains(
-            response, reverse("lessons:session_detail", args=[session.pk])
-        )
 
     def test_selects_only_lesson_sessions_of_currently_logged_teacher(self):
         self.login(self.teacher)
@@ -191,21 +158,44 @@ class TestTeacherLessonsListView(
 
         self.assertQuerysetEqual(response.context["lesson_sessions"], [session2])
 
-    def test_displays_appropriate_message_when_there_are_no_lessons_in_given_date(
+    def test_context_contain_lesson_session_list(self):
+        self.login(self.teacher)
+
+        response = self.client.get(self.get_url())
+
+        self.assertIn("lesson_sessions", response.context)
+
+    def test_context_contains_given_date(self):
+        self.login(self.teacher)
+        date = "2021-01-01"
+        response = self.client.get(self.get_url(date=date))
+
+        self.assertIn("date", response.context)
+        self.assertEqual(response.context["date"], date)
+
+    def test_renders_links_to_lesson_session_detail_view(self):
+        self.login(self.teacher)
+        session = self.create_lesson_session(self.lesson)
+
+        response = self.client.get(self.get_url())
+
+        self.assertContains(
+            response, reverse("lessons:session_detail", args=[session.pk])
+        )
+
+    def test_renders_appropriate_message_when_there_are_no_lessons_in_given_date(
         self,
     ):
         self.login(self.teacher)
 
         response = self.client.get(self.get_url())
 
-        self.assertContains(
-            response, "There are no lessons in the given range of time."
-        )
+        self.assertContains(response, "There are no lessons in the given date.")
 
 
-class TestLessonSessionDetailView(
-    TeacherViewMixin,
-    ResourceViewMixin,
+class LessonSessionDetailViewTestCase(
+    TeacherViewTestMixin,
+    ResourceViewTestMixin,
     UsersMixin,
     ClassesMixin,
     LessonsMixin,
@@ -216,8 +206,7 @@ class TestLessonSessionDetailView(
     def setUp(self):
         self.teacher = self.create_teacher()
         self.school_class = self.create_class()
-        self.student = self.create_user(
-            username="student123",
+        self.student = self.create_student(
             school_class=self.school_class,
             first_name="StudentFirstName",
             last_name="StudentLastName",
@@ -262,15 +251,7 @@ class TestLessonSessionDetailView(
 
         self.assertEqual(response.status_code, 403)
 
-    def test_context_contain_form_and_formset(self):
-        self.login(self.teacher)
-
-        response = self.client.get(self.get_url())
-
-        self.assertIn("lesson_session_form", response.context)
-        self.assertIn("presences_formset", response.context)
-
-    def test_updates_lesson_session_and_presences_when_data_is_correct(self):
+    def test_updates_lesson_session_and_presences(self):
         self.login(self.teacher)
         presences = self.create_presences(self.lesson_session, [self.student])
         expected_statuses = ["absent"]
@@ -294,9 +275,9 @@ class TestLessonSessionDetailView(
 
         response = self.client.post(self.get_url(), data=data)
 
-        self.assertRedirects(response, reverse("lessons:sessions"))
+        self.assertRedirects(response, reverse("lessons:session_list"))
 
-    def test_displays_success_message_after_successful_update(self):
+    def test_renders_success_message_after_successful_update(self):
         self.login(self.teacher)
         presences = self.create_presences(self.lesson_session, [self.student])
         data = self.prepare_form_data(
@@ -305,9 +286,19 @@ class TestLessonSessionDetailView(
 
         response = self.client.post(self.get_url(), data=data, follow=True)
 
-        self.assertContains(response, SUCCESS_LESSON_SESSION_UPDATE_MESSAGE)
+        self.assertContains(
+            response, "The lesson session has been updated successfully."
+        )
 
-    def test_displays_students_full_names_as_labels(self):
+    def test_context_contain_form_and_formset(self):
+        self.login(self.teacher)
+
+        response = self.client.get(self.get_url())
+
+        self.assertIn("lesson_session_form", response.context)
+        self.assertIn("presences_formset", response.context)
+
+    def test_renders_students_full_names_as_labels(self):
         self.login(self.teacher)
         self.create_presences(self.lesson_session, [self.student])
 

@@ -9,7 +9,7 @@
   <h1 class="d-inline-block">{{ lesson_session }}</h1>
   <span class="mx-4 h1">|</span>
   <a href="{% url "grades:class_grades" lesson_session.lesson.school_class.slug lesson_session.lesson.subject.slug %}" class="d-inline-block h1">Grades</a>
-  <form action="{{ lesson_session.get_absolute_url }}" method="post">
+  <form method="post">
     {{ presences_formset.management_form }}
     {{ lesson_session_form|crispy }}
 

@@ -1,14 +1,23 @@
 from django.test import TestCase
 from django.urls import reverse
 
-from django_school.apps.users.views import (SUCCESS_PASSWORD_CHANGE_MESSAGE,
-                                            SUCCESS_PROFILE_UPDATE_MESSAGE)
-from tests.utils import (ClassesMixin, CommonMixin, LoginRequiredViewMixin,
-                         ResourceViewMixin, TeacherViewMixin, UsersMixin)
+from tests.utils import (
+    ClassesMixin,
+    CommonMixin,
+    LoginRequiredTestMixin,
+    ResourceViewTestMixin,
+    TeacherViewTestMixin,
+    UsersMixin,
+)
 
 
-class TestStudentDetailView(
-    TeacherViewMixin, ResourceViewMixin, UsersMixin, ClassesMixin, CommonMixin, TestCase
+class StudentDetailViewTestCase(
+    TeacherViewTestMixin,
+    ResourceViewTestMixin,
+    UsersMixin,
+    ClassesMixin,
+    CommonMixin,
+    TestCase,
 ):
     path_name = "users:detail"
 
@@ -60,7 +69,7 @@ class TestStudentDetailView(
         self.assertContains(response, str(self.address))
 
 
-class TestProfileView(LoginRequiredViewMixin, UsersMixin, CommonMixin, TestCase):
+class ProfileViewTestCase(LoginRequiredTestMixin, UsersMixin, CommonMixin, TestCase):
     path_name = "users:profile"
 
     def setUp(self):
@@ -100,9 +109,11 @@ class TestProfileView(LoginRequiredViewMixin, UsersMixin, CommonMixin, TestCase)
 
         self.assertTrue(user_data.items() <= self.student.__dict__.items())
         self.assertTrue(address_data.items() <= self.address.__dict__.items())
-        self.assertContains(response, SUCCESS_PROFILE_UPDATE_MESSAGE)
+        self.assertContains(
+            response, "The profile information has been updated successfully."
+        )
 
-    def test_displays_error_message_when_data_is_incorrect(self):
+    def test_renders_error_message_when_data_is_incorrect(self):
         self.login(self.student)
 
         response = self.client.post(self.get_url(), {"incorrect": "data"})
@@ -110,7 +121,7 @@ class TestProfileView(LoginRequiredViewMixin, UsersMixin, CommonMixin, TestCase)
         self.assertContains(response, "This field is required")
 
 
-class TestPasswordChangeWithMessageView(UsersMixin, TestCase):
+class PasswordChangeWithMessageViewTestCase(UsersMixin, TestCase):
     path_name = "users:password_change"
 
     def setUp(self):
@@ -141,4 +152,4 @@ class TestPasswordChangeWithMessageView(UsersMixin, TestCase):
 
         response = self.client.post(self.get_url(), data, follow=True)
 
-        self.assertContains(response, SUCCESS_PASSWORD_CHANGE_MESSAGE)
+        self.assertContains(response, "The password has been changed successfully.")

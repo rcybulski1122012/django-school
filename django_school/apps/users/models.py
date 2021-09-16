@@ -1,37 +1,46 @@
 from django.contrib.auth.models import AbstractUser, UserManager
 from django.db import models
-from django.db.models import F, Q, Sum
+from django.db.models import F, Prefetch, Q, Sum
 from django.urls import reverse
 from django.utils.text import slugify
 
 from django_school.apps.classes.models import Class
 from django_school.apps.common.models import Address
+from django_school.apps.grades.models import Grade
 
 
-class CustomUserManager(UserManager):
-    def with_nested_resources(self):
-        return super().get_queryset().select_related("address")
-
-    def with_nested_student_resources(self):
-        return super().get_queryset().select_related("address", "school_class__tutor")
-
-    def with_nested_teacher_resources(self):
-        return super().get_queryset().select_related("address", "teacher_class")
-
+class StudentsQuerySet(models.QuerySet):
     def with_weighted_avg(self, subject):
-        return (
-            super()
-            .get_queryset()
-            .annotate(
-                w_avg=Sum(
-                    F("grades_gotten__grade") * F("grades_gotten__weight"),
-                    filter=Q(grades_gotten__subject=subject),
-                )
-                / Sum(
-                    F("grades_gotten__weight"), filter=Q(grades_gotten__subject=subject)
+        return self.annotate(
+            w_avg=Sum(
+                F("grades_gotten__grade") * F("grades_gotten__weight"),
+                filter=Q(grades_gotten__subject=subject),
+            )
+            / Sum(F("grades_gotten__weight"), filter=Q(grades_gotten__subject=subject)),
+        )
+
+    def with_subject_grades(self, subject):
+        return self.prefetch_related(
+            Prefetch(
+                "grades_gotten",
+                queryset=Grade.objects.filter(subject=subject).select_related(
+                    "category"
                 ),
+                to_attr="subject_grades",
             )
         )
+
+
+class StudentsManager(models.Manager):
+    def get_queryset(self):
+        return StudentsQuerySet(self.model, using=self._db).filter(
+            groups__name="students"
+        )
+
+
+class TeachersManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(groups__name="teachers")
 
 
 class User(AbstractUser):
@@ -53,7 +62,9 @@ class User(AbstractUser):
         Class, models.SET_NULL, null=True, blank=True, related_name="students"
     )
 
-    objects = CustomUserManager()
+    objects = UserManager()
+    students = StudentsManager.from_queryset(StudentsQuerySet)()
+    teachers = TeachersManager()
 
     def __str__(self):
         return self.full_name
@@ -73,3 +84,7 @@ class User(AbstractUser):
     @property
     def is_teacher(self):
         return self.groups.filter(name="teachers").exists()
+
+    @property
+    def is_student(self):
+        return self.groups.filter(name="students").exists()

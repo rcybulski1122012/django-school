@@ -7,7 +7,7 @@
 
 {% block content %}
   <h1>Your Profile</h1>
-  <form action="{% url "users:profile" %}" method="POST">
+  <form method="POST">
     {{ user_info_form|crispy  }}
     {{ address_form|crispy }}
 

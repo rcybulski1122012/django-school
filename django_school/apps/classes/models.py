@@ -4,16 +4,6 @@ from django.db import models
 from django.urls import reverse
 from django.utils.text import slugify
 
-TEACHER_NOT_IN_TEACHERS_GROUP_MESSAGE = "Given teacher is not in teachers group."
-
-
-class ClassQuerySet(models.QuerySet):
-    def with_nested_resources(self):
-        return self.select_related("tutor").prefetch_related("students")
-
-    def with_lessons(self):
-        return self.prefetch_related("lessons__subject", "lessons__teacher")
-
 
 class Class(models.Model):
     number = models.CharField(max_length=4, unique=True)
@@ -24,8 +14,6 @@ class Class(models.Model):
         null=True,
         related_name="teacher_class",
     )
-
-    objects = ClassQuerySet.as_manager()
 
     class Meta:
         verbose_name_plural = "classes"
@@ -48,4 +36,4 @@ class Class(models.Model):
         super().clean()
 
         if self.tutor is not None and not self.tutor.is_teacher:
-            raise ValidationError(TEACHER_NOT_IN_TEACHERS_GROUP_MESSAGE)
+            raise ValidationError("Tutor is not in teachers group.")
