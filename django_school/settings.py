@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
+from os import environ
 from pathlib import Path
 
 from django.urls import reverse_lazy
@@ -33,10 +34,10 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    "django_school.apps.lessons",
     "django_school.apps.users",
     "django_school.apps.classes",
     "django_school.apps.common",
-    "django_school.apps.lessons",
     "django_school.apps.grades",
     "django.contrib.admin",
     "django.contrib.auth",
@@ -85,11 +86,14 @@ WSGI_APPLICATION = "django_school.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": environ.get("PSQL_NAME"),
+        "USER": environ.get("PSQL_USER"),
+        "PASSWORD": environ.get("PSQL_PASSWORD"),
+        "HOST": environ.get("PSQL_HOST"),
+        "PORT": environ.get("PSQL_PORT"),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
@@ -116,12 +120,11 @@ AUTH_PASSWORD_VALIDATORS = [
 LANGUAGE_CODE = "en-us"
 
 TIME_ZONE = "UTC"
+USE_TZ = True
 
 USE_I18N = True
 
 USE_L10N = True
-
-USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)

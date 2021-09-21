@@ -1,5 +1,6 @@
 import datetime
 
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
@@ -232,12 +233,12 @@ class LessonSessionDetailViewTestCase(
             "presence_set-INITIAL_FORMS": statuses_count,
         }
 
-        for index, presence, status in zip(range(statuses_count), presences, statuses):
+        for index, (presence, status) in enumerate(zip(presences, statuses)):
             data.update(
                 {
                     f"presence_set-{index}-status": status,
-                    f"presence_set-{index}-id": presence.id,
-                    f"presence_set-{index}-lesson_session": lesson_session.id,
+                    f"presence_set-{index}-id": presence.pk,
+                    f"presence_set-{index}-lesson_session": lesson_session.pk,
                 }
             )
 

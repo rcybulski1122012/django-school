@@ -9,7 +9,7 @@ class PresenceFormSetTestCase(ClassesMixin, UsersMixin, LessonsMixin, TestCase):
         self.teacher = self.create_teacher()
         self.school_class = self.create_class()
         self.subject = self.create_subject()
-        self.student = self.create_user(
+        self.student = self.create_student(
             first_name="StudentFirstName",
             last_name="StudentLastName",
             school_class=self.school_class,
@@ -18,15 +18,14 @@ class PresenceFormSetTestCase(ClassesMixin, UsersMixin, LessonsMixin, TestCase):
         self.lesson_session = self.create_lesson_session(self.lesson)
         self.presences = self.create_presences(self.lesson_session, [self.student])
 
-    @staticmethod
-    def get_example_formset_data(topic, status):
+    def get_example_formset_data(self, topic, status):
         return {
             "topic": topic,
             "presence_set-TOTAL_FORMS": "1",
             "presence_set-INITIAL_FORMS": "1",
             "presence_set-0-status": status,
-            "presence_set-0-id": "1",
-            "presence_set-0-lesson_session": "1",
+            "presence_set-0-id": self.presences[0].pk,
+            "presence_set-0-lesson_session": self.lesson_session.pk,
         }
 
     def test_valid(self):

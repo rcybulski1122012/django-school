@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
@@ -45,8 +46,8 @@ class Lesson(models.Model):
         ("sun", "Sunday"),
     ]
 
-    time = models.CharField(max_length=16, choices=LESSONS_TIMES)
-    weekday = models.CharField(max_length=16, choices=WEEKDAYS)
+    time = models.CharField(max_length=32, choices=LESSONS_TIMES)
+    weekday = models.CharField(max_length=32, choices=WEEKDAYS)
     classroom = models.PositiveIntegerField()
     subject = models.ForeignKey(
         Subject, on_delete=models.CASCADE, related_name="lessons"
@@ -102,7 +103,7 @@ class Presence(models.Model):
         ("none", "None"),
     ]
 
-    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    student = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     lesson_session = models.ForeignKey(LessonSession, on_delete=models.CASCADE)
     status = models.CharField(max_length=16, choices=PRESENCE_STATUSES, default="none")
 

@@ -1,19 +1,11 @@
-import datetime
+from datetime import date
+from unittest.mock import patch
 
 from django.core.management import call_command
 from django.test import TestCase
 
 from django_school.apps.lessons.models import LessonSession, Presence
 from tests.utils import ClassesMixin, LessonsMixin, UsersMixin
-
-
-class DateStub(datetime.date):
-    @classmethod
-    def today(cls):
-        return cls(year=2021, month=1, day=1)
-
-
-datetime.date = DateStub
 
 
 class GenerateLessonSessionTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
@@ -31,7 +23,11 @@ class GenerateLessonSessionTestCase(UsersMixin, ClassesMixin, LessonsMixin, Test
         )
         self.create_lesson(self.subject, self.teacher, self.school_class, weekday="mon")
 
-        call_command("create_lesson_sessions")
+        with patch(
+            "django_school.apps.lessons.management.commands.create_lesson_sessions.date"
+        ) as mock_date:
+            mock_date.today.return_value = date(2021, 1, 1)
+            call_command("create_lesson_sessions")
 
         lesson_session = LessonSession.objects.all()[0]
         presence = Presence.objects.get(lesson_session=lesson_session)
@@ -48,4 +44,8 @@ class GenerateLessonSessionTestCase(UsersMixin, ClassesMixin, LessonsMixin, Test
             )
 
         with self.assertNumQueries(12):
-            call_command("create_lesson_sessions")
+            with patch(
+                "django_school.apps.lessons.management.commands.create_lesson_sessions.date"
+            ) as mock_date:
+                mock_date.today.return_value = date(2021, 1, 1)
+                call_command("create_lesson_sessions")
