@@ -12,7 +12,11 @@ class CreateLessonSessionTestCase(LessonsMixin, ClassesMixin, UsersMixin, TestCa
         school_class = self.create_class()
         lesson = self.create_lesson(subject, user, school_class)
         students = [
-            self.create_user(username=f"username{i}", school_class=school_class)
+            self.create_user(
+                username=f"username{i}",
+                first_name=f"firstname{i}",
+                school_class=school_class,
+            )
             for i in range(5)
         ]
 
@@ -20,4 +24,4 @@ class CreateLessonSessionTestCase(LessonsMixin, ClassesMixin, UsersMixin, TestCa
 
         students_with_presence = [p.student for p in Presence.objects.all()]
         self.assertEqual(LessonSession.objects.first().lesson, lesson)
-        self.assertEqual(students_with_presence, students)
+        self.assertQuerysetEqual(students_with_presence, students, ordered=False)

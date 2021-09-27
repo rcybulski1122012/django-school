@@ -1,11 +1,16 @@
-from django.forms import HiddenInput
 from django.test import TestCase
 from django.urls import reverse
 
-from django_school.apps.grades.models import Grade
-from tests.utils import (ClassesMixin, GradesMixin, LessonsMixin,
-                         ResourceViewTestMixin, TeacherViewTestMixin,
-                         UsersMixin)
+from django_school.apps.grades.forms import GradeCategoryForm
+from django_school.apps.grades.models import Grade, GradeCategory
+from tests.utils import (
+    ClassesMixin,
+    GradesMixin,
+    LessonsMixin,
+    ResourceViewTestMixin,
+    TeacherViewTestMixin,
+    UsersMixin,
+)
 
 
 class GradeViewTestMixin(
@@ -404,3 +409,115 @@ class GradeDeleteViewTestCase(
         self.assertContains(response, self.grade.get_grade_display())
         self.assertContains(response, self.grade_category.name)
         self.assertContains(response, self.student.full_name)
+
+
+class GradeCategoryFormViewTestCase(ClassesMixin, LessonsMixin, GradesMixin, TestCase):
+    def test_context_contains_GradeCategoryForm(self):
+        response = self.client.get(reverse("grades:grade_category_form"))
+
+        form = response.context["form"]
+        self.assertIsInstance(form, GradeCategoryForm)
+
+
+class GradeCategoriesViewTestCase(GradeViewTestMixin, TestCase):
+    path_name = "grades:grade_categories"
+
+    def test_returns_404_when_the_teacher_is_not_teaching_the_subject_to_the_class(
+        self,
+    ):
+        teacher2 = self.create_teacher(username="teacher2")
+        self.login(teacher2)
+
+        response = self.client.get(self.get_url())
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_renders_list_of_categories_if_request_method_is_GET(self):
+        self.login(self.teacher)
+
+        response = self.client.get(self.get_url())
+
+        categories = response.context["categories"]
+        self.assertQuerysetEqual(categories, [self.grade_category])
+        self.assertContains(response, self.grade_category.name)
+
+    def test_context_contains_school_class_and_subject_if_request_method_is_GET(self):
+        self.login(self.teacher)
+
+        response = self.client.get(self.get_url())
+
+        self.assertEqual(response.context["subject"], self.subject)
+        self.assertEqual(response.context["school_class"], self.school_class)
+
+    def test_creates_category_and_redirects_to_category_detail_if_data_is_valid_and_request_method_is_POST(
+        self,
+    ):
+        self.login(self.teacher)
+
+        response = self.client.post(self.get_url(), {"name": "new category"})
+
+        new_category = GradeCategory.objects.exclude(pk=self.grade_category.pk).get()
+
+        self.assertRedirects(
+            response, reverse("grades:grade_category_detail", args=[new_category.pk])
+        )
+
+    def test_renders_grade_category_form_if_data_is_invalid_and_request_method_is_POST(
+        self,
+    ):
+        self.login(self.teacher)
+
+        response = self.client.post(self.get_url(), {"name": "a" * 65})
+
+        self.assertTemplateUsed(response, "grades/partials/grade_category_form.html")
+        self.assertIn("form", response.context)
+
+
+class SingleGradeCategoryMixin(
+    TeacherViewTestMixin,
+    ResourceViewTestMixin,
+    UsersMixin,
+    ClassesMixin,
+    LessonsMixin,
+    GradesMixin,
+):
+    def setUp(self):
+        self.teacher = self.create_teacher()
+        self.school_class = self.create_class()
+        self.student = self.create_student(school_class=self.school_class)
+        self.subject = self.create_subject()
+        self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
+        self.grade_category = self.create_grade_category(
+            self.subject, self.school_class
+        )
+
+    def get_url(self, pk=None, **kwargs):
+        if pk:
+            return reverse(self.path_name, args=[pk])
+        else:
+            return reverse(self.path_name, args=[self.grade_category.pk])
+
+    def get_nonexistent_resource_url(self):
+        return self.get_url(pk=12345)
+
+    def test_returns_404_when_the_teacher_is_not_teaching_the_subject_to_the_class(
+        self,
+    ):
+        teacher2 = self.create_teacher(username="teacher2")
+        self.login(teacher2)
+
+        response = self.client.get(self.get_url())
+
+        self.assertEqual(response.status_code, 404)
+
+
+class GradeCategoryDetailViewTestCase(SingleGradeCategoryMixin, TestCase):
+    path_name = "grades:grade_category_detail"
+
+    def test_renders_name_of_the_category(self):
+        self.login(self.teacher)
+
+        response = self.client.get(self.get_url())
+
+        self.assertEqual(response.context["category"], self.grade_category)
+        self.assertContains(response, self.grade_category.name)

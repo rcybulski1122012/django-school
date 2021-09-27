@@ -3,22 +3,37 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.views.generic import CreateView, DeleteView, TemplateView, UpdateView
+from django.views.generic import (
+    CreateView,
+    DeleteView,
+    DetailView,
+    TemplateView,
+    UpdateView,
+)
 
 from django_school.apps.classes.models import Class
 from django_school.apps.common.utils import IsTeacherMixin, teacher_view
 from django_school.apps.grades.forms import (
     BulkGradeCreationCommonInfoForm,
     BulkGradeCreationFormSet,
+    GradeCategoryForm,
     GradeForm,
 )
 from django_school.apps.grades.models import Grade, GradeCategory
 from django_school.apps.lessons.models import Lesson, Subject
 
 User = get_user_model()
+
+
+def _does_the_teacher_teach_the_subject_to_the_class(teacher, subject, school_class):
+    return Lesson.objects.filter(
+        school_class=school_class,
+        subject=subject,
+        teacher=teacher,
+    ).exists()
 
 
 class GradesViewMixin:
@@ -29,17 +44,12 @@ class GradesViewMixin:
         self.school_class = get_object_or_404(Class, slug=self.kwargs["class_slug"])
         self.subject = get_object_or_404(Subject, slug=self.kwargs["subject_slug"])
 
-        if not self.does_the_teacher_teach_the_subject_to_the_class():
+        if not _does_the_teacher_teach_the_subject_to_the_class(
+            self.request.user, self.subject, self.school_class
+        ):
             raise Http404
 
         return super().dispatch(request, *args, **kwargs)
-
-    def does_the_teacher_teach_the_subject_to_the_class(self):
-        return Lesson.objects.filter(
-            school_class=self.school_class,
-            subject=self.subject,
-            teacher=self.request.user,
-        ).exists()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -212,3 +222,109 @@ class GradeDeleteView(
     def delete(self, *args, **kwargs):
         messages.success(self.request, self.success_message)
         return super().delete(*args, **kwargs)
+
+
+@login_required
+@teacher_view
+def grade_categories_view(request, class_slug, subject_slug):
+    school_class = get_object_or_404(Class, slug=class_slug)
+    subject = get_object_or_404(Subject, slug=subject_slug)
+
+    if not Lesson.objects.filter(
+        school_class=school_class, subject=subject, teacher=request.user
+    ).exists():
+        raise Http404
+
+    if request.method == "POST":
+        form = GradeCategoryForm(request.POST)
+        form.set_subject_and_class(subject, school_class)
+
+        if form.is_valid():
+            category = form.save()
+            return redirect("grades:grade_category_detail", pk=category.pk)
+        else:
+            return render(
+                request, "grades/partials/grade_category_form.html", {"form": form}
+            )
+
+    categories = GradeCategory.objects.filter(
+        subject=subject, school_class=school_class
+    )
+    return render(
+        request,
+        "grades/gradecategory_list.html",
+        {
+            "categories": categories,
+            "school_class": school_class,
+            "subject": subject,
+        },
+    )
+
+
+class GradeCategoryAccessMixin:
+    def get_object(self, queryset=None):
+        category = super().get_object(queryset)
+
+        if not _does_the_teacher_teach_the_subject_to_the_class(
+            self.request.user, category.subject, category.school_class
+        ):
+            raise Http404
+
+        return category
+
+    def get_queryset(self):
+        return super().get_queryset().select_related("school_class", "subject")
+
+
+class GradeCategoryFormTemplateView(TemplateView):
+    template_name = "grades/partials/grade_category_form.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"] = GradeCategoryForm()
+
+        return context
+
+
+class GradeCategoryDetailView(
+    LoginRequiredMixin, IsTeacherMixin, GradeCategoryAccessMixin, DetailView
+):
+    model = GradeCategory
+    template_name = "grades/partials/grade_category_detail.html"
+    context_object_name = "category"
+
+    def get_queryset(self):
+        return super().get_queryset().select_related("school_class", "subject")
+
+
+@login_required
+@teacher_view
+def grade_category_delete_view(request, pk):
+    category = get_object_or_404(
+        GradeCategory.objects.select_related("school_class", "subject"), pk=pk
+    )
+
+    if not _does_the_teacher_teach_the_subject_to_the_class(
+        request.user, category.subject, category.school_class
+    ):
+        raise Http404
+
+    if request.method == "POST":
+        category.delete()
+
+    return HttpResponse()
+
+
+class GradeCategoryUpdateView(
+    LoginRequiredMixin, IsTeacherMixin, GradeCategoryAccessMixin, UpdateView
+):
+    model = GradeCategory
+    form_class = GradeCategoryForm
+    template_name = "grades/partials/grade_category_form.html"
+    context_object_name = "category"
+
+    def get_success_url(self):
+        return reverse("grades:grade_category_detail", args=[self.object.pk])
+
+    def get_queryset(self):
+        return super().get_queryset().select_related("school_class", "subject")

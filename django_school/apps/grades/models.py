@@ -22,14 +22,6 @@ class GradeCategory(models.Model):
     def __str__(self):
         return self.name
 
-    def clean(self):
-        super().clean()
-
-        if not Lesson.objects.filter(
-            school_class=self.school_class, subject=self.subject
-        ).exists():
-            raise ValidationError("The student is not learning the given subject")
-
 
 class Grade(models.Model):
     GRADES = [

@@ -55,15 +55,3 @@ class GradeModelTestCase(UsersMixin, ClassesMixin, LessonsMixin, GradesMixin, Te
             self.create_grade(
                 category2, self.subject, self.student, self.teacher
             ).clean()
-
-
-class GradeCategoryModelTestCase(
-    UsersMixin, ClassesMixin, LessonsMixin, GradesMixin, TestCase
-):
-    def setUp(self):
-        self.school_class = self.create_class()
-        self.subject = self.create_subject()
-
-    def test_clean_raises_ValidationError_if_class_is_not_learning_the_subject(self):
-        with self.assertRaises(ValidationError):
-            self.create_grade_category(self.subject, self.school_class).clean()

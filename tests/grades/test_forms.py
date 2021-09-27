@@ -1,10 +1,8 @@
 from django.test import TestCase
 
-from django_school.apps.grades.forms import (
-    BulkGradeCreationCommonInfoForm,
-    BulkGradeCreationFormSet,
-    GradeForm,
-)
+from django_school.apps.grades.forms import (BulkGradeCreationCommonInfoForm,
+                                             BulkGradeCreationFormSet,
+                                             GradeCategoryForm, GradeForm)
 from tests.utils import ClassesMixin, GradesMixin, LessonsMixin, UsersMixin
 
 
@@ -108,3 +106,17 @@ class BulkGradeCreationFormSetTestCase(UsersMixin, TestCase):
         self.assertNotIn(
             '<label for="id_form-0-grade">Grade:</label>', self.formset.as_p()
         )
+
+
+class GradeCategoryFormTestCase(ClassesMixin, LessonsMixin, TestCase):
+    def setUp(self):
+        self.subject = self.create_subject()
+        self.school_class = self.create_class()
+
+    def test_set_subject_and_class(self):
+        form = GradeCategoryForm()
+
+        form.set_subject_and_class(self.subject, self.school_class)
+
+        self.assertEqual(form.data["subject"], self.subject.pk)
+        self.assertEqual(form.data["school_class"], self.school_class.pk)
