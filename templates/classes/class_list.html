@@ -12,9 +12,16 @@
        <a href="{{ school_class.get_absolute_url }}">
           {{ school_class.number }}
         </a>
-       <a href="{{ school_class.get_timetable_url }}" class="float-end">
-         timetable
-       </a>
+        <span class="float-end">
+          <a href="{% url "lessons:class_subject_list" school_class.slug %}">
+            subjects
+          </a>
+          &nbsp;
+          <a href="{{ school_class.get_timetable_url }}" >
+            timetable
+          </a>
+        </span>
+
       </li>
     {% empty %}
       <p>No classes have been created yet.</p>

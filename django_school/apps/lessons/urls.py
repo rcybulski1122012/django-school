@@ -1,6 +1,7 @@
 from django.urls import path
 
-from django_school.apps.lessons.views import (ClassTimetableView,
+from django_school.apps.lessons.views import (ClassSubjectListView,
+                                              ClassTimetableView,
                                               TeacherLessonSessionsListView,
                                               TeacherTimetableView,
                                               lesson_session_detail_view,
@@ -29,5 +30,10 @@ urlpatterns = [
         "sessions/<int:session_pk>/",
         lesson_session_detail_view,
         name="session_detail",
+    ),
+    path(
+        "subjects/<slug:class_slug>/",
+        ClassSubjectListView.as_view(),
+        name="class_subject_list",
     ),
 ]

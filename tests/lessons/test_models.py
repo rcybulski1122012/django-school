@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from django_school.apps.lessons.models import Presence
+from django_school.apps.lessons.models import Presence, Subject
 from tests.utils import ClassesMixin, LessonsMixin, UsersMixin
 
 
@@ -15,6 +15,30 @@ class SubjectModelTestCase(LessonsMixin, TestCase):
         subject = self.create_subject(name="Computer Science", slug="cs")
 
         self.assertEqual(subject.slug, "cs")
+
+
+class SubjectQuerySetTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
+    def setUp(self):
+        self.teacher = self.create_teacher()
+        self.school_class = self.create_class()
+        self.subject = self.create_subject()
+
+    def test_with_does_the_teacher_teach_the_subject_to_the_class_when_does_not_teach(
+        self,
+    ):
+        subject = Subject.objects.with_does_the_teacher_teach_the_subject_to_the_class(
+            self.teacher, self.school_class
+        ).get()
+
+        self.assertFalse(subject.does_the_teacher_teach_the_subject_to_the_class)
+
+    def test_with_does_the_teacher_teach_the_subject_to_the_class_when_teaches(self):
+        self.create_lesson(self.subject, self.teacher, self.school_class)
+        subject = Subject.objects.with_does_the_teacher_teach_the_subject_to_the_class(
+            self.teacher, self.school_class
+        ).get()
+
+        self.assertTrue(subject.does_the_teacher_teach_the_subject_to_the_class)
 
 
 class LessonModelTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):

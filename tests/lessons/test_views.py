@@ -5,8 +5,13 @@ from django.test import TestCase
 from django.urls import reverse
 
 from django_school.apps.lessons.models import Lesson, Presence
-from tests.utils import (ClassesMixin, LessonsMixin, ResourceViewTestMixin,
-                         TeacherViewTestMixin, UsersMixin)
+from tests.utils import (
+    ClassesMixin,
+    LessonsMixin,
+    ResourceViewTestMixin,
+    TeacherViewTestMixin,
+    UsersMixin,
+)
 
 
 class TimetableViewMixin(
@@ -306,3 +311,87 @@ class LessonSessionDetailViewTestCase(
         response = self.client.get(self.get_url())
 
         self.assertContains(response, self.student.full_name)
+
+
+class ClassSubjectListViewTestCase(
+    TeacherViewTestMixin,
+    ResourceViewTestMixin,
+    UsersMixin,
+    ClassesMixin,
+    LessonsMixin,
+    TestCase,
+):
+    path_name = "lessons:class_subject_list"
+
+    def setUp(self):
+        self.teacher = self.create_teacher()
+        self.school_class = self.create_class()
+        self.student = self.create_student(school_class=self.school_class)
+        self.subject = self.create_subject()
+
+    def get_url(self, class_slug=None):
+        if class_slug:
+            return reverse(self.path_name, args=[class_slug])
+        else:
+            return reverse(self.path_name, args=[self.school_class.slug])
+
+    def get_nonexistent_resource_url(self):
+        return self.get_url("123g")
+
+    def test_renders_subject_names(self):
+        self.create_lesson(self.subject, self.teacher, self.school_class)
+        self.login(self.teacher)
+
+        response = self.client.get(self.get_url())
+
+        self.assertContains(response, self.subject.name)
+
+    def test_renders_links_to_grades_and_grades_categories_if_the_user_teaches_the_subject_to_the_class(
+        self,
+    ):
+        self.create_lesson(self.subject, self.teacher, self.school_class)
+        self.login(self.teacher)
+
+        response = self.client.get(self.get_url())
+
+        self.assertContains(
+            response,
+            reverse(
+                "grades:class_grades", args=[self.school_class.slug, self.subject.slug]
+            ),
+        )
+        self.assertContains(
+            response,
+            reverse(
+                "grades:categories:create",
+                args=[self.school_class.slug, self.subject.slug],
+            ),
+        )
+
+    def test_does_not_render_links_if_the_user_does_not_teach_the_subject_to_the_class(
+        self,
+    ):
+        self.login(self.teacher)
+
+        response = self.client.get(self.get_url())
+
+        self.assertNotContains(
+            response,
+            reverse(
+                "grades:class_grades", args=[self.school_class.slug, self.subject.slug]
+            ),
+        )
+        self.assertNotContains(
+            response,
+            reverse(
+                "grades:categories:create",
+                args=[self.school_class.slug, self.subject.slug],
+            ),
+        )
+
+    def test_context_contain_school_class(self):
+        self.login(self.teacher)
+
+        response = self.client.get(self.get_url())
+
+        self.assertEqual(response.context["school_class"], self.school_class)

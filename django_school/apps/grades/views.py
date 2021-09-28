@@ -6,17 +6,26 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.views.generic import (CreateView, DeleteView, DetailView,
-                                  TemplateView, UpdateView)
+from django.views.generic import (
+    CreateView,
+    DeleteView,
+    DetailView,
+    TemplateView,
+    UpdateView,
+)
 
 from django_school.apps.classes.models import Class
 from django_school.apps.common.utils import IsTeacherMixin, teacher_view
-from django_school.apps.grades.forms import (BulkGradeCreationCommonInfoForm,
-                                             BulkGradeCreationFormSet,
-                                             GradeCategoryForm, GradeForm)
+from django_school.apps.grades.forms import (
+    BulkGradeCreationCommonInfoForm,
+    BulkGradeCreationFormSet,
+    GradeCategoryForm,
+    GradeForm,
+)
 from django_school.apps.grades.models import Grade, GradeCategory
-from django_school.apps.grades.utils import \
-    does_the_teacher_teach_the_subject_to_the_class
+from django_school.apps.common.utils import (
+    does_the_teacher_teach_the_subject_to_the_class,
+)
 from django_school.apps.lessons.models import Subject
 
 User = get_user_model()

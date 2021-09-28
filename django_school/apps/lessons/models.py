@@ -2,15 +2,33 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Prefetch
 from django.urls import reverse
 from django.utils.text import slugify
 
 from django_school.apps.classes.models import Class
 
 
+class SubjectQuerySet(models.QuerySet):
+    def with_does_the_teacher_teach_the_subject_to_the_class(
+        self, teacher, school_class
+    ):
+        return self.prefetch_related(
+            Prefetch(
+                "lessons",
+                queryset=Lesson.objects.filter(
+                    teacher=teacher, school_class=school_class
+                ),
+                to_attr="does_the_teacher_teach_the_subject_to_the_class",
+            )
+        )
+
+
 class Subject(models.Model):
     name = models.CharField(max_length=64)
     slug = models.SlugField(max_length=64, unique=True)
+
+    objects = SubjectQuerySet.as_manager()
 
     def __str__(self):
         return self.name

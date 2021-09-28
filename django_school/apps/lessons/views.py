@@ -12,7 +12,7 @@ from django.views.generic import DetailView, ListView
 from django_school.apps.classes.models import Class
 from django_school.apps.common.utils import IsTeacherMixin, teacher_view
 from django_school.apps.lessons.forms import LessonSessionForm, PresenceFormSet
-from django_school.apps.lessons.models import Lesson, LessonSession
+from django_school.apps.lessons.models import Lesson, LessonSession, Subject
 
 User = get_user_model()
 
@@ -135,3 +135,31 @@ def lesson_session_detail_view(request, session_pk):
             "presences_formset": presences_formset,
         },
     )
+
+
+class ClassSubjectListView(LoginRequiredMixin, IsTeacherMixin, ListView):
+    model = Subject
+    template_name = "lessons/class_subject_list.html"
+    context_object_name = "subjects"
+
+    school_class = None
+
+    def dispatch(self, request, *args, **kwargs):
+        self.school_class = get_object_or_404(Class, slug=self.kwargs["class_slug"])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .with_does_the_teacher_teach_the_subject_to_the_class(
+                teacher=self.request.user, school_class=self.school_class
+            )
+            .filter(lessons__school_class=self.school_class)
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["school_class"] = self.school_class
+
+        return context
