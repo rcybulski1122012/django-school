@@ -112,9 +112,12 @@ def lesson_session_detail_view(request, session_pk):
     if request.user != lesson_session.lesson.teacher:
         raise PermissionDenied()
 
+    lesson_session_form = LessonSessionForm(
+        request.POST or None, instance=lesson_session
+    )
+    presences_formset = PresenceFormSet(request.POST or None, instance=lesson_session)
+
     if request.method == "POST":
-        lesson_session_form = LessonSessionForm(request.POST, instance=lesson_session)
-        presences_formset = PresenceFormSet(request.POST, instance=lesson_session)
         if lesson_session_form.is_valid() and presences_formset.is_valid():
             lesson_session_form.save()
             presences_formset.save()
@@ -122,9 +125,6 @@ def lesson_session_detail_view(request, session_pk):
                 request, "The lesson session has been updated successfully."
             )
             return redirect("lessons:session_list")
-    else:
-        lesson_session_form = LessonSessionForm(instance=lesson_session)
-        presences_formset = PresenceFormSet(instance=lesson_session)
 
     return render(
         request,

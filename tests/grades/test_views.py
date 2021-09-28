@@ -3,17 +3,12 @@ from django.urls import reverse
 
 from django_school.apps.grades.forms import GradeCategoryForm
 from django_school.apps.grades.models import Grade, GradeCategory
-from tests.utils import (
-    ClassesMixin,
-    GradesMixin,
-    LessonsMixin,
-    ResourceViewTestMixin,
-    TeacherViewTestMixin,
-    UsersMixin,
-)
+from tests.utils import (ClassesMixin, GradesMixin, LessonsMixin,
+                         ResourceViewTestMixin, TeacherViewTestMixin,
+                         UsersMixin)
 
 
-class GradeViewTestMixin(
+class SubjectAndSchoolClassRelatedTestMixin(
     TeacherViewTestMixin,
     ResourceViewTestMixin,
     UsersMixin,
@@ -27,9 +22,7 @@ class GradeViewTestMixin(
         self.student = self.create_student(school_class=self.school_class)
         self.subject = self.create_subject()
         self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
-        self.grade_category = self.create_grade_category(
-            self.subject, self.school_class
-        )
+        self.category = self.create_grade_category(self.subject, self.school_class)
 
     def get_url(self, class_slug=None, subject_slug=None):
         class_slug = class_slug or self.school_class.slug
@@ -65,7 +58,7 @@ class GradeViewTestMixin(
         self.assertIn("subject", response.context)
 
 
-class GradeCreateViewTestCase(GradeViewTestMixin, TestCase):
+class GradeCreateViewTestCase(SubjectAndSchoolClassRelatedTestMixin, TestCase):
     path_name = "grades:add"
 
     def get_example_form_data(self):
@@ -75,7 +68,7 @@ class GradeCreateViewTestCase(GradeViewTestMixin, TestCase):
             "comment": "Math Exam",
             "subject": self.subject.pk,
             "student": self.student.pk,
-            "category": self.grade_category.pk,
+            "category": self.category.pk,
             "teacher": self.teacher.pk,
         }
 
@@ -110,7 +103,7 @@ class GradeCreateViewTestCase(GradeViewTestMixin, TestCase):
 
     def test_renders_error_after_adding_a_grade_which_already_exist(self):
         self.login(self.teacher)
-        self.create_grade(self.grade_category, self.subject, self.student, self.teacher)
+        self.create_grade(self.category, self.subject, self.student, self.teacher)
         data = self.get_example_form_data()
 
         response = self.client.post(self.get_url(), data=data)
@@ -129,7 +122,7 @@ class GradeCreateViewTestCase(GradeViewTestMixin, TestCase):
         self.assertEqual(form.initial["student"], str(self.student.pk))
 
 
-class ClassGradesViewTestCase(GradeViewTestMixin, TestCase):
+class ClassGradesViewTestCase(SubjectAndSchoolClassRelatedTestMixin, TestCase):
     path_name = "grades:class_grades"
 
     def test_context_contains_list_of_given_class_students(self):
@@ -150,13 +143,13 @@ class ClassGradesViewTestCase(GradeViewTestMixin, TestCase):
 
         response = self.client.get(self.get_url())
 
-        self.assertQuerysetEqual(response.context["categories"], [self.grade_category])
+        self.assertQuerysetEqual(response.context["categories"], [self.category])
 
     def test_renders_avg_of_students_grades_with_precision_to_2_numbers(self):
         self.login(self.teacher)
         for grade in [1.5, 3.75, 5.5]:
             self.create_grade(
-                self.grade_category, self.subject, self.student, self.teacher, grade
+                self.category, self.subject, self.student, self.teacher, grade
             )
         expected_avg = "3.58"
 
@@ -165,7 +158,7 @@ class ClassGradesViewTestCase(GradeViewTestMixin, TestCase):
         self.assertContains(response, expected_avg)
 
 
-class CreateGradesInBulkViewTestCase(GradeViewTestMixin, TestCase):
+class CreateGradesInBulkViewTestCase(SubjectAndSchoolClassRelatedTestMixin, TestCase):
     path_name = "grades:add_in_bulk"
 
     def get_url(self, class_slug=None, subject_slug=None, category_pk=None):
@@ -182,7 +175,7 @@ class CreateGradesInBulkViewTestCase(GradeViewTestMixin, TestCase):
             "weight": 1,
             "comment": "Math Exam",
             "subject": self.subject.pk,
-            "category": self.grade_category.pk,
+            "category": self.category.pk,
             "teacher": self.teacher.pk,
             "form-TOTAL_FORMS": students_count,
             "form-INITIAL_FORMS": 0,
@@ -230,7 +223,7 @@ class CreateGradesInBulkViewTestCase(GradeViewTestMixin, TestCase):
 
     def test_renders_error_when_students_already_have_grade_in_this_category(self):
         self.login(self.teacher)
-        self.create_grade(self.grade_category, self.subject, self.student, self.teacher)
+        self.create_grade(self.category, self.subject, self.student, self.teacher)
         data = self.prepare_form_data([self.student])
 
         response = self.client.post(self.get_url(), data)
@@ -241,34 +234,29 @@ class CreateGradesInBulkViewTestCase(GradeViewTestMixin, TestCase):
     def test_set_category_initial_data_to_form_if_given(self):
         self.login(self.teacher)
 
-        response = self.client.get(self.get_url(category_pk=self.grade_category.pk))
+        response = self.client.get(self.get_url(category_pk=self.category.pk))
 
         form = response.context["common_form"]
-        self.assertEqual(form.initial["category"], str(self.grade_category.pk))
+        self.assertEqual(form.initial["category"], str(self.category.pk))
 
 
-class GradeUpdateViewTestCase(
+class SingleGradeTestMixin(
     TeacherViewTestMixin,
     ResourceViewTestMixin,
     UsersMixin,
     ClassesMixin,
     LessonsMixin,
     GradesMixin,
-    TestCase,
 ):
-    path_name = "grades:update"
-
     def setUp(self):
         self.teacher = self.create_teacher()
         self.school_class = self.create_class()
         self.student = self.create_student(school_class=self.school_class)
         self.subject = self.create_subject()
         self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
-        self.grade_category = self.create_grade_category(
-            self.subject, self.school_class
-        )
+        self.category = self.create_grade_category(self.subject, self.school_class)
         self.grade = self.create_grade(
-            self.grade_category, self.subject, self.student, self.teacher
+            self.category, self.subject, self.student, self.teacher
         )
 
     def get_url(self, grade_pk=None):
@@ -280,14 +268,6 @@ class GradeUpdateViewTestCase(
     def get_nonexistent_resource_url(self):
         return self.get_url(grade_pk=12345)
 
-    @staticmethod
-    def get_example_form_data():
-        return {
-            "grade": 5.0,
-            "weight": 5,
-            "comment": "Updated comment",
-        }
-
     def test_returns_403_when_user_is_not_the_teacher_who_gave_the_grade(self):
         teacher2 = self.create_teacher(username="teacher2")
         self.login(teacher2)
@@ -295,6 +275,18 @@ class GradeUpdateViewTestCase(
         response = self.client.get(self.get_url())
 
         self.assertEqual(response.status_code, 403)
+
+
+class GradeUpdateViewTestCase(SingleGradeTestMixin, TestCase):
+    path_name = "grades:update"
+
+    @staticmethod
+    def get_example_form_data():
+        return {
+            "grade": 5.0,
+            "weight": 5,
+            "comment": "Updated comment",
+        }
 
     def test_updates_grade(self):
         self.login(self.teacher)
@@ -331,49 +323,11 @@ class GradeUpdateViewTestCase(
         response = self.client.get(self.get_url())
 
         self.assertContains(response, self.student.full_name)
-        self.assertContains(response, self.grade_category.name)
+        self.assertContains(response, self.category.name)
 
 
-class GradeDeleteViewTestCase(
-    TeacherViewTestMixin,
-    ResourceViewTestMixin,
-    UsersMixin,
-    ClassesMixin,
-    LessonsMixin,
-    GradesMixin,
-    TestCase,
-):
+class GradeDeleteViewTestCase(SingleGradeTestMixin, TestCase):
     path_name = "grades:delete"
-
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_student(school_class=self.school_class)
-        self.subject = self.create_subject()
-        self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
-        self.grade_category = self.create_grade_category(
-            self.subject, self.school_class
-        )
-        self.grade = self.create_grade(
-            self.grade_category, self.subject, self.student, self.teacher
-        )
-
-    def get_url(self, grade_pk=None):
-        if grade_pk:
-            return reverse(self.path_name, args=[grade_pk])
-        else:
-            return reverse(self.path_name, args=[self.grade.pk])
-
-    def get_nonexistent_resource_url(self):
-        return self.get_url(grade_pk=12345)
-
-    def test_returns_403_when_user_is_not_the_teacher_who_gave_the_grade(self):
-        teacher2 = self.create_teacher(username="teacher2")
-        self.login(teacher2)
-
-        response = self.client.get(self.get_url())
-
-        self.assertEqual(response.status_code, 403)
 
     def test_deletes_grade(self):
         self.login(self.teacher)
@@ -407,7 +361,7 @@ class GradeDeleteViewTestCase(
         response = self.client.get(self.get_url())
 
         self.assertContains(response, self.grade.get_grade_display())
-        self.assertContains(response, self.grade_category.name)
+        self.assertContains(response, self.category.name)
         self.assertContains(response, self.student.full_name)
 
 
@@ -419,7 +373,7 @@ class GradeCategoryFormViewTestCase(ClassesMixin, LessonsMixin, GradesMixin, Tes
         self.assertIsInstance(form, GradeCategoryForm)
 
 
-class GradeCategoriesViewTestCase(GradeViewTestMixin, TestCase):
+class GradeCategoriesViewTestCase(SubjectAndSchoolClassRelatedTestMixin, TestCase):
     path_name = "grades:grade_categories"
 
     def test_returns_404_when_the_teacher_is_not_teaching_the_subject_to_the_class(
@@ -438,8 +392,8 @@ class GradeCategoriesViewTestCase(GradeViewTestMixin, TestCase):
         response = self.client.get(self.get_url())
 
         categories = response.context["categories"]
-        self.assertQuerysetEqual(categories, [self.grade_category])
-        self.assertContains(response, self.grade_category.name)
+        self.assertQuerysetEqual(categories, [self.category])
+        self.assertContains(response, self.category.name)
 
     def test_context_contains_school_class_and_subject_if_request_method_is_GET(self):
         self.login(self.teacher)
@@ -456,7 +410,7 @@ class GradeCategoriesViewTestCase(GradeViewTestMixin, TestCase):
 
         response = self.client.post(self.get_url(), {"name": "new category"})
 
-        new_category = GradeCategory.objects.exclude(pk=self.grade_category.pk).get()
+        new_category = GradeCategory.objects.exclude(pk=self.category.pk).get()
 
         self.assertRedirects(
             response, reverse("grades:grade_category_detail", args=[new_category.pk])
@@ -473,7 +427,7 @@ class GradeCategoriesViewTestCase(GradeViewTestMixin, TestCase):
         self.assertIn("form", response.context)
 
 
-class SingleGradeCategoryMixin(
+class SingleGradeCategoryTestMixin(
     TeacherViewTestMixin,
     ResourceViewTestMixin,
     UsersMixin,
@@ -487,15 +441,13 @@ class SingleGradeCategoryMixin(
         self.student = self.create_student(school_class=self.school_class)
         self.subject = self.create_subject()
         self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
-        self.grade_category = self.create_grade_category(
-            self.subject, self.school_class
-        )
+        self.category = self.create_grade_category(self.subject, self.school_class)
 
     def get_url(self, pk=None, **kwargs):
         if pk:
             return reverse(self.path_name, args=[pk])
         else:
-            return reverse(self.path_name, args=[self.grade_category.pk])
+            return reverse(self.path_name, args=[self.category.pk])
 
     def get_nonexistent_resource_url(self):
         return self.get_url(pk=12345)
@@ -511,7 +463,7 @@ class SingleGradeCategoryMixin(
         self.assertEqual(response.status_code, 404)
 
 
-class GradeCategoryDetailViewTestCase(SingleGradeCategoryMixin, TestCase):
+class GradeCategoryDetailViewTestCase(SingleGradeCategoryTestMixin, TestCase):
     path_name = "grades:grade_category_detail"
 
     def test_renders_name_of_the_category(self):
@@ -519,5 +471,44 @@ class GradeCategoryDetailViewTestCase(SingleGradeCategoryMixin, TestCase):
 
         response = self.client.get(self.get_url())
 
-        self.assertEqual(response.context["category"], self.grade_category)
-        self.assertContains(response, self.grade_category.name)
+        self.assertEqual(response.context["category"], self.category)
+        self.assertContains(response, self.category.name)
+
+
+class GradeCategoryDeleteViewTestCase(SingleGradeCategoryTestMixin, TestCase):
+    path_name = "grades:grade_category_delete"
+
+    def test_deletes_category(self):
+        self.login(self.teacher)
+
+        self.client.post(self.get_url())
+
+        self.assertFalse(GradeCategory.objects.exists())
+
+
+class GradeCategoryUpdateViewTestCase(SingleGradeCategoryTestMixin, TestCase):
+    path_name = "grades:grade_category_update"
+
+    def get_example_form_data(self):
+        return {
+            "name": "new name",
+            "subject": self.subject.pk,
+            "school_class": self.school_class.pk,
+        }
+
+    def test_updates_category(self):
+        self.login(self.teacher)
+
+        self.client.post(self.get_url(), self.get_example_form_data())
+
+        self.category.refresh_from_db()
+        self.assertEqual(self.category.name, "new name")
+
+    def test_redirects_to_category_detail_after_successful_update(self):
+        self.login(self.teacher)
+
+        response = self.client.post(self.get_url(), self.get_example_form_data())
+
+        self.assertRedirects(
+            response, reverse("grades:grade_category_detail", args=[self.category.pk])
+        )

@@ -39,9 +39,10 @@ class StudentDetailView(LoginRequiredMixin, IsTeacherMixin, DetailView):
 
 @login_required
 def profile_view(request):
+    user_info_form = UserInfoForm(request.POST or None, instance=request.user)
+    address_form = AddressForm(request.POST or None, instance=request.user.address)
+
     if request.method == "POST":
-        user_info_form = UserInfoForm(request.POST, instance=request.user)
-        address_form = AddressForm(request.POST, instance=request.user.address)
         if user_info_form.is_valid() and address_form.is_valid():
             user_info_form.save()
             address_form.save()
@@ -50,9 +51,6 @@ def profile_view(request):
                 "The profile information has been updated successfully.",
             )
             return redirect("users:profile")
-    else:
-        user_info_form = UserInfoForm(instance=request.user)
-        address_form = AddressForm(instance=request.user.address)
 
     return render(
         request,
