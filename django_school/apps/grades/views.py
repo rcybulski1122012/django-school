@@ -222,7 +222,7 @@ def grade_categories_view(request, class_slug, subject_slug):
 
         if form.is_valid():
             category = form.save()
-            return redirect("grades:grade_category_detail", pk=category.pk)
+            return redirect("grades:categories:detail", pk=category.pk)
         else:
             return render(
                 request, "grades/partials/grade_category_form.html", {"form": form}
@@ -302,4 +302,4 @@ class GradeCategoryUpdateView(
     context_object_name = "category"
 
     def get_success_url(self):
-        return reverse("grades:grade_category_detail", args=[self.object.pk])
+        return reverse("grades:categories:detail", args=[self.object.pk])

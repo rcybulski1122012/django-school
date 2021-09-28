@@ -367,14 +367,14 @@ class GradeDeleteViewTestCase(SingleGradeTestMixin, TestCase):
 
 class GradeCategoryFormViewTestCase(ClassesMixin, LessonsMixin, GradesMixin, TestCase):
     def test_context_contains_GradeCategoryForm(self):
-        response = self.client.get(reverse("grades:grade_category_form"))
+        response = self.client.get(reverse("grades:categories:form"))
 
         form = response.context["form"]
         self.assertIsInstance(form, GradeCategoryForm)
 
 
 class GradeCategoriesViewTestCase(SubjectAndSchoolClassRelatedTestMixin, TestCase):
-    path_name = "grades:grade_categories"
+    path_name = "grades:categories:create"
 
     def test_returns_404_when_the_teacher_is_not_teaching_the_subject_to_the_class(
         self,
@@ -413,7 +413,7 @@ class GradeCategoriesViewTestCase(SubjectAndSchoolClassRelatedTestMixin, TestCas
         new_category = GradeCategory.objects.exclude(pk=self.category.pk).get()
 
         self.assertRedirects(
-            response, reverse("grades:grade_category_detail", args=[new_category.pk])
+            response, reverse("grades:categories:detail", args=[new_category.pk])
         )
 
     def test_renders_grade_category_form_if_data_is_invalid_and_request_method_is_POST(
@@ -464,7 +464,7 @@ class SingleGradeCategoryTestMixin(
 
 
 class GradeCategoryDetailViewTestCase(SingleGradeCategoryTestMixin, TestCase):
-    path_name = "grades:grade_category_detail"
+    path_name = "grades:categories:detail"
 
     def test_renders_name_of_the_category(self):
         self.login(self.teacher)
@@ -476,7 +476,7 @@ class GradeCategoryDetailViewTestCase(SingleGradeCategoryTestMixin, TestCase):
 
 
 class GradeCategoryDeleteViewTestCase(SingleGradeCategoryTestMixin, TestCase):
-    path_name = "grades:grade_category_delete"
+    path_name = "grades:categories:delete"
 
     def test_deletes_category(self):
         self.login(self.teacher)
@@ -487,7 +487,7 @@ class GradeCategoryDeleteViewTestCase(SingleGradeCategoryTestMixin, TestCase):
 
 
 class GradeCategoryUpdateViewTestCase(SingleGradeCategoryTestMixin, TestCase):
-    path_name = "grades:grade_category_update"
+    path_name = "grades:categories:update"
 
     def get_example_form_data(self):
         return {
@@ -510,5 +510,5 @@ class GradeCategoryUpdateViewTestCase(SingleGradeCategoryTestMixin, TestCase):
         response = self.client.post(self.get_url(), self.get_example_form_data())
 
         self.assertRedirects(
-            response, reverse("grades:grade_category_detail", args=[self.category.pk])
+            response, reverse("grades:categories:detail", args=[self.category.pk])
         )

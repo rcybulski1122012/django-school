@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import include, path
 
 from django_school.apps.grades.views import (ClassGradesView,
                                              GradeCategoryDetailView,
@@ -12,31 +12,29 @@ from django_school.apps.grades.views import (ClassGradesView,
 
 app_name = "grades"
 
+categories_urlpatterns = [
+    path("htmx/form/", GradeCategoryFormTemplateView.as_view(), name="form"),
+    path("htmx/<int:pk>/", GradeCategoryDetailView.as_view(), name="detail"),
+    path("htmx/<int:pk>/delete/", grade_category_delete_view, name="delete"),
+    path(
+        "htmx/<int:pk>/update/",
+        GradeCategoryUpdateView.as_view(),
+        name="update",
+    ),
+    path(
+        "<slug:class_slug>/<slug:subject_slug>/",
+        grade_categories_view,
+        name="create",
+    ),
+]
+
 urlpatterns = [
     path(
-        "categories/htmx/form/",
-        GradeCategoryFormTemplateView.as_view(),
-        name="grade_category_form",
-    ),
-    path(
-        "categories/htmx/<int:pk>/",
-        GradeCategoryDetailView.as_view(),
-        name="grade_category_detail",
-    ),
-    path(
-        "categories/htmx/<int:pk>/delete/",
-        grade_category_delete_view,
-        name="grade_category_delete",
-    ),
-    path(
-        "categories/htmx/<int:pk>/update/",
-        GradeCategoryUpdateView.as_view(),
-        name="grade_category_update",
-    ),
-    path(
-        "categories/<slug:class_slug>/<slug:subject_slug>/",
-        grade_categories_view,
-        name="grade_categories",
+        "categories/",
+        include(
+            (categories_urlpatterns, "categories"),
+            namespace="categories",
+        ),
     ),
     path(
         "<slug:class_slug>/<slug:subject_slug>/add/",
