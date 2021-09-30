@@ -112,6 +112,16 @@ class LessonSession(models.Model):
         return reverse("lessons:session_detail", args=[self.pk])
 
 
+class AttachedFile(models.Model):
+    file = models.FileField(upload_to="lesson_files/")
+    lesson_session = models.ForeignKey(
+        LessonSession, on_delete=models.CASCADE, related_name="attached_files"
+    )
+
+    def __str__(self):
+        return self.file.name
+
+
 class Presence(models.Model):
     PRESENCE_STATUSES = [
         ("present", "Present"),

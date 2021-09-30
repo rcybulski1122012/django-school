@@ -154,3 +154,7 @@ AUTH_USER_MODEL = "users.user"
 INTERNAL_IPS = [
     "127.0.0.1",
 ]
+
+# Media
+MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_URL = "/media/"

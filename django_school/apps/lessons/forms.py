@@ -1,12 +1,39 @@
 from django import forms
 
-from django_school.apps.lessons.models import LessonSession, Presence
+from django_school.apps.lessons.models import (AttachedFile, LessonSession,
+                                               Presence)
 
 
 class LessonSessionForm(forms.ModelForm):
+    attached_files = forms.FileField(
+        required=False,
+        widget=forms.ClearableFileInput(attrs={"multiple": True}),
+    )
+
     class Meta:
         model = LessonSession
         fields = ["topic"]
+
+    def save(self, commit=True, request_files=None):
+        lesson_session = super().save(commit)
+
+        files = (
+            [
+                AttachedFile(file=file)
+                for file in request_files.getlist("attached_files")
+            ]
+            if request_files
+            else []
+        )
+
+        if commit:
+            lesson_session.save()
+            for file in files:
+                file.lesson_session = lesson_session
+
+            AttachedFile.objects.bulk_create(files)
+
+        return lesson_session, files
 
 
 class PresenceForm(forms.ModelForm):

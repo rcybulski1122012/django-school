@@ -1,10 +1,12 @@
 import datetime
+from os import path
+from shutil import rmtree
 
-from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from django_school.apps.lessons.models import Lesson, Presence
+from django_school.apps.lessons.models import AttachedFile, Lesson, Presence
 from tests.utils import (
     ClassesMixin,
     LessonsMixin,
@@ -208,6 +210,7 @@ class LessonSessionDetailViewTestCase(
     TestCase,
 ):
     path_name = "lessons:session_detail"
+    temp_dir_path = "temp_dir/"
 
     def setUp(self):
         self.teacher = self.create_teacher()
@@ -270,6 +273,27 @@ class LessonSessionDetailViewTestCase(
         presences = Presence.objects.all()
         updated_statuses = [presence.status for presence in presences]
         self.assertEqual(updated_statuses, expected_statuses)
+
+    @override_settings(MEDIA_ROOT=temp_dir_path)
+    def test_updates_files(self):
+        self.login(self.teacher)
+        presences = self.create_presences(self.lesson_session, [self.student])
+        data = self.prepare_form_data(
+            self.lesson_session, presences, "New topic", ["absent"]
+        )
+        files = [
+            SimpleUploadedFile("file1.txt", b"file_content"),
+            SimpleUploadedFile("file2.txt", b"file_content"),
+        ]
+        data["attached_files"] = files
+
+        self.client.post(self.get_url(), data=data, files=files)
+
+        self.assertEqual(AttachedFile.objects.count(), 2)
+        self.assertTrue(
+            path.exists(path.join(self.temp_dir_path, "lesson_files", "file1.txt"))
+        )
+        rmtree(self.temp_dir_path)
 
     def test_redirects_to_lesson_sessions_list_after_successful_update(self):
         self.login(self.teacher)
@@ -395,3 +419,53 @@ class ClassSubjectListViewTestCase(
         response = self.client.get(self.get_url())
 
         self.assertEqual(response.context["school_class"], self.school_class)
+
+
+@override_settings(MEDIA_ROOT="temp_dir/")
+class AttachedFileDeleteViewTestCase(
+    TeacherViewTestMixin,
+    ResourceViewTestMixin,
+    UsersMixin,
+    ClassesMixin,
+    LessonsMixin,
+    TestCase,
+):
+    path_name = "lessons:attached_file_delete"
+
+    def setUp(self):
+        self.teacher = self.create_teacher()
+        self.school_class = self.create_class()
+        self.student = self.create_student(school_class=self.school_class)
+        self.subject = self.create_subject()
+        self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
+        self.lesson_session = self.create_lesson_session(self.lesson)
+
+        self.file = self.create_file(self.lesson_session)
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        rmtree("temp_dir/")
+
+    def get_url(self, file_pk=None):
+        if file_pk:
+            return reverse(self.path_name, args=[file_pk])
+        else:
+            return reverse(self.path_name, args=[self.file.pk])
+
+    def get_nonexistent_resource_url(self):
+        return self.get_url(file_pk=12345)
+
+    def test_deletes_attached_file_instance(self):
+        self.login(self.teacher)
+
+        self.client.post(self.get_url())
+
+        self.assertFalse(AttachedFile.objects.exists())
+
+    def test_deletes_file(self):
+        self.login(self.teacher)
+
+        self.client.post(self.get_url())
+
+        self.assertFalse(path.exists(self.file.file.path))

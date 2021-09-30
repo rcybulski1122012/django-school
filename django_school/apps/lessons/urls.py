@@ -4,6 +4,7 @@ from django_school.apps.lessons.views import (ClassSubjectListView,
                                               ClassTimetableView,
                                               TeacherLessonSessionsListView,
                                               TeacherTimetableView,
+                                              attached_file_delete_view,
                                               lesson_session_detail_view,
                                               timetables_list_view)
 
@@ -35,5 +36,10 @@ urlpatterns = [
         "subjects/<slug:class_slug>/",
         ClassSubjectListView.as_view(),
         name="class_subject_list",
+    ),
+    path(
+        "attached_files/<int:pk>/delete/",
+        attached_file_delete_view,
+        name="attached_file_delete",
     ),
 ]

@@ -1,6 +1,10 @@
-from django.test import TestCase
+from unittest.mock import MagicMock
 
-from django_school.apps.lessons.forms import PresenceFormSet
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import RequestFactory, TestCase
+
+from django_school.apps.lessons.forms import LessonSessionForm, PresenceFormSet
+from django_school.apps.lessons.models import AttachedFile
 from tests.utils import ClassesMixin, LessonsMixin, UsersMixin
 
 
@@ -51,3 +55,36 @@ class PresenceFormSetTestCase(ClassesMixin, UsersMixin, LessonsMixin, TestCase):
             '<label for="id_presence_set-0-status">Status:</label>',
             formset.as_p(),
         )
+
+
+class LessonSessionFormTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
+    def setUp(self):
+        self.teacher = self.create_teacher()
+        self.school_class = self.create_class()
+        self.subject = self.create_subject()
+        self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
+        self.lesson_session = self.create_lesson_session(self.lesson)
+
+    def test_saves_files_if_valid(self):
+        files = [
+            SimpleUploadedFile("file1.txt", b"file_content"),
+            SimpleUploadedFile("file2.txt", b"file_content"),
+        ]
+
+        request = RequestFactory().get("/")
+        request.FILES.getlist = MagicMock(return_value=files)
+
+        form = LessonSessionForm(
+            {"topic": "new topic"}, request.FILES, instance=self.lesson_session
+        )
+
+        self.assertTrue(form.is_valid())
+        _, files = form.save()
+        self.assertQuerysetEqual(files, AttachedFile.objects.all())
+
+    def test_does_not_save_any_files_if_not_attached(self):
+        form = LessonSessionForm({"topic": "new topic"}, instance=self.lesson_session)
+
+        self.assertTrue(form.is_valid())
+        form.save()
+        self.assertFalse(AttachedFile.objects.exists())

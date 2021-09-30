@@ -1,18 +1,24 @@
 import datetime
+import os
 
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView
 
 from django_school.apps.classes.models import Class
 from django_school.apps.common.utils import IsTeacherMixin, teacher_view
 from django_school.apps.lessons.forms import LessonSessionForm, PresenceFormSet
-from django_school.apps.lessons.models import Lesson, LessonSession, Subject
+from django_school.apps.lessons.models import (
+    AttachedFile,
+    Lesson,
+    LessonSession,
+    Subject,
+)
 
 User = get_user_model()
 
@@ -105,7 +111,7 @@ def lesson_session_detail_view(request, session_pk):
             "lesson__teacher",
             "lesson__school_class",
             "lesson__subject",
-        ),
+        ).prefetch_related("attached_files"),
         pk=session_pk,
     )
 
@@ -113,13 +119,13 @@ def lesson_session_detail_view(request, session_pk):
         raise PermissionDenied()
 
     lesson_session_form = LessonSessionForm(
-        request.POST or None, instance=lesson_session
+        request.POST or None, request.FILES or None, instance=lesson_session
     )
     presences_formset = PresenceFormSet(request.POST or None, instance=lesson_session)
 
     if request.method == "POST":
         if lesson_session_form.is_valid() and presences_formset.is_valid():
-            lesson_session_form.save()
+            lesson_session_form.save(request_files=request.FILES)
             presences_formset.save()
             messages.success(
                 request, "The lesson session has been updated successfully."
@@ -163,3 +169,21 @@ class ClassSubjectListView(LoginRequiredMixin, IsTeacherMixin, ListView):
         context["school_class"] = self.school_class
 
         return context
+
+
+@login_required
+@teacher_view
+def attached_file_delete_view(request, pk):
+    attached_file = get_object_or_404(
+        AttachedFile.objects.select_related("lesson_session__lesson__teacher"), pk=pk
+    )
+
+    if not attached_file.lesson_session.lesson.teacher == request.user:
+        raise PermissionDenied
+
+    if request.method == "POST":
+        path = attached_file.file.path
+        attached_file.delete()
+        os.remove(path)
+
+    return HttpResponse()
