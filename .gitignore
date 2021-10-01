@@ -121,3 +121,6 @@ GitHub.sublime-settings
 # Pipenv
 Pipfile
 Pipfile.lock
+
+# collected static files
+staticfiles/

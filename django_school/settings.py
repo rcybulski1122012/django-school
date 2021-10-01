@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "django_school.apps.classes",
     "django_school.apps.common",
     "django_school.apps.grades",
+    "django_school.apps.messages",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -46,6 +47,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "crispy_forms",
+    "martor",
     "debug_toolbar",
 ]
 
@@ -131,6 +133,7 @@ USE_L10N = True
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = "/static/"
+STATIC_ROOT = "staticfiles"
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
@@ -147,14 +150,26 @@ CRISPY_TEMPLATE_PACK = "bootstrap4"
 LOGOUT_REDIRECT_URL = reverse_lazy("users:login")
 LOGIN_REDIRECT_URL = reverse_lazy("index")
 LOGIN_URL = reverse_lazy("users:login")
-
 AUTH_USER_MODEL = "users.user"
+
+# Media
+MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_URL = "/media/"
 
 # Debug Toolbar
 INTERNAL_IPS = [
     "127.0.0.1",
 ]
 
-# Media
-MEDIA_ROOT = BASE_DIR / "media"
-MEDIA_URL = "/media/"
+# martor
+MARTOR_THEME = "bootstrap"
+
+MARTOR_ENABLE_CONFIGS = {
+    "emoji": "true",  # to enable/disable emoji icons.
+    "imgur": "false",  # to enable/disable imgur/custom uploader.
+    "mention": "false",  # to enable/disable mention
+    "jquery": "true",  # to include/revoke jquery (require for admin default django)
+    "living": "false",  # to enable/disable live updates in preview
+    "spellcheck": "false",  # to enable/disable spellcheck in form textareas
+    "hljs": "true",  # to enable/disable hljs highlighting in preview
+}
