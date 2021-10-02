@@ -37,6 +37,17 @@
 
                 {% endif %}
                 <div class="nav-item dropdown">
+                  <a class="nav-link dropdown-toggle" href="#" id="messagesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Messages
+                  </a>
+                  <div class="dropdown-menu" aria-labelledby="messagesDropdown">
+                     <a class="dropdown-item" href="{% url "messages:received" %}">Received</a>
+                    <a class="dropdown-item" href="{% url "messages:sent" %}">Sent</a>
+                  </div>
+                </div>
+
+
+                <div class="nav-item dropdown">
                   <a class="nav-link dropdown-toggle" href="#" id="accountDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                     Account
                   </a>

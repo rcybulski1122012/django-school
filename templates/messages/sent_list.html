@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}
+  Sent Messages
+{% endblock %}
+
+{% block content %}
+  <h1>Sent Messages</h1>
+  {% include "messages/messages_list.html" %}
+  {% include "common/paginator.html" %}
+{% endblock %}
