@@ -41,3 +41,16 @@ table {
    overflow-x: auto !important;
    width: 100% !important;
  }
+
+.message-unread {
+    color: #0275d8 !important;
+}
+
+.message-title:hover{
+    color: lightgray !important;
+    transition: 0.15s;
+}
+
+.message-datetime {
+    font-size: 0.7em;
+}

@@ -8,9 +8,14 @@ from django.utils.text import slugify
 from django_school.apps.classes.models import Class
 from django_school.apps.common.models import Address
 from django_school.apps.grades.models import Grade, GradeCategory
-from django_school.apps.lessons.models import (AttachedFile, Lesson,
-                                               LessonSession, Presence,
-                                               Subject)
+from django_school.apps.lessons.models import (
+    AttachedFile,
+    Lesson,
+    LessonSession,
+    Presence,
+    Subject,
+)
+from django_school.apps.messages.models import Message, MessageStatus
 
 User = get_user_model()
 
@@ -186,6 +191,25 @@ class GradesMixin:
             weight=weight,
             **kwargs,
         )
+
+
+class MessagesMixin:
+    DEFAULT_TITLE = "Message Title"
+    DEFAULT_CONTENT = "Message Content"
+
+    @staticmethod
+    def create_message(
+        sender, receivers, title=DEFAULT_TITLE, content=DEFAULT_CONTENT, **kwargs
+    ):
+        message = Message.objects.create(
+            sender=sender, title=title, content=content, **kwargs
+        )
+        statuses = [
+            MessageStatus(message=message, receiver=receiver) for receiver in receivers
+        ]
+        MessageStatus.objects.bulk_create(statuses)
+
+        return message
 
 
 class LoginRequiredTestMixin:

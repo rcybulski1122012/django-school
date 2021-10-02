@@ -1,0 +1,17 @@
+<ul class="list-group">
+  {% for school_message in school_messages %}
+    <li class="list-group-item">
+      <div class="row">
+        <div class="col-lg-10 col-sm-8">
+         <a href="#" class="link-unstyled message-title h4 {% if school_message.status.0.is_read == False %} message-unread{% endif %} %}">{{ school_message.title }}</a>
+        </div>
+        <div class="col-lg-2 col-sm-4">
+          Sender: {{ school_message.sender.full_name }}
+          <br><span class="text-muted message-datetime">{{ school_message.created }}</span>
+        </div>
+      </div>
+    </li>
+  {% empty %}
+    You don't have any messages.
+  {% endfor %}
+</ul>
