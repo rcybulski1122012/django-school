@@ -6,7 +6,7 @@ from django_school.apps.messages.models import Message, MessageStatus
 class MessageForm(forms.ModelForm):
     class Meta:
         model = Message
-        fields = ["title", "content", "receivers"]
+        fields = ["topic", "content", "receivers"]
 
     def __init__(self, *args, **kwargs):
         self.sender = kwargs.pop("sender")

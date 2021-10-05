@@ -24,7 +24,7 @@ class MessageStatusManagerTestCase(UsersMixin, MessagesMixin, TestCase):
         self.receiver = self.create_user(username="receiver")
 
         self.message = Message.objects.create(
-            title="title", content="content", sender=self.sender
+            topic="topic", content="content", sender=self.sender
         )
 
     def test_create_multiple(self):

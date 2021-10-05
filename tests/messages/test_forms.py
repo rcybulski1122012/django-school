@@ -14,8 +14,8 @@ class MessageFormTestCase(UsersMixin, MessagesMixin, TestCase):
     def get_example_form_data(self):
         return {
             "receivers": [self.receiver.pk],
-            "title": "Hi!",
-            "content": "????",
+            "topic": "Hi!",
+            "content": "???",
         }
 
     def test_assigns_sender_to_form(self):

@@ -2,7 +2,8 @@ from django.test import TestCase
 from django.urls import reverse
 
 from django_school.apps.messages.models import Message, MessageStatus
-from tests.utils import LoginRequiredTestMixin, MessagesMixin, UsersMixin
+from tests.utils import (ClassesMixin, LoginRequiredTestMixin, MessagesMixin,
+                         UsersMixin)
 
 
 class MessagesListViewTestMixin(LoginRequiredTestMixin, UsersMixin, MessagesMixin):
@@ -41,7 +42,6 @@ class MessagesListViewTestMixin(LoginRequiredTestMixin, UsersMixin, MessagesMixi
 
         messages = response.context["school_messages"]
         self.assertEqual(10, messages.count())
-        print(response.content)
         self.assertContains(response, '<ul class="pagination">')
 
 
@@ -56,12 +56,12 @@ class ReceivedMessagesListViewTestCase(MessagesListViewTestMixin, TestCase):
         messages = response.context["school_messages"]
         self.assertQuerysetEqual(messages, [self.message2])
 
-    def test_renders_message_title_and_sender_full_name(self):
+    def test_renders_message_topic_and_sender_full_name(self):
         self.login(self.user1)
 
         response = self.client.get(self.get_url())
 
-        self.assertContains(response, self.message2.title)
+        self.assertContains(response, self.message2.topic)
         self.assertContains(response, self.message2.sender.full_name)
 
     def test_link_has_message_unread_class_if_unread(self):
@@ -90,7 +90,7 @@ class SentMessagesListViewTestCase(MessagesListViewTestMixin, TestCase):
 
 
 class MessageCreateViewTestCase(
-    LoginRequiredTestMixin, UsersMixin, MessagesMixin, TestCase
+    LoginRequiredTestMixin, UsersMixin, ClassesMixin, MessagesMixin, TestCase
 ):
     path_name = "messages:send"
 
@@ -104,7 +104,7 @@ class MessageCreateViewTestCase(
     def get_example_form_data(self):
         return {
             "receivers": [self.receiver.pk],
-            "title": "Hi!",
+            "topic": "Hi!",
             "content": "???",
         }
 
@@ -136,7 +136,7 @@ class MessageCreateViewTestCase(
         self.login(self.sender)
         data = {
             "receivers": [],
-            "title": "Hi!",
+            "topic": "Hi!",
             "content": "???",
         }
         response = self.client.post(self.get_url(), data)
@@ -154,3 +154,67 @@ class MessageCreateViewTestCase(
             response,
             f'<input type="checkbox" name="receivers" value="{self.receiver.pk}"',
         )
+
+    def test_context_contains_teachers_qs_and_classes_qs(self):
+        school_class = self.create_class()
+        self.login(self.sender)
+
+        response = self.client.get(self.get_url())
+
+        teachers_qs = response.context["teachers"]
+        classes_qs = response.context["classes"]
+        self.assertQuerysetEqual(teachers_qs, [self.receiver])
+        self.assertQuerysetEqual(classes_qs, [school_class])
+
+
+class MessageDetailViewTestView(
+    LoginRequiredTestMixin, UsersMixin, MessagesMixin, TestCase
+):
+    path_name = "messages:detail"
+
+    def setUp(self):
+        self.sender = self.create_user(username="sender")
+        self.receiver = self.create_user(username="receiver")
+        self.user = self.create_user()
+
+        self.message = self.create_message(self.sender, [self.receiver])
+
+    def get_url(self, message_pk=None, **kwargs):
+        if message_pk:
+            return reverse(self.path_name, args=[message_pk])
+        else:
+            return reverse(self.path_name, args=[self.message.pk])
+
+    def test_returns_403_when_user_is_not_sender_or_receiver_of_the_message(self):
+        self.login(self.user)
+
+        response = self.client.get(self.get_url())
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_context_contains_message(self):
+        self.login(self.receiver)
+
+        response = self.client.get(self.get_url())
+
+        self.assertEqual(response.context["school_message"], self.message)
+
+    def test_renders_message_info(self):
+        self.login(self.receiver)
+
+        response = self.client.get(self.get_url())
+
+        self.assertContains(response, self.message.topic)
+        self.assertContains(response, self.message.content)
+        self.assertContains(response, self.sender.full_name)
+        self.assertContains(response, self.receiver.full_name)
+
+    def test_sets_status_is_read_to_True_if_not_read(self):
+        self.login(self.receiver)
+
+        self.client.get(self.get_url())
+
+        status = MessageStatus.objects.filter(
+            message=self.message, receiver=self.receiver
+        ).get()
+        self.assertTrue(status.is_read)

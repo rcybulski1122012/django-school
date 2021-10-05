@@ -46,7 +46,7 @@ table {
     color: #0275d8 !important;
 }
 
-.message-title:hover{
+.message-topic:hover{
     color: lightgray !important;
     transition: 0.15s;
 }

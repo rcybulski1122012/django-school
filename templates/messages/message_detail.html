@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load martortags %}
+
+{% block title %}
+   Message: {{ school_message.topic }}
+{% endblock %}
+
+{% block content %}
+  <div class="border rounded p-2">
+    <strong>Topic:</strong> {{ school_message.topic }}
+  </div>
+
+  {% if school_message.sender != user %}
+    <div class="border rounded p-2 my-2">
+      <strong>From:</strong> {{ school_message.sender.full_name }}
+    </div>
+  {% endif %}
+
+  <div class="border rounded p-2 my-2">
+    <strong>To:</strong> {{ school_message.receivers.all|join:", " }}
+  </div>
+
+  <div class="border rounded p-4 my-2">
+    <strong>Content</strong>
+    <hr>
+    {{ school_message.content|safe_markdown }}
+  </div>
+
+{% endblock %}

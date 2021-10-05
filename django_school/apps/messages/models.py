@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 from django.db.models import Prefetch
+from django.urls import reverse
 from martor.models import MartorField
 
 
@@ -18,7 +19,7 @@ class MessagesQuerySet(models.QuerySet):
 
 
 class Message(models.Model):
-    title = models.CharField(max_length=64)
+    topic = models.CharField(max_length=64)
     content = MartorField()
 
     sender = models.ForeignKey(
@@ -33,6 +34,9 @@ class Message(models.Model):
     created = models.DateTimeField(auto_now_add=True)
 
     objects = MessagesQuerySet.as_manager()
+
+    def get_absolute_url(self):
+        return reverse("messages:detail", args=[self.pk])
 
 
 class MessageStatusManager(models.Manager):
@@ -52,6 +56,5 @@ class MessageStatus(models.Model):
     receiver = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     is_read = models.BooleanField(default=False)
-    read_datetime = models.DateTimeField(auto_now=True)
 
     objects = MessageStatusManager()

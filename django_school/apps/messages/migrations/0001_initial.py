@@ -10,37 +10,72 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('users', '0004_alter_user_slug'),
+        ("users", "0004_alter_user_slug"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Message',
+            name="Message",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(max_length=64)),
-                ('content', martor.models.MartorField()),
-                ('created', models.DateTimeField(auto_now_add=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("title", models.CharField(max_length=64)),
+                ("content", martor.models.MartorField()),
+                ("created", models.DateTimeField(auto_now_add=True)),
             ],
         ),
         migrations.CreateModel(
-            name='MessageStatus',
+            name="MessageStatus",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('is_read', models.BooleanField(default=False)),
-                ('read_datetime', models.DateTimeField(auto_now=True)),
-                ('message', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='school_messages.message')),
-                ('receiver', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='users.user')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("is_read", models.BooleanField(default=False)),
+                ("read_datetime", models.DateTimeField(auto_now=True)),
+                (
+                    "message",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="school_messages.message",
+                    ),
+                ),
+                (
+                    "receiver",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="users.user"
+                    ),
+                ),
             ],
         ),
         migrations.AddField(
-            model_name='message',
-            name='receivers',
-            field=models.ManyToManyField(related_name='messages_received', through='school_messages.MessageStatus', to='users.User'),
+            model_name="message",
+            name="receivers",
+            field=models.ManyToManyField(
+                related_name="messages_received",
+                through="school_messages.MessageStatus",
+                to="users.User",
+            ),
         ),
         migrations.AddField(
-            model_name='message',
-            name='sender',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='messages_sent', to='users.user'),
+            model_name="message",
+            name="sender",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="messages_sent",
+                to="users.user",
+            ),
         ),
     ]
