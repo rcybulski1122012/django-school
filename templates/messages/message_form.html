@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% load crispy_forms_filters %}
+{% load static %}
+
+{% block css %}
+  <link href="{% static 'plugins/css/ace.min.css' %}" type="text/css" media="all" rel="stylesheet" />
+  <link href="{% static 'plugins/css/resizable.min.css' %}" type="text/css" media="all" rel="stylesheet" />
+  <link href="{% static 'martor/css/martor.bootstrap.min.css' %}" type="text/css" media="all" rel="stylesheet" />
+{% endblock %}
+
+{% block title %}
+  Send a message
+{% endblock %}
+
+{% block content %}
+  <h1>Send a message</h1>
+
+  <form method="POST">
+    <div class="row">
+      <div class="col-lg-9 col-12 border p-3">
+        {{ form.title|as_crispy_field }}
+        {{ form.content|as_crispy_field }}
+      </div>
+      <div class="col-lg-3 col-12 border p-3">
+        <div class="form-group">
+          {{ form.receivers.label }}
+
+          {% if form.receivers.errors %}
+            <div class="alert alert-danger">
+              {{ form.receivers.errors.0 }}
+            </div>
+          {% endif %}
+
+          <a class="link-unstyled mt-1" data-bs-toggle="collapse" href="#teachers"
+             role="button" aria-expanded="false" aria-controls="teachers">
+            <div class="collapse-panel">
+              Teachers
+              <span class="arrow float-end">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-caret-down-fill" viewBox="0 0 16 16">
+                  <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"></path>
+                </svg>
+              </span>
+            </div>
+          </a>
+          <div class="collapse" id="teachers">
+            {% for teacher in teachers %}
+              <input type="checkbox" name="receivers" value="{{ teacher.pk }}" id="receiver-{{ teacher.pk }}">
+              <label for="receiver-{{ teacher.pk }}">{{ teacher.full_name }}</label><br>
+            {% endfor %}
+          </div>
+
+          {% for class in classes %}
+            <a class="link-unstyled" data-bs-toggle="collapse" href="#class-{{ class.number }}"
+               role="button" aria-expanded="false" aria-controls="class-{{ class.number }}">
+              <div class="collapse-panel">
+                {{ class.number }}
+                <span class="arrow float-end">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-caret-down-fill" viewBox="0 0 16 16">
+                    <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"></path>
+                  </svg>
+                </span>
+              </div>
+            </a>
+
+            <div class="collapse" id="class-{{ class.number }}">
+              {% for student in class.students.all %}
+                 <input type="checkbox" name="receivers" value="{{ student.pk }}" id="receiver-{{ student.pk }}">
+                 <label for="receiver-{{ student.pk }}">{{ student.full_name }}</label><br>
+              {% endfor %}
+            </div>
+          {% endfor %}
+
+        </div>
+        <button class="btn btn-outline-primary my-2" id="select-all-btn">Select All</button>
+      </div>
+    </div>
+
+    <input type="submit" value="Send" class="btn btn-success my-3">
+
+    {% csrf_token %}
+  </form>
+{% endblock content %}
+
+{% block js %}
+  const collapse_elements = document.querySelectorAll(".collapse");
+
+  for(const element of collapse_elements){
+      element.addEventListener("show.bs.collapse", e => {
+          element.previousElementSibling.querySelector(".arrow").style.transform = "rotate(180deg)"
+      })
+
+      element.addEventListener("hide.bs.collapse", e => {
+          element.previousElementSibling.querySelector(".arrow").style.transform = "rotate(0deg)"
+      })
+  }
+
+  const selectAllButton = document.querySelector("#select-all-btn")
+  const receiversCheckboxes = document.querySelectorAll(`input[type="checkbox"]`)
+  selectAllButton.addEventListener("click", e => {
+      e.preventDefault()
+      for(const checkbox of receiversCheckboxes)
+          checkbox.checked = true
+      e.target.innerHTML = "Selected"
+  })
+{% endblock %}
+
+{% block js_libraries %}
+  <script type="text/javascript" src="{% static 'plugins/js/jquery.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'plugins/js/ace.js' %}"></script>
+  <script type="text/javascript" src="{% static 'plugins/js/mode-markdown.js' %}"></script>
+  <script type="text/javascript" src="{% static 'plugins/js/ext-language_tools.js' %}"></script>
+  <script type="text/javascript" src="{% static 'plugins/js/theme-github.js' %}"></script>
+  <script type="text/javascript" src="{% static 'plugins/js/typo.js' %}"></script>
+  <script type="text/javascript" src="{% static 'plugins/js/spellcheck.js' %}"></script>
+  <script type="text/javascript" src="{% static 'plugins/js/resizable.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'plugins/js/emojis.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'martor/js/martor.bootstrap.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'plugins/js/bootstrap.min.js' %}"></script>
+{% endblock %}

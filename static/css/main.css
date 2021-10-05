@@ -54,3 +54,15 @@ table {
 .message-datetime {
     font-size: 0.7em;
 }
+
+.collapse-panel {
+    margin-bottom: 2px;
+    width: 100%;
+    padding: 3px;
+    border: solid 1px lightgray;
+     border-radius: 5px;
+}
+
+input[type="checkbox"] {
+    margin-left: 10px;
+}

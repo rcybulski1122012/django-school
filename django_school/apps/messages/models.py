@@ -35,6 +35,16 @@ class Message(models.Model):
     objects = MessagesQuerySet.as_manager()
 
 
+class MessageStatusManager(models.Manager):
+    def create_multiple(self, message, receivers):
+        statuses = [
+            self.model(message=message, receiver=receiver) for receiver in receivers
+        ]
+        self.model.objects.bulk_create(statuses)
+
+        return statuses
+
+
 class MessageStatus(models.Model):
     message = models.ForeignKey(
         Message, on_delete=models.CASCADE, related_name="statuses"
@@ -43,3 +53,5 @@ class MessageStatus(models.Model):
 
     is_read = models.BooleanField(default=False)
     read_datetime = models.DateTimeField(auto_now=True)
+
+    objects = MessageStatusManager()
