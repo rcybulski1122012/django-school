@@ -3,9 +3,14 @@ from django.urls import reverse
 
 from django_school.apps.grades.forms import GradeCategoryForm
 from django_school.apps.grades.models import Grade, GradeCategory
-from tests.utils import (ClassesMixin, GradesMixin, LessonsMixin,
-                         ResourceViewTestMixin, TeacherViewTestMixin,
-                         UsersMixin)
+from tests.utils import (
+    ClassesMixin,
+    GradesMixin,
+    LessonsMixin,
+    ResourceViewTestMixin,
+    TeacherViewTestMixin,
+    UsersMixin,
+)
 
 
 class SubjectAndSchoolClassRelatedTestMixin(
@@ -54,8 +59,8 @@ class SubjectAndSchoolClassRelatedTestMixin(
 
         response = self.client.get(self.get_url())
 
-        self.assertIn("school_class", response.context)
-        self.assertIn("subject", response.context)
+        self.assertEqual(response.context["school_class"], self.school_class)
+        self.assertEqual(response.context["subject"], self.subject)
 
 
 class GradeCreateViewTestCase(SubjectAndSchoolClassRelatedTestMixin, TestCase):

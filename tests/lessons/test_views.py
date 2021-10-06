@@ -7,13 +7,8 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from django_school.apps.lessons.models import AttachedFile, Lesson, Presence
-from tests.utils import (
-    ClassesMixin,
-    LessonsMixin,
-    ResourceViewTestMixin,
-    TeacherViewTestMixin,
-    UsersMixin,
-)
+from tests.utils import (ClassesMixin, LessonsMixin, ResourceViewTestMixin,
+                         TeacherViewTestMixin, UsersMixin)
 
 
 class TimetableViewMixin(
@@ -168,17 +163,17 @@ class TeacherLessonSessionsListViewTestCase(
 
     def test_context_contain_lesson_session_list(self):
         self.login(self.teacher)
+        session = self.create_lesson_session(self.lesson, datetime.date(2015, 2, 2))
 
-        response = self.client.get(self.get_url())
+        response = self.client.get(self.get_url(date="2015-02-02"))
 
-        self.assertIn("lesson_sessions", response.context)
+        self.assertQuerysetEqual(response.context["lesson_sessions"], [session])
 
     def test_context_contains_given_date(self):
         self.login(self.teacher)
         date = "2021-01-01"
         response = self.client.get(self.get_url(date=date))
 
-        self.assertIn("date", response.context)
         self.assertEqual(response.context["date"], date)
 
     def test_renders_links_to_lesson_session_detail_view(self):
