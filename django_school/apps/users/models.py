@@ -50,7 +50,7 @@ class User(AbstractUser):
         ("other", "other"),
     ]
 
-    slug = models.SlugField(max_length=64, blank=True)
+    slug = models.SlugField(max_length=64, unique=True)
     personal_id = models.CharField(max_length=16, null=True, blank=True)
     phone_number = models.CharField(max_length=16, null=True, blank=True)
     gender = models.CharField(
