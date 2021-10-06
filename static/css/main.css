@@ -29,24 +29,24 @@ input, select {
 }
 
 .link-unstyled, .link-unstyled:link, .link-unstyled:hover {
-  color: inherit;
-  text-decoration: inherit;
+    color: inherit;
+    text-decoration: inherit;
 }
 
 table {
     word-wrap: break-word;
 }
 
-.table{
-   overflow-x: auto !important;
-   width: 100% !important;
- }
+.table {
+    overflow-x: auto !important;
+    width: 100% !important;
+}
 
 .message-unread {
     color: #0275d8 !important;
 }
 
-.message-topic:hover{
+.message-topic:hover {
     color: lightgray !important;
     transition: 0.15s;
 }
@@ -60,7 +60,7 @@ table {
     width: 100%;
     padding: 3px;
     border: solid 1px lightgray;
-     border-radius: 5px;
+    border-radius: 5px;
 }
 
 input[type="checkbox"] {

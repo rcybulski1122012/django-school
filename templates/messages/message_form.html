@@ -3,9 +3,9 @@
 {% load static %}
 
 {% block css %}
-  <link href="{% static 'plugins/css/ace.min.css' %}" type="text/css" media="all" rel="stylesheet" />
-  <link href="{% static 'plugins/css/resizable.min.css' %}" type="text/css" media="all" rel="stylesheet" />
-  <link href="{% static 'martor/css/martor.bootstrap.min.css' %}" type="text/css" media="all" rel="stylesheet" />
+  <link href="{% static 'plugins/css/ace.min.css' %}" type="text/css" media="all" rel="stylesheet"/>
+  <link href="{% static 'plugins/css/resizable.min.css' %}" type="text/css" media="all" rel="stylesheet"/>
+  <link href="{% static 'martor/css/martor.bootstrap.min.css' %}" type="text/css" media="all" rel="stylesheet"/>
 {% endblock %}
 
 {% block title %}
@@ -36,7 +36,8 @@
             <div class="collapse-panel">
               Teachers
               <span class="arrow float-end">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-caret-down-fill" viewBox="0 0 16 16">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                     class="bi bi-caret-down-fill" viewBox="0 0 16 16">
                   <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"></path>
                 </svg>
               </span>
@@ -55,7 +56,8 @@
               <div class="collapse-panel">
                 {{ class.number }}
                 <span class="arrow float-end">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-caret-down-fill" viewBox="0 0 16 16">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                       class="bi bi-caret-down-fill" viewBox="0 0 16 16">
                     <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"></path>
                   </svg>
                 </span>
@@ -64,8 +66,8 @@
 
             <div class="collapse" id="class-{{ class.number }}">
               {% for student in class.students.all %}
-                 <input type="checkbox" name="receivers" value="{{ student.pk }}" id="receiver-{{ student.pk }}">
-                 <label for="receiver-{{ student.pk }}">{{ student.full_name }}</label><br>
+                <input type="checkbox" name="receivers" value="{{ student.pk }}" id="receiver-{{ student.pk }}">
+                <label for="receiver-{{ student.pk }}">{{ student.full_name }}</label><br>
               {% endfor %}
             </div>
           {% endfor %}
@@ -82,29 +84,29 @@
 {% endblock content %}
 
 {% block js %}
-  const collapse_elements = document.querySelectorAll(".collapse");
+  <script>
+      const collapse_elements = document.querySelectorAll(".collapse");
 
-  for(const element of collapse_elements){
-      element.addEventListener("show.bs.collapse", e => {
-          element.previousElementSibling.querySelector(".arrow").style.transform = "rotate(180deg)"
+      for (const element of collapse_elements) {
+          element.addEventListener("show.bs.collapse", e => {
+              element.previousElementSibling.querySelector(".arrow").style.transform = "rotate(180deg)"
+          })
+
+          element.addEventListener("hide.bs.collapse", e => {
+              element.previousElementSibling.querySelector(".arrow").style.transform = "rotate(0deg)"
+          })
+      }
+
+      const selectAllButton = document.querySelector("#select-all-btn")
+      const receiversCheckboxes = document.querySelectorAll(`input[type="checkbox"]`)
+      selectAllButton.addEventListener("click", e => {
+          e.preventDefault()
+          for (const checkbox of receiversCheckboxes)
+              checkbox.checked = true
+          e.target.innerHTML = "Selected"
       })
+  </script>
 
-      element.addEventListener("hide.bs.collapse", e => {
-          element.previousElementSibling.querySelector(".arrow").style.transform = "rotate(0deg)"
-      })
-  }
-
-  const selectAllButton = document.querySelector("#select-all-btn")
-  const receiversCheckboxes = document.querySelectorAll(`input[type="checkbox"]`)
-  selectAllButton.addEventListener("click", e => {
-      e.preventDefault()
-      for(const checkbox of receiversCheckboxes)
-          checkbox.checked = true
-      e.target.innerHTML = "Selected"
-  })
-{% endblock %}
-
-{% block js_libraries %}
   <script type="text/javascript" src="{% static 'plugins/js/jquery.min.js' %}"></script>
   <script type="text/javascript" src="{% static 'plugins/js/ace.js' %}"></script>
   <script type="text/javascript" src="{% static 'plugins/js/mode-markdown.js' %}"></script>

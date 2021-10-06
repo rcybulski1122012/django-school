@@ -8,7 +8,7 @@
   <h1>Grades categories | Class: {{ school_class }} | Subject: {{ subject }}</h1>
   <ul class="list-group my-4" id="categories">
     {% for category in categories %}
-        {% include "grades/partials/grade_category_detail.html" with category=category %}
+      {% include "grades/partials/grade_category_detail.html" with category=category %}
     {% endfor %}
   </ul>
 
@@ -22,12 +22,14 @@
   </button>
 {% endblock %}
 
-{% block js_libraries %}
-  <script src="https://unpkg.com/htmx.org@1.5.0" integrity="sha384-oGA+prIp5Vchu6we2YkI51UtVzN9Jpx2Z7PnR1I78PnZlN8LkrCT4lqqqmDkyrvI" crossorigin="anonymous"></script>
-{% endblock %}
-
 {% block js %}
-    document.addEventListener("htmx:configRequest", e => {
-        e.detail.headers["X-CSRFToken"] = "{{ csrf_token }}"
-    })
+  <script>
+      document.addEventListener("htmx:configRequest", e => {
+          e.detail.headers["X-CSRFToken"] = "{{ csrf_token }}"
+      })
+  </script>
+
+  <script src="https://unpkg.com/htmx.org@1.5.0"
+          integrity="sha384-oGA+prIp5Vchu6we2YkI51UtVzN9Jpx2Z7PnR1I78PnZlN8LkrCT4lqqqmDkyrvI"
+          crossorigin="anonymous"></script>
 {% endblock %}

@@ -22,12 +22,11 @@
     <div class="col-3">
       <form method="get">
         <label for="date_to">Date:</label>
-        <input type="date" name="date" id="date_to" class="form-control" value="{% if date %}{{ date }}{% else %}{% now "Y-m-d" %}{% endif %}">
+        <input type="date" name="date" id="date_to" class="form-control"
+               value="{% if date %}{{ date }}{% else %}{% now "Y-m-d" %}{% endif %}">
         <input type="submit" class="btn btn-outline-success my-3" value="Filter">
       </form>
     </div>
   </div>
-
-
 
 {% endblock %}

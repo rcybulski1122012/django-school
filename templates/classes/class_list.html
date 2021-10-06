@@ -9,7 +9,7 @@
   <ul class="list-group my-4">
     {% for school_class in school_classes %}
       <li class="list-group-item">
-       <a href="{{ school_class.get_absolute_url }}">
+        <a href="{{ school_class.get_absolute_url }}">
           {{ school_class.number }}
         </a>
         <span class="float-end">
@@ -17,7 +17,7 @@
             subjects
           </a>
           &nbsp;
-          <a href="{{ school_class.get_timetable_url }}" >
+          <a href="{{ school_class.get_timetable_url }}">
             timetable
           </a>
         </span>

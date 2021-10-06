@@ -28,14 +28,14 @@
 </div>
 
 <script>
-      let timetable = document.querySelector("#timetable");
+    let timetable = document.querySelector("#timetable");
 
-      {% for lesson in lessons %}
-          {
-              let cell = timetable.querySelector("#{{ lesson.weekday }}{{ lesson.time }}")
-              cell.querySelector(".lesson").innerText = "{{ lesson.subject.name }}"
-              cell.querySelector(".teacher").innerText = "{{ lesson.teacher.full_name }} |"
-              cell.querySelector(".classroom").innerText = "{{ lesson.classroom }}"
-          }
-      {% endfor %}
-  </script>
+    {% for lesson in lessons %}
+        {
+            let cell = timetable.querySelector("#{{ lesson.weekday }}{{ lesson.time }}")
+            cell.querySelector(".lesson").innerText = "{{ lesson.subject.name }}"
+            cell.querySelector(".teacher").innerText = "{{ lesson.teacher.full_name }} |"
+            cell.querySelector(".classroom").innerText = "{{ lesson.classroom }}"
+        }
+    {% endfor %}
+</script>

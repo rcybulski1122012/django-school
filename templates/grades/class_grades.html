@@ -11,44 +11,46 @@
   <div class="table-responsive">
     <table class="table table-bordered table-responsive" id="grades">
       <thead>
-          <tr>
-            <th>Student</th>
-            <th style="width:10%"> </th>
-            {% for category in categories %}
-              <th>
-                {{ category.name }}
-                <a href="{% url "grades:add_in_bulk" school_class.slug subject.slug %}?category={{ category.pk }}" class="badge bg-primary text-white link-unstyled float-end">
-                  +
-                </a>
-              </th>
+      <tr>
+        <th>Student</th>
+        <th style="width:10%"></th>
+        {% for category in categories %}
+          <th>
+            {{ category.name }}
+            <a href="{% url "grades:add_in_bulk" school_class.slug subject.slug %}?category={{ category.pk }}"
+               class="badge bg-primary text-white link-unstyled float-end">
+              +
+            </a>
+          </th>
 
-            {% endfor %}
-            <th>
-              Average
-            </th>
-          </tr>
+        {% endfor %}
+        <th>
+          Average
+        </th>
+      </tr>
       </thead>
       <tbody>
-       {% for student in students %}
-         <tr class="student-{{ student.pk }}">
-           <td>{{ student.full_name }}</td>
-           <td class="text-center">
-             <a href="{% url "grades:add" class_slug subject_slug %}?student={{ student.pk }}" class="btn btn-outline-primary">
-               +
-             </a>
-           </td>
-           {% for category in categories %}
-             <td class="category-{{ category.pk }}"></td>
-           {% endfor %}
+      {% for student in students %}
+        <tr class="student-{{ student.pk }}">
+          <td>{{ student.full_name }}</td>
+          <td class="text-center">
+            <a href="{% url "grades:add" class_slug subject_slug %}?student={{ student.pk }}"
+               class="btn btn-outline-primary">
+              +
+            </a>
+          </td>
+          {% for category in categories %}
+            <td class="category-{{ category.pk }}"></td>
+          {% endfor %}
 
-           <td>
-             {% if student.w_avg %}
-                {{ student.w_avg|floatformat:2 }}
-             {% else %}
-                -
-             {% endif %}
-           </td>
-         </tr>
+          <td>
+            {% if student.w_avg %}
+              {{ student.w_avg|floatformat:2 }}
+            {% else %}
+              -
+            {% endif %}
+          </td>
+        </tr>
       {% endfor %}
       </tbody>
     </table>
@@ -56,42 +58,44 @@
 {% endblock %}
 
 {% block js %}
-    const grades = document.querySelector("#grades");
+  <script>
+      const grades = document.querySelector("#grades");
 
-    function createGrade(studentPk, categoryPk, grade, gradePk, gradeComment, gradeWeight) {
-        const td = grades.querySelector(`.student-${studentPk} .category-${categoryPk}`);
-        const update_url = "{% url "grades:update" grade_pk=12345 %}".replace(/12345/, gradePk.toString());
-        const delete_url = "{% url "grades:delete" grade_pk=12345 %}".replace(/12345/, gradePk.toString());
+      function createGrade(studentPk, categoryPk, grade, gradePk, gradeComment, gradeWeight) {
+          const td = grades.querySelector(`.student-${studentPk} .category-${categoryPk}`);
+          const update_url = "{% url "grades:update" grade_pk=12345 %}".replace(/12345/, gradePk.toString());
+          const delete_url = "{% url "grades:delete" grade_pk=12345 %}".replace(/12345/, gradePk.toString());
 
-        td.innerText = grade;
-        td.dataset.bsToggle = "popover";
-        td.dataset.bsContent = `
+          td.innerText = grade;
+          td.dataset.bsToggle = "popover";
+          td.dataset.bsContent = `
             <h3>${gradeComment}</h3>
             <p>Weight: ${gradeWeight}</p>
             <a href="${update_url}" class="btn btn-outline-primary">Update</a>
             <a href="${delete_url}" class="btn btn-outline-danger">Delete</a>
         `;
-    }
+      }
 
-    {% for student in students %}
-        {% for grade in student.subject_grades %}
-            createGrade({{ grade.student.pk }},
-                        {{ grade.category.pk }},
-                        "{{ grade.get_grade_display }}",
-                        {{ grade.pk }},
-                        "{{ grade.comment }}",
-                        {{ grade.weight }},
-            );
-        {% endfor %}
-    {% endfor %}
+      {% for student in students %}
+          {% for grade in student.subject_grades %}
+              createGrade({{ grade.student.pk }},
+                  {{ grade.category.pk }},
+                  "{{ grade.get_grade_display }}",
+                  {{ grade.pk }},
+                  "{{ grade.comment }}",
+                  {{ grade.weight }},
+              );
+          {% endfor %}
+      {% endfor %}
 
-    bootstrap.Tooltip.Default.allowList.h1 = ["*"]
-    const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
-    const popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
-        return new bootstrap.Popover(popoverTriggerEl, {
-            container: "body",
-            sanitize: false,
-            html: true,
-        })
-    })
+      bootstrap.Tooltip.Default.allowList.h1 = ["*"]
+      const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+      const popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+          return new bootstrap.Popover(popoverTriggerEl, {
+              container: "body",
+              sanitize: false,
+              html: true,
+          })
+      })
+  </script>
 {% endblock %}

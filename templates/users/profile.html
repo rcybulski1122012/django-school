@@ -8,7 +8,7 @@
 {% block content %}
   <h1>Your Profile</h1>
   <form method="POST">
-    {{ user_info_form|crispy  }}
+    {{ user_info_form|crispy }}
     {{ address_form|crispy }}
 
     <input type="submit" value="Update" class="btn btn-success my-3">

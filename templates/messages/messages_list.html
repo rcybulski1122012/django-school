@@ -3,10 +3,12 @@
     <li class="list-group-item">
       <div class="row">
         <div class="col-lg-10 col-sm-8">
-         <a href="{{ school_message.get_absolute_url }}" class="link-unstyled message-topic h4 {% if school_message.status.0.is_read == False %} message-unread{% endif %} %}">{{ school_message.topic }}</a>
+          <a href="{{ school_message.get_absolute_url }}"
+             class="link-unstyled message-topic h4 {% if school_message.status.0.is_read == False %} message-unread{% endif %} %}">{{ school_message.topic }}</a>
         </div>
         <div class="col-lg-2 col-sm-4">
-          {% if school_message.sender != user %} <span class="float-end">Sender: {{ school_message.sender.full_name }}</span><br>{% endif %}
+          {% if school_message.sender != user %}
+            <span class="float-end">Sender: {{ school_message.sender.full_name }}</span><br>{% endif %}
           <span class="text-muted message-datetime float-end">{{ school_message.created }}</span>
         </div>
       </div>
