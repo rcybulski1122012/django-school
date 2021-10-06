@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
+from django.db.models import Q
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DetailView, ListView
 
@@ -68,30 +69,28 @@ class MessageCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
         return kwargs
 
 
-class MessageDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
+class MessageDetailView(LoginRequiredMixin, DetailView):
     model = Message
     pk_url_kwarg = "message_pk"
     template_name = "messages/message_detail.html"
     context_object_name = "school_message"
 
-    def test_func(self):
-        message = self.get_object()
-
-        return message.sender == self.request.user or message.status
-
     def get_queryset(self):
         return (
             super()
             .get_queryset()
+            .filter(Q(sender=self.request.user) | Q(receivers=self.request.user))
             .select_related("sender")
             .with_statuses(receiver=self.request.user)
         )
 
     def get(self, request, *args, **kwargs):
         result = super().get(request, *args, **kwargs)
-        status = self.object.status[0]
-        if not status.is_read:
-            status.is_read = True
-            status.save()
+
+        if self.object.status:
+            status = self.object.status[0]
+            if not status.is_read:
+                status.is_read = True
+                status.save()
 
         return result

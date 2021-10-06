@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -15,7 +15,11 @@ from django.views.generic import (
 )
 
 from django_school.apps.classes.models import Class
-from django_school.apps.common.utils import IsTeacherMixin, teacher_view
+from django_school.apps.common.utils import (
+    IsTeacherMixin,
+    does_the_teacher_teach_the_subject_to_the_class,
+    teacher_view,
+)
 from django_school.apps.grades.forms import (
     BulkGradeCreationCommonInfoForm,
     BulkGradeCreationFormSet,
@@ -23,9 +27,6 @@ from django_school.apps.grades.forms import (
     GradeForm,
 )
 from django_school.apps.grades.models import Grade, GradeCategory
-from django_school.apps.common.utils import (
-    does_the_teacher_teach_the_subject_to_the_class,
-)
 from django_school.apps.lessons.models import Subject
 
 User = get_user_model()
@@ -165,25 +166,22 @@ class ClassGradesView(
         return context
 
 
-class SingleGradeMixin(UserPassesTestMixin):
+class SingleGradeMixin:
     model = Grade
     pk_url_kwarg = "grade_pk"
     context_object_name = "grade"
 
-    def test_func(self):
-        return self.get_object().teacher == self.request.user
-
     def get_success_url(self):
-        grade = self.get_object()
         return reverse(
             "grades:class_grades",
-            args=[grade.student.school_class.slug, grade.subject.slug],
+            args=[self.object.student.school_class.slug, self.object.subject.slug],
         )
 
     def get_queryset(self):
         return (
             super()
             .get_queryset()
+            .filter(teacher=self.request.user)
             .select_related("category", "subject", "student__school_class", "teacher")
         )
 

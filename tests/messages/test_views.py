@@ -2,8 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from django_school.apps.messages.models import Message, MessageStatus
-from tests.utils import (ClassesMixin, LoginRequiredTestMixin, MessagesMixin,
-                         UsersMixin)
+from tests.utils import ClassesMixin, LoginRequiredTestMixin, MessagesMixin, UsersMixin
 
 
 class MessagesListViewTestMixin(LoginRequiredTestMixin, UsersMixin, MessagesMixin):
@@ -185,12 +184,26 @@ class MessageDetailViewTestView(
         else:
             return reverse(self.path_name, args=[self.message.pk])
 
-    def test_returns_403_when_user_is_not_sender_or_receiver_of_the_message(self):
+    def test_returns_404_when_user_is_not_a_sender_or_a_receiver_of_the_message(self):
         self.login(self.user)
 
         response = self.client.get(self.get_url())
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 404)
+
+    def test_returns_200_when_user_is_a_sender_or_a_receiver_of_the_message(self):
+        self.login(self.sender)
+
+        response = self.client.get(self.get_url())
+
+        self.assertEqual(response.status_code, 200)
+
+        self.logout()
+        self.login(self.receiver)
+
+        response = self.client.get(self.get_url())
+
+        self.assertEqual(response.status_code, 200)
 
     def test_context_contains_message(self):
         self.login(self.receiver)

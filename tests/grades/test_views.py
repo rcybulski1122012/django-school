@@ -3,14 +3,9 @@ from django.urls import reverse
 
 from django_school.apps.grades.forms import GradeCategoryForm
 from django_school.apps.grades.models import Grade, GradeCategory
-from tests.utils import (
-    ClassesMixin,
-    GradesMixin,
-    LessonsMixin,
-    ResourceViewTestMixin,
-    TeacherViewTestMixin,
-    UsersMixin,
-)
+from tests.utils import (ClassesMixin, GradesMixin, LessonsMixin,
+                         ResourceViewTestMixin, TeacherViewTestMixin,
+                         UsersMixin)
 
 
 class SubjectAndSchoolClassRelatedTestMixin(
@@ -273,13 +268,13 @@ class SingleGradeTestMixin(
     def get_nonexistent_resource_url(self):
         return self.get_url(grade_pk=12345)
 
-    def test_returns_403_when_user_is_not_the_teacher_who_gave_the_grade(self):
+    def test_returns_404_when_user_is_not_the_teacher_who_gave_the_grade(self):
         teacher2 = self.create_teacher(username="teacher2")
         self.login(teacher2)
 
         response = self.client.get(self.get_url())
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 404)
 
 
 class GradeUpdateViewTestCase(SingleGradeTestMixin, TestCase):
