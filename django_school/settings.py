@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "django_school.apps.common",
     "django_school.apps.grades",
     "django_school.apps.messages",
+    "django_school.apps.events",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",

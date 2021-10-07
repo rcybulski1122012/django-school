@@ -7,10 +7,15 @@ from django.utils.text import slugify
 
 from django_school.apps.classes.models import Class
 from django_school.apps.common.models import Address
+from django_school.apps.events.models import Event
 from django_school.apps.grades.models import Grade, GradeCategory
-from django_school.apps.lessons.models import (AttachedFile, Lesson,
-                                               LessonSession, Presence,
-                                               Subject)
+from django_school.apps.lessons.models import (
+    AttachedFile,
+    Lesson,
+    LessonSession,
+    Presence,
+    Subject,
+)
 from django_school.apps.messages.models import Message, MessageStatus
 
 User = get_user_model()
@@ -206,6 +211,29 @@ class MessagesMixin:
         MessageStatus.objects.bulk_create(statuses)
 
         return message
+
+
+class EventsMixin:
+    DEFAULT_TITLE = "Event Title"
+    DEFAULT_DESCRIPTION = "Event Description"
+
+    @staticmethod
+    def create_event(
+        teacher,
+        school_class,
+        date,
+        title=DEFAULT_TITLE,
+        description=DEFAULT_DESCRIPTION,
+        **kwargs,
+    ):
+        return Event.objects.create(
+            teacher=teacher,
+            school_class=school_class,
+            date=date,
+            title=title,
+            description=description,
+            **kwargs,
+        )
 
 
 class LoginRequiredTestMixin:
