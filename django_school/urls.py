@@ -29,6 +29,7 @@ urlpatterns = [
     path(
         "messages/", include("django_school.apps.messages.urls", namespace="messages")
     ),
+    path("events/", include("django_school.apps.events.urls", namespace="events")),
     path("admin/", admin.site.urls),
     path("martor/", include("martor.urls")),
     path("__debug__", include(debug_toolbar.urls)),

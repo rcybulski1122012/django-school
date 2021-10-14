@@ -1,0 +1,8 @@
+<div class="bg-primary text-white p-1 my-1 rounded event"
+     data-bs-toggle="popover" title="{{ event.title }}"
+     data-bs-content="<strong>Description: </strong>{% if event.description %}{{ event.description }}{% endif %}<br>
+                      <strong>Created: </strong> {{ event.created }}<br>
+                      <strong>Teacher: </strong> {{ event.teacher.full_name  }}<br>
+                      <strong>Scope:</strong> {% if event.school_class %}{{ event.school_class }}{% else %}global{% endif %}<br>">
+  {{ event.title }}
+</div>

@@ -37,6 +37,10 @@ table {
     word-wrap: break-word;
 }
 
+#calendar td{
+    width: 14%;
+}
+
 .table {
     overflow-x: auto !important;
     width: 100% !important;
@@ -65,4 +69,13 @@ table {
 
 input[type="checkbox"] {
     margin-left: 10px;
+}
+
+[data-bs-toggle="popover"]:hover {
+    cursor: pointer;
+}
+
+.event:hover {
+    opacity: 0.9;
+    transition: 0.15s
 }
