@@ -20,7 +20,7 @@ class EventModelTestCase(UsersMixin, ClassesMixin, EventsMixin, TestCase):
         with self.assertRaises(ValidationError):
             self.create_event(self.teacher, self.school_class, self.past_date).clean()
 
-    def test_clean_raises_ValidationError_if_teacher_is_not_in_teachers_group(self):
+    def test_clean_raises_ValidationError_if_teacher_is_not_a_teacher(self):
         student = self.create_student()
 
         with self.assertRaises(ValidationError):

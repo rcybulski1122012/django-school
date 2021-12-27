@@ -91,7 +91,7 @@ class Lesson(models.Model):
             )
 
         if not self.teacher.is_teacher:
-            raise ValidationError("The teacher is not in teachers group.")
+            raise ValidationError("The teacher is not a teacher.")
 
 
 class LessonSession(models.Model):

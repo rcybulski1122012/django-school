@@ -33,14 +33,18 @@ class StudentsQuerySet(models.QuerySet):
 
 class StudentsManager(models.Manager):
     def get_queryset(self):
-        return StudentsQuerySet(self.model, using=self._db).filter(
-            groups__name="students"
-        )
+        return StudentsQuerySet(self.model, using=self._db).filter(role=ROLES.STUDENT)
 
 
 class TeachersManager(models.Manager):
     def get_queryset(self):
-        return super().get_queryset().filter(groups__name="teachers")
+        return super().get_queryset().filter(role=ROLES.TEACHER)
+
+
+class ROLES(models.TextChoices):
+    TEACHER = ("TEACHER", "Teacher")
+    STUDENT = ("STUDENT", "Student")
+    PARENT = ("PARENT", "Parent")
 
 
 class User(AbstractUser):
@@ -50,6 +54,7 @@ class User(AbstractUser):
         ("other", "other"),
     ]
 
+    role = models.TextField(null=True, choices=ROLES.choices)
     slug = models.SlugField(max_length=64, unique=True)
     personal_id = models.CharField(max_length=16, null=True, blank=True)
     phone_number = models.CharField(max_length=16, null=True, blank=True)
@@ -83,8 +88,11 @@ class User(AbstractUser):
 
     @property
     def is_teacher(self):
-        return self.groups.filter(name="teachers").exists()
+        return self.role == ROLES.TEACHER
 
     @property
     def is_student(self):
-        return self.groups.filter(name="students").exists()
+        return self.role == ROLES.STUDENT
+
+    def is_parent(self):
+        return self.role == ROLES.PARENT

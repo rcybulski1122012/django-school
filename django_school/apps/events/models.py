@@ -47,7 +47,7 @@ class Event(models.Model):
             raise ValidationError("The date must be in the future.")
 
         if not self.teacher.is_teacher:
-            raise ValidationError("Teacher is not in teachers group.")
+            raise ValidationError("Teacher is not a teacher.")
 
     @property
     def is_global(self):

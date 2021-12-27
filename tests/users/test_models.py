@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
+from django_school.apps.users.models import ROLES
 from tests.utils import ClassesMixin, GradesMixin, LessonsMixin, UsersMixin
 
 User = get_user_model()
@@ -27,7 +28,8 @@ class UserModelTestCase(UsersMixin, TestCase):
 
         self.assertFalse(user.is_teacher)
 
-        self.add_user_to_group(user, "teachers")
+        user.role = ROLES.TEACHER
+        user.save()
 
         self.assertTrue(user.is_teacher)
 
@@ -36,7 +38,8 @@ class UserModelTestCase(UsersMixin, TestCase):
 
         self.assertFalse(user.is_student)
 
-        self.add_user_to_group(user, "students")
+        user.role = ROLES.STUDENT
+        user.save()
 
         self.assertTrue(user.is_student)
 

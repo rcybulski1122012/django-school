@@ -12,6 +12,7 @@ from django.views.generic import DetailView
 from django_school.apps.common.forms import AddressForm
 from django_school.apps.common.utils import IsTeacherMixin
 from django_school.apps.users.forms import UserInfoForm
+from django_school.apps.users.models import ROLES
 
 User = get_user_model()
 
@@ -23,14 +24,14 @@ class StudentDetailView(LoginRequiredMixin, IsTeacherMixin, DetailView):
     context_object_name = "user"
 
     def dispatch(self, request, *args, **kwargs):
-        if self.is_the_user_in_teachers_group():
+        if self.is_requested_user_a_teacher():
             raise Http404()
 
         return super().dispatch(request, *args, **kwargs)
 
-    def is_the_user_in_teachers_group(self):
+    def is_requested_user_a_teacher(self):
         return User.objects.filter(
-            slug=self.kwargs[self.slug_url_kwarg], groups__name="teachers"
+            slug=self.kwargs[self.slug_url_kwarg], role=ROLES.TEACHER
         ).exists()
 
     def get_queryset(self):

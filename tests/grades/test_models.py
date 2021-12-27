@@ -23,7 +23,7 @@ class GradeModelTestCase(UsersMixin, ClassesMixin, LessonsMixin, GradesMixin, Te
                 self.category, self.subject, self.student, self.teacher
             ).clean()
 
-    def test_clean_raises_ValidationError_if_teacher_is_not_in_teachers_group(self):
+    def test_clean_raises_ValidationError_if_teacher_is_not_a_teacher(self):
         student2 = self.create_student(username="student2")
 
         with self.assertRaises(ValidationError):
@@ -31,7 +31,7 @@ class GradeModelTestCase(UsersMixin, ClassesMixin, LessonsMixin, GradesMixin, Te
                 self.category, self.subject, self.student, student2
             ).clean()
 
-    def test_clean_raises_ValidationError_if_student_is_in_teachers_group(self):
+    def test_clean_raises_ValidationError_if_student_is_a_teacher(self):
         teacher2 = self.create_teacher(username="teacher2")
 
         with self.assertRaises(ValidationError):

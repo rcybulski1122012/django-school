@@ -13,12 +13,8 @@ from django.views.generic import DetailView, ListView
 from django_school.apps.classes.models import Class
 from django_school.apps.common.utils import IsTeacherMixin, teacher_view
 from django_school.apps.lessons.forms import LessonSessionForm, PresenceFormSet
-from django_school.apps.lessons.models import (
-    AttachedFile,
-    Lesson,
-    LessonSession,
-    Subject,
-)
+from django_school.apps.lessons.models import (AttachedFile, Lesson,
+                                               LessonSession, Subject)
 
 User = get_user_model()
 
@@ -65,7 +61,7 @@ class TeacherTimetableView(TimetableContextMixin, DetailView):
 
 
 def timetables_list_view(request):
-    teachers = User.objects.filter(groups__name="teachers").order_by("first_name")
+    teachers = User.teachers.order_by("first_name")
     school_classes = Class.objects.order_by("number")
 
     return render(

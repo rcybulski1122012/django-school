@@ -36,4 +36,4 @@ class Class(models.Model):
         super().clean()
 
         if self.tutor is not None and not self.tutor.is_teacher:
-            raise ValidationError("Tutor is not in teachers group.")
+            raise ValidationError("Tutor is not a teacher.")

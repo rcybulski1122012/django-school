@@ -15,7 +15,7 @@ class ClassModelTestCase(UsersMixin, ClassesMixin, TestCase):
 
         self.assertEqual(school_class.slug, "cm4")
 
-    def test_clean_raises_ValidationError_when_tutor_is_not_in_teachers_group(
+    def test_clean_raises_ValidationError_when_tutor_is_not_a_teacher(
         self,
     ):
         student = self.create_student()

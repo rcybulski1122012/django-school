@@ -79,10 +79,10 @@ class Grade(models.Model):
             )
 
         if not self.teacher.is_teacher:
-            raise ValidationError("The teacher is not in teachers group.")
+            raise ValidationError("The teacher is a teacher.")
 
         if not self.student.is_student:
-            raise ValidationError("The student is not in students group")
+            raise ValidationError("The student is not a student")
 
         if not Lesson.objects.filter(
             school_class=self.student.school_class, subject=self.subject

@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import transaction
 from django.utils.text import slugify
@@ -17,12 +16,12 @@ from django_school.apps.lessons.models import (
     Subject,
 )
 from django_school.apps.messages.models import Message, MessageStatus
+from django_school.apps.users.models import ROLES
 
 User = get_user_model()
 
 
 class UsersMixin:
-    fixtures = ["groups.json"]
     DEFAULT_USERNAME = "username"
     DEFAULT_PASSWORD = "password"
     TEACHER_USERNAME = "teacher"
@@ -45,22 +44,15 @@ class UsersMixin:
     def logout(self):
         self.client.logout()
 
-    @staticmethod
-    def add_user_to_group(user, group_name):
-        group = Group.objects.get(name=group_name)
-        user.groups.add(group)
-
     @classmethod
     def create_teacher(cls, username=TEACHER_USERNAME, **kwargs):
-        teacher = cls.create_user(username, **kwargs)
-        cls.add_user_to_group(teacher, "teachers")
+        teacher = cls.create_user(username, role=ROLES.TEACHER, **kwargs)
 
         return teacher
 
     @classmethod
     def create_student(cls, username=STUDENT_USERNAME, **kwargs):
-        student = cls.create_user(username, **kwargs)
-        cls.add_user_to_group(student, "students")
+        student = cls.create_user(username, role=ROLES.STUDENT, **kwargs)
 
         return student
 
@@ -249,14 +241,14 @@ class LoginRequiredTestMixin:
 
 
 class TeacherViewTestMixin(LoginRequiredTestMixin):
-    def test_returns_403_when_user_is_not_in_teachers_group(self):
+    def test_returns_403_when_user_is_not_a_teacher(self):
         self.login(self.student)
 
         response = self.client.get(self.get_url())
 
         self.assertEqual(response.status_code, 403)
 
-    def test_returns_200_when_user_is_in_teachers_group(self):
+    def test_returns_200_when_user_is_a_teacher(self):
         self.login(self.teacher)
 
         response = self.client.get(self.get_url())
