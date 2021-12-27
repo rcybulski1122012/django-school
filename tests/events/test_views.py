@@ -50,10 +50,19 @@ class EventsCalendarViewTestCase(
     def test_renders_buttons_for_next_and_previous_month(self):
         self.login(self.teacher)
         response = self.client.get(self.get_url())
-        self.assertContains(
-            response,
-            self.get_url(date=self.current_month_date + datetime.timedelta(days=30)),
-        )
+
+        if self.current_month_date.month != 12:
+            self.assertContains(
+                response,
+                self.get_url(
+                    date=self.current_month_date + datetime.timedelta(days=30)
+                ),
+            )
+        else:
+            self.assertContains(
+                response,
+                self.get_url() + f"?year={self.current_month_date.year}&month={13}",
+            )
         self.assertContains(
             response,
             self.get_url(date=self.current_month_date + datetime.timedelta(days=-30)),
