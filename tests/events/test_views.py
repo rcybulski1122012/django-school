@@ -4,9 +4,15 @@ from django.test import TestCase
 from django.urls import reverse
 
 from django_school.apps.events.models import Event
-from tests.utils import (ClassesMixin, EventsMixin, LoginRequiredTestMixin,
-                         ResourceViewTestMixin, TeacherViewTestMixin,
-                         UsersMixin)
+from tests.utils import (
+    ClassesMixin,
+    EventsMixin,
+    LessonsMixin,
+    LoginRequiredTestMixin,
+    ResourceViewTestMixin,
+    TeacherViewTestMixin,
+    UsersMixin,
+)
 
 
 class EventsCalendarViewTestCase(
@@ -115,6 +121,69 @@ class EventsCalendarViewTestCase(
         self.assertNotContains(response, school_class2_event.title)
 
 
+class EventCreateViewTestCase(
+    TeacherViewTestMixin,
+    UsersMixin,
+    ClassesMixin,
+    LessonsMixin,
+    EventsMixin,
+    TestCase,
+):
+    path_name = "events:create"
+
+    def setUp(self):
+        self.teacher = self.create_teacher()
+        self.student = self.create_student()
+        self.school_class = self.create_class()
+        self.date = datetime.date.today() + datetime.timedelta(days=1)
+        self.subject = self.create_subject()
+        self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
+
+    def get_url(self):
+        return reverse(self.path_name)
+
+    def get_example_form_data(self):
+        return {
+            "title": "title",
+            "description": "description",
+            "school_class": self.school_class.pk,
+            "date": self.date.strftime("%Y-%m-%d"),
+        }
+
+    def test_creates_event(self):
+        self.login(self.teacher)
+        data = self.get_example_form_data()
+
+        self.client.post(self.get_url(), data)
+
+        self.assertTrue(Event.objects.exists())
+
+    def test_redirects_to_calendar_view_after_successful_create(self):
+        self.login(self.teacher)
+        data = self.get_example_form_data()
+
+        response = self.client.post(self.get_url(), data)
+
+        self.assertRedirects(response, reverse("events:calendar"))
+
+    def test_renders_success_message_after_successful_create(self):
+        self.login(self.teacher)
+        data = self.get_example_form_data()
+
+        response = self.client.post(self.get_url(), data, follow=True)
+
+        self.assertContains(response, "The event has been created successfully")
+
+    def test_renders_error_message_if_date_is_in_the_past(self):
+        self.login(self.teacher)
+        data = self.get_example_form_data()
+        data["date"] = "2010-01-01"
+
+        response = self.client.post(self.get_url(), data)
+
+        self.assertContains(response, "The date must be in the future.")
+
+
 class EventDeleteViewTestCase(
     TeacherViewTestMixin,
     ResourceViewTestMixin,
@@ -147,6 +216,20 @@ class EventDeleteViewTestCase(
         self.client.post(self.get_url())
 
         self.assertFalse(Event.objects.exists())
+
+    def test_redirects_to_calendar_view_after_successful_delete(self):
+        self.login(self.teacher)
+
+        response = self.client.post(self.get_url())
+
+        self.assertRedirects(response, reverse("events:calendar"))
+
+    def test_renders_success_message_after_successful_delete(self):
+        self.login(self.teacher)
+
+        response = self.client.post(self.get_url(), follow=True)
+
+        self.assertContains(response, "The event has been deleted successfully.")
 
     def test_returns_404_when_user_is_not_creator(self):
         teacher2 = self.create_teacher(username="teacher2")

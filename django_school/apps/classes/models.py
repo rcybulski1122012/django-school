@@ -9,6 +9,12 @@ class ClassQuerySet(models.QuerySet):
     def with_students(self):
         return self.select_related("tutor").prefetch_related("students")
 
+    def visible_to_user(self, user):
+        if user.is_teacher:
+            return self.filter(lessons__teacher=user)
+        else:
+            return self.filter(pk=user.school_class_id)
+
 
 class Class(models.Model):
     number = models.CharField(max_length=4, unique=True)

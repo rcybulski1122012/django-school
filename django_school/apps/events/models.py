@@ -12,7 +12,7 @@ class EventQuerySet(models.QuerySet):
     def for_year_and_month(self, year, month):
         return self.filter(date__year=year, date__month=month)
 
-    def for_user(self, user):
+    def visible_to_user(self, user):
         return self.filter(
             Q(teacher=user)
             | Q(school_class_id=user.school_class_id)
