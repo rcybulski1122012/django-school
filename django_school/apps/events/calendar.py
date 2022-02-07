@@ -13,8 +13,9 @@ class EventCalendar(HTMLCalendar):
     cssclass_month = "table table-bordered"
     cssclass_month_head = "text-center"
 
-    def __init__(self, events):
+    def __init__(self, events, user=None):
         self.events = defaultdict(list)
+        self.user = user
         for event in events:
             self.events[event.date].append(event)
 
@@ -30,7 +31,7 @@ class EventCalendar(HTMLCalendar):
 
         for event in current_day_events:
             current_day_events_html += self.event_template.render(
-                context={"event": event}
+                context={"event": event, "user": self.user}
             )
 
         return f"<td>{day}{current_day_events_html}</td>"

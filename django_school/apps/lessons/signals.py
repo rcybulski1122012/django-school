@@ -7,6 +7,6 @@ from django_school.apps.lessons.models import LessonSession
 
 
 @receiver(pre_save, sender=LessonSession)
-def default_date(sender, **kwargs):
-    if sender.date is None:
-        sender.date = datetime.datetime.today()
+def default_date(sender, instance, **kwargs):
+    if instance.date is None:
+        instance.date = datetime.datetime.today()

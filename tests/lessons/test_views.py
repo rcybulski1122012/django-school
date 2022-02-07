@@ -6,7 +6,12 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from django_school.apps.lessons.models import AttachedFile, Lesson, Presence
+from django_school.apps.lessons.models import (
+    AttachedFile,
+    Lesson,
+    Presence,
+    LessonSession,
+)
 from tests.utils import (
     ClassesMixin,
     LessonsMixin,
@@ -184,6 +189,7 @@ class TeacherLessonSessionsListViewTestCase(
     def test_renders_links_to_lesson_session_detail_view(self):
         self.login(self.teacher)
         session = self.create_lesson_session(self.lesson)
+        print(LessonSession.objects.all())
 
         response = self.client.get(self.get_url())
 

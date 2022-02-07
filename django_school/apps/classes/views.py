@@ -19,6 +19,4 @@ class ClassDetailView(LoginRequiredMixin, IsTeacherMixin, DetailView):
     template_name = "classes/class_detail.html"
 
     def get_queryset(self):
-        return (
-            super().get_queryset().select_related("tutor").prefetch_related("students")
-        )
+        return super().get_queryset().with_students()

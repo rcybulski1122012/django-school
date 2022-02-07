@@ -5,6 +5,11 @@ from django.urls import reverse
 from django.utils.text import slugify
 
 
+class ClassQuerySet(models.QuerySet):
+    def with_students(self):
+        return self.select_related("tutor").prefetch_related("students")
+
+
 class Class(models.Model):
     number = models.CharField(max_length=4, unique=True)
     slug = models.SlugField(unique=True, blank=True)
@@ -14,6 +19,8 @@ class Class(models.Model):
         null=True,
         related_name="teacher_class",
     )
+
+    objects = ClassQuerySet.as_manager()
 
     class Meta:
         verbose_name_plural = "classes"

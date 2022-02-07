@@ -1,8 +1,11 @@
 import datetime
 
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import TemplateView
+from django.urls import reverse_lazy
+from django.views.generic import DeleteView, TemplateView
 
+from django_school.apps.common.utils import IsTeacherMixin
 from django_school.apps.events.calendar import EventCalendar
 from django_school.apps.events.models import Event
 
@@ -18,7 +21,9 @@ class EventsCalendarView(LoginRequiredMixin, TemplateView):
             .for_user(self.request.user)
             .select_related("school_class", "teacher")
         )
-        calendar = EventCalendar(events).formatmonth(year, month)
+        calendar = EventCalendar(events, user=self.request.user).formatmonth(
+            year, month
+        )
 
         context.update(
             {
@@ -48,3 +53,19 @@ class EventsCalendarView(LoginRequiredMixin, TemplateView):
             month = 12
 
         return year, month
+
+
+class EventDeleteView(LoginRequiredMixin, IsTeacherMixin, DeleteView):
+    model = Event
+    template_name = "events/event_delete.html"
+    pk_url_kwarg = "event_pk"
+    context_object_name = "event"
+    success_message = "The event has been deleted successfully."
+    success_url = reverse_lazy("events:calendar")
+
+    def get_queryset(self):
+        return super().get_queryset().filter(teacher=self.request.user)
+
+    def delete(self, *args, **kwargs):
+        messages.success(self.request, self.success_message)
+        return super().delete(*args, **kwargs)

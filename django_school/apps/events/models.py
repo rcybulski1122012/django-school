@@ -2,6 +2,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
+from django.urls import reverse
 from django.utils import timezone
 
 from django_school.apps.classes.models import Class
@@ -53,3 +54,7 @@ class Event(models.Model):
     @property
     def is_global(self):
         return self.school_class is None
+
+    @property
+    def delete_url(self):
+        return reverse("events:delete", args=[self.pk])

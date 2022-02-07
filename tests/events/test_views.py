@@ -3,7 +3,10 @@ import datetime
 from django.test import TestCase
 from django.urls import reverse
 
-from tests.utils import ClassesMixin, EventsMixin, LoginRequiredTestMixin, UsersMixin
+from django_school.apps.events.models import Event
+from tests.utils import (ClassesMixin, EventsMixin, LoginRequiredTestMixin,
+                         ResourceViewTestMixin, TeacherViewTestMixin,
+                         UsersMixin)
 
 
 class EventsCalendarViewTestCase(
@@ -110,3 +113,45 @@ class EventsCalendarViewTestCase(
 
         self.assertContains(response, self.current_month_event.title)
         self.assertNotContains(response, school_class2_event.title)
+
+
+class EventDeleteViewTestCase(
+    TeacherViewTestMixin,
+    ResourceViewTestMixin,
+    UsersMixin,
+    ClassesMixin,
+    EventsMixin,
+    TestCase,
+):
+    path_name = "events:delete"
+
+    def setUp(self):
+        self.teacher = self.create_teacher()
+        self.student = self.create_student()
+        self.school_class = self.create_class()
+        self.date = datetime.date.today() + datetime.timedelta(days=1)
+        self.event = self.create_event(self.teacher, self.school_class, self.date)
+
+    def get_url(self, event_pk=None):
+        if event_pk:
+            return reverse(self.path_name, args=[event_pk])
+        else:
+            return reverse(self.path_name, args=[self.event.pk])
+
+    def get_nonexistent_resource_url(self):
+        return reverse(self.path_name, args=[123456])
+
+    def test_deletes_event(self):
+        self.login(self.teacher)
+
+        self.client.post(self.get_url())
+
+        self.assertFalse(Event.objects.exists())
+
+    def test_returns_404_when_user_is_not_creator(self):
+        teacher2 = self.create_teacher(username="teacher2")
+        self.login(teacher2)
+
+        response = self.client.post(self.get_url())
+
+        self.assertEqual(response.status_code, 404)

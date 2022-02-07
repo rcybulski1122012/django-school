@@ -33,7 +33,7 @@ class EventCalendarTestCase(UsersMixin, ClassesMixin, EventsMixin, TestCase):
         self.assertEqual(result, '<td class="noday">&nbsp;</td>')
 
     def test_formatday_renders_template_with_events_for_given_day(self):
-        calendar = EventCalendar([self.event])
+        calendar = EventCalendar([self.event], user=self.teacher)
         calendar.year, calendar.month = self.date.year, self.date.month
 
         result = calendar.formatday(self.date.day, 1)
@@ -41,6 +41,7 @@ class EventCalendarTestCase(UsersMixin, ClassesMixin, EventsMixin, TestCase):
         self.assertIn(self.event.title, result)
         self.assertIn(self.event.description, result)
         self.assertIn(self.event.teacher.full_name, result)
+        self.assertIn(self.event.delete_url, result)
 
     def test_formatmonth_sets_year_and_month_attributes_to_class(self):
         calendar = EventCalendar([self.event])

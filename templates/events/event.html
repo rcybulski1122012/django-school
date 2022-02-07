@@ -3,6 +3,8 @@
      data-bs-content="<strong>Description: </strong>{% if event.description %}{{ event.description }}{% endif %}<br>
                       <strong>Created: </strong> {{ event.created }}<br>
                       <strong>Teacher: </strong> {{ event.teacher.full_name  }}<br>
-                      <strong>Scope:</strong> {% if event.school_class %}{{ event.school_class }}{% else %}global{% endif %}<br>">
+                      <strong>Scope:</strong> {% if event.school_class %}{{ event.school_class }}{% else %}global{% endif %}<br>
+                      {% if user == event.teacher %}<a href='#' class='btn btn-outline-primary'>Update</a>
+                      <a href='{{ event.delete_url }}' class='btn btn-outline-danger'>Delete</a>{% endif %}">
   {{ event.title }}
 </div>
