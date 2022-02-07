@@ -94,5 +94,6 @@ class User(AbstractUser):
     def is_student(self):
         return self.role == ROLES.STUDENT
 
+    @property
     def is_parent(self):
         return self.role == ROLES.PARENT

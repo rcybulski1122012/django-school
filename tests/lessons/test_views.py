@@ -7,8 +7,13 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from django_school.apps.lessons.models import AttachedFile, Lesson, Presence
-from tests.utils import (ClassesMixin, LessonsMixin, ResourceViewTestMixin,
-                         TeacherViewTestMixin, UsersMixin)
+from tests.utils import (
+    ClassesMixin,
+    LessonsMixin,
+    ResourceViewTestMixin,
+    TeacherViewTestMixin,
+    UsersMixin,
+)
 
 
 class TimetableViewMixin(
@@ -193,7 +198,7 @@ class TeacherLessonSessionsListViewTestCase(
 
         response = self.client.get(self.get_url())
 
-        self.assertContains(response, "There are no lessons in the given date.")
+        self.assertContains(response, "There are no lessons on the given date.")
 
 
 class LessonSessionDetailViewTestCase(

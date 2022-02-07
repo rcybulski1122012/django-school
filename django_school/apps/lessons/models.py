@@ -1,3 +1,5 @@
+import datetime
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -78,7 +80,7 @@ class Lesson(models.Model):
     )
 
     def __str__(self):
-        return f"{self.school_class}: {self.subject.name}, {self.weekday}: {self.time}"
+        return f"{self.school_class}: {self.subject.name}, {self.get_weekday_display()}: {self.get_time_display()}"
 
     def clean(self):
         super().clean()
@@ -96,7 +98,7 @@ class Lesson(models.Model):
 
 class LessonSession(models.Model):
     topic = models.CharField(max_length=128, blank=True, null=True)
-    date = models.DateField(auto_now_add=True)
+    date = models.DateField()
 
     lesson = models.ForeignKey(
         Lesson, on_delete=models.CASCADE, related_name="sessions"

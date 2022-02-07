@@ -2,7 +2,8 @@ from django.test import TestCase
 from django.urls import reverse
 
 from django_school.apps.messages.models import Message, MessageStatus
-from tests.utils import ClassesMixin, LoginRequiredTestMixin, MessagesMixin, UsersMixin
+from tests.utils import (ClassesMixin, LoginRequiredTestMixin, MessagesMixin,
+                         UsersMixin)
 
 
 class MessagesListViewTestMixin(LoginRequiredTestMixin, UsersMixin, MessagesMixin):
@@ -146,8 +147,6 @@ class MessageCreateViewTestCase(
         self.login(self.sender)
 
         response = self.client.get(self.get_url())
-
-        print(response.content)
 
         self.assertContains(
             response,

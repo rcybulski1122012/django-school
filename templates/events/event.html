@@ -1,4 +1,4 @@
-<div class="bg-primary text-white p-1 my-1 rounded event"
+<div class="text-white p-1 my-1 rounded event {% if event.school_class %}bg-primary{% else %}bg-danger{% endif %}"
      data-bs-toggle="popover" title="{{ event.title }}"
      data-bs-content="<strong>Description: </strong>{% if event.description %}{{ event.description }}{% endif %}<br>
                       <strong>Created: </strong> {{ event.created }}<br>

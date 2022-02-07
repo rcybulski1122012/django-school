@@ -82,6 +82,7 @@ class MessageDetailView(LoginRequiredMixin, DetailView):
             .filter(Q(sender=self.request.user) | Q(receivers=self.request.user))
             .select_related("sender")
             .with_statuses(receiver=self.request.user)
+            .distinct()
         )
 
     def get(self, request, *args, **kwargs):

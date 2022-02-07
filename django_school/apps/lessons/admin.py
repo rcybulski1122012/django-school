@@ -17,7 +17,15 @@ class LessonAdmin(admin.ModelAdmin):
 
 @admin.register(LessonSession)
 class LessonSessionAdmin(admin.ModelAdmin):
-    pass
+    list_filter = (
+        "lesson__school_class",
+        "date",
+        "lesson__subject",
+    )
+    list_select_related = (
+        "lesson__school_class",
+        "lesson__subject",
+    )
 
 
 @admin.register(Presence)

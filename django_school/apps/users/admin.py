@@ -7,6 +7,8 @@ from django_school.apps.users.models import User
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
     prepopulated_fields = {"slug": ("first_name", "last_name")}
+    list_display = ("full_name", "role", "school_class")
+    list_filter = ("role", "school_class")
     fieldsets = UserAdmin.fieldsets + (
         (
             None,

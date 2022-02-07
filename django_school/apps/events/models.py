@@ -30,6 +30,7 @@ class Event(models.Model):
         on_delete=models.CASCADE,
         related_name="created_events",
     )
+    # if none, the event is global
     school_class = models.ForeignKey(
         Class,
         on_delete=models.SET_NULL,

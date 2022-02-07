@@ -14,7 +14,7 @@
             <a href="{% url "lessons:session_detail" session.pk %}">{{ session.lesson }}</a>
           </li>
         {% empty %}
-          <p>There are no lessons in the given date.</p>
+          <p>There are no lessons on the given date.</p>
         {% endfor %}
       </ul>
     </div>
