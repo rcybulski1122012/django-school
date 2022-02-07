@@ -184,6 +184,80 @@ class EventCreateViewTestCase(
         self.assertContains(response, "The date must be in the future.")
 
 
+class EventUpdateViewTestCase(
+    TeacherViewTestMixin,
+    ResourceViewTestMixin,
+    UsersMixin,
+    ClassesMixin,
+    LessonsMixin,
+    EventsMixin,
+    TestCase,
+):
+    path_name = "events:update"
+
+    def setUp(self):
+        self.teacher = self.create_teacher()
+        self.student = self.create_student()
+        self.school_class = self.create_class()
+        self.date = datetime.date.today() + datetime.timedelta(days=1)
+        self.subject = self.create_subject()
+        self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
+        self.event = self.create_event(self.teacher, self.school_class, self.date)
+
+    def get_url(self, event_pk=None):
+        if event_pk:
+            return reverse(self.path_name, args=[event_pk])
+        else:
+            return reverse(self.path_name, args=[self.event.pk])
+
+    def get_nonexistent_resource_url(self):
+        return reverse(self.path_name, args=[123456])
+
+    def get_example_form_data(self):
+        return {
+            "title": "new title",
+            "description": "new description",
+            "school_class": self.school_class.pk,
+            "date": self.date.strftime("%Y-%m-%d"),
+        }
+
+    def test_updates_event(self):
+        self.login(self.teacher)
+        data = self.get_example_form_data()
+
+        self.client.post(self.get_url(), data)
+
+        self.event.refresh_from_db()
+        self.assertEqual(
+            [self.event.title, self.event.description],
+            [data["title"], data["description"]],
+        )
+
+    def test_redirects_to_calendar_view_after_successful_update(self):
+        self.login(self.teacher)
+        data = self.get_example_form_data()
+
+        response = self.client.post(self.get_url(), data)
+
+        self.assertRedirects(response, reverse("events:calendar"))
+
+    def test_renders_success_message_after_successful_update(self):
+        self.login(self.teacher)
+        data = self.get_example_form_data()
+
+        response = self.client.post(self.get_url(), data, follow=True)
+
+        self.assertContains(response, "The event has been updated successfully")
+
+    def test_returns_404_when_user_is_not_creator(self):
+        teacher2 = self.create_teacher(username="teacher2")
+        self.login(teacher2)
+
+        response = self.client.post(self.get_url())
+
+        self.assertEqual(response.status_code, 404)
+
+
 class EventDeleteViewTestCase(
     TeacherViewTestMixin,
     ResourceViewTestMixin,

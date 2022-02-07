@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.urls import reverse_lazy
-from django.views.generic import CreateView, DeleteView, TemplateView
+from django.views.generic import CreateView, DeleteView, TemplateView, UpdateView
 
 from django_school.apps.common.utils import IsTeacherMixin
 from django_school.apps.events.calendar import EventCalendar
@@ -65,6 +65,26 @@ class EventCreateView(
     template_name = "events/event_form.html"
     success_message = "The event has been created successfully"
     success_url = reverse_lazy("events:calendar")
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user})
+        return kwargs
+
+
+class EventUpdateView(
+    LoginRequiredMixin, IsTeacherMixin, SuccessMessageMixin, UpdateView
+):
+    model = Event
+    form_class = EventForm
+    template_name = "events/event_update.html"
+    pk_url_kwarg = "event_pk"
+    context_object_name = "event"
+    success_message = "The event has been updated successfully"
+    success_url = reverse_lazy("events:calendar")
+
+    def get_queryset(self):
+        return super().get_queryset().filter(teacher=self.request.user)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

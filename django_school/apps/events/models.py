@@ -56,5 +56,9 @@ class Event(models.Model):
         return self.school_class is None
 
     @property
+    def update_url(self):
+        return reverse("events:update", args=[self.pk])
+
+    @property
     def delete_url(self):
         return reverse("events:delete", args=[self.pk])

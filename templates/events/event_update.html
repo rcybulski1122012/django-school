@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load crispy_forms_filters %}
+
+{% block title %}
+  Update event "{{ event.title }}"
+{% endblock %}
+
+{% block content %}
+  <h1>Update event "{{ event.title }}"</h1>
+  <form method="POST">
+    {{ form|crispy }}
+
+    <input type="submit" value="Create" class="btn btn-success my-3">
+
+    {% csrf_token %}
+  </form>
+{% endblock %}
