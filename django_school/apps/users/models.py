@@ -30,6 +30,12 @@ class StudentsQuerySet(models.QuerySet):
             )
         )
 
+    def visible_to_user(self, user):
+        if user.is_teacher:
+            return self.filter(school_class__lessons__teacher=user).distinct()
+        else:
+            return self.filter(pk=user.pk)
+
 
 class StudentsManager(models.Manager):
     def get_queryset(self):
@@ -97,3 +103,7 @@ class User(AbstractUser):
     @property
     def is_parent(self):
         return self.role == ROLES.PARENT
+
+    @property
+    def attendance_url(self):
+        return reverse("lessons:student_attendance", args=[self.slug])

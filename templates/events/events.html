@@ -22,11 +22,14 @@
       </svg>
     </button>
 
+
+    {% if request.user.is_teacher %}
     <a href="{% url "events:create" %}">
       <button class="btn btn-primary float-end" >
         Create
       </button>
     </a>
+    {% endif %}
   </div>
 
   <div class="table-responsive" id="calendar">

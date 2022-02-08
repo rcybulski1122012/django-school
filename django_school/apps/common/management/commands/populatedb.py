@@ -8,7 +8,8 @@ from django.utils.text import slugify
 from django_school.apps.classes.models import Class
 from django_school.apps.events.models import Event
 from django_school.apps.grades.models import Grade, GradeCategory
-from django_school.apps.lessons.models import Lesson, Subject
+from django_school.apps.lessons.models import (Lesson, LessonSession, Presence,
+                                               Subject)
 from django_school.apps.lessons.utils import (create_lesson_session,
                                               find_closest_future_date)
 from django_school.apps.users.models import ROLES
@@ -202,8 +203,7 @@ class Command(BaseCommand):
 
         Subject.objects.bulk_create(subjects)
 
-    @staticmethod
-    def create_lessons():
+    def create_lessons(self):
         classes = Class.objects.all()
         subjects = Subject.objects.all()
         teachers = list(User.teachers.all())
@@ -232,9 +232,24 @@ class Command(BaseCommand):
 
         Lesson.objects.bulk_create(lessons)
 
+        self.create_lesson_sessions_and_presences(lessons)
+
+    @staticmethod
+    def create_lesson_sessions_and_presences(lessons):
+        lesson_sessions = []
+        presences = []
         for lesson in lessons:
             lesson_date = find_closest_future_date(lesson.weekday)
-            create_lesson_session(lesson, date=lesson_date)
+            lesson_session = LessonSession(lesson=lesson, date=lesson_date)
+            lesson_sessions.append(lesson_session)
+            status = random.choice(Presence.PRESENCE_STATUSES[:-1])[0]
+            presences += [
+                Presence(student=student, lesson_session=lesson_session, status=status)
+                for student in lesson.school_class.students.all()
+            ]
+
+        LessonSession.objects.bulk_create(lesson_sessions)
+        Presence.objects.bulk_create(presences)
 
     @staticmethod
     def create_grades_categories_and_grades():

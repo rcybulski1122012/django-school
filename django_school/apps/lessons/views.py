@@ -1,5 +1,6 @@
 import datetime
 import os
+from collections import Counter, defaultdict
 
 from django.contrib import messages
 from django.contrib.auth import get_user_model
@@ -14,7 +15,8 @@ from django_school.apps.classes.models import Class
 from django_school.apps.common.utils import IsTeacherMixin, teacher_view
 from django_school.apps.lessons.forms import LessonSessionForm, PresenceFormSet
 from django_school.apps.lessons.models import (AttachedFile, Lesson,
-                                               LessonSession, Subject)
+                                               LessonSession, Presence,
+                                               Subject)
 
 User = get_user_model()
 
@@ -183,3 +185,36 @@ def attached_file_delete_view(request, pk):
         os.remove(path)
 
     return HttpResponse()
+
+
+@login_required
+def student_attendance_summary_view(request, student_slug):
+    subject_name = request.GET.get("subject", None)
+    subject = (
+        get_object_or_404(Subject, name__iexact=subject_name) if subject_name else None
+    )
+    student = get_object_or_404(
+        User.students.visible_to_user(request.user), slug=student_slug
+    )
+
+    qs = student.presence_set
+    if subject:
+        qs = qs.filter(lesson_session__lesson__subject=subject)
+
+    statuses = [p[0] for p in qs.values_list("status") if p[0] != "none"]
+    subjects = Subject.objects.filter(
+        lessons__school_class__students=student
+    ).values_list("name", flat=True)
+    total = len(statuses)
+    counter = Counter(statuses)
+    statuses = defaultdict(int, counter.most_common())
+
+    ctx = {
+        "student": student,
+        "statuses": statuses,
+        "total": total,
+        "subject": subject,
+        "subjects": subjects,
+    }
+
+    return render(request, "lessons/student_attendance.html", ctx)

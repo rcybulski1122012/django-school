@@ -141,6 +141,22 @@ class StudentsManagerTestCase(
         with self.assertNumQueries(2):
             _ = User.students.with_subject_grades(self.subject).get().subject_grades
 
+    def test_visible_to_user_selects_taught_students_if_user_is_a_teacher(self):
+        school_class2 = self.create_class(number="2c")
+        self.create_student(username="student2", school_class=school_class2)
+        teacher2 = self.create_teacher(username="teacher2")
+        self.create_lesson(self.subject, teacher2, school_class2)
+        self.create_lesson(self.subject, self.teacher, self.school_class)
+
+        queryset = User.students.visible_to_user(self.teacher)
+        self.assertQuerysetEqual(queryset, [self.student])
+
+    def test_visible_to_user_selects_the_user_if_he_is_a_student(self):
+        self.create_student(username="student2")
+        queryset = User.students.visible_to_user(self.student)
+
+        self.assertQuerysetEqual(queryset, [self.student])
+
 
 class TeachersManagerTestCase(UsersMixin, TestCase):
     def setUp(self):

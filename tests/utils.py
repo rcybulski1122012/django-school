@@ -134,9 +134,9 @@ class LessonsMixin:
         return lesson_session
 
     @staticmethod
-    def create_presences(lesson_session, students):
+    def create_presences(lesson_session, students, status="none"):
         presences = [
-            Presence(lesson_session=lesson_session, student=student)
+            Presence(lesson_session=lesson_session, student=student, status=status)
             for student in students
         ]
 
