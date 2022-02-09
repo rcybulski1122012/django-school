@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}
+  {{ school_class.number }} attendance
+{% endblock %}
+
+{% block content %}
+  <h1>{{ school_class.number }} attendance</h1>
+
+  <div class="table-responsive">
+    <table class="table table-bordered align-middle">
+      <thead class="align-middle">
+        <tr>
+          <th rowspan="2">Student</th>
+          <th colspan="2">Present</th>
+          <th colspan="2">Absent</th>
+          <th colspan="2">Exempt</th>
+          <th colspan="2">Excused</th>
+        </tr>
+        <tr>
+          <th>Hours</th><th>Percentage</th>
+          <th>Hours</th><th>Percentage</th>
+          <th>Hours</th><th>Percentage</th>
+          <th>Hours</th><th>Percentage</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for student in students %}
+          <tr>
+            <th><a href="{{ student.attendance_url }}" class="text-decoration-none">{{ student.full_name }}</a></th>
+            <td>{{ student.present_hours }}</td>
+            <td>{% widthratio student.present_hours student.total_attendance 100 %}%</td>
+            <td>{{ student.absent_hours }}</td>
+            <td>{% widthratio student.absent_hours student.total_attendance 100 %}%</td>
+            <td>{{ student.exempt_hours }}</td>
+            <td>{% widthratio student.exempt_hours student.total_attendance 100 %}%</td>
+            <td>{{ student.excused_hours }}</td>
+            <td>{% widthratio student.excused_hours student.total_attendance 100 %}%</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+{% endblock %}

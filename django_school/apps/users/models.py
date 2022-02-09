@@ -1,6 +1,6 @@
 from django.contrib.auth.models import AbstractUser, UserManager
 from django.db import models
-from django.db.models import F, Prefetch, Q, Sum
+from django.db.models import Count, F, Prefetch, Q, Sum
 from django.urls import reverse
 from django.utils.text import slugify
 
@@ -28,6 +28,35 @@ class StudentsQuerySet(models.QuerySet):
                 ),
                 to_attr="subject_grades",
             )
+        )
+
+    def with_attendance(self, **attendance_params):
+        return self.annotate(
+            total_attendance=Count(
+                "presence",
+                ~Q(presence__status="none") & Q(**attendance_params),
+                distinct=True,
+            ),
+            present_hours=Count(
+                "presence",
+                filter=Q(presence__status="present", **attendance_params),
+                distinct=True,
+            ),
+            absent_hours=Count(
+                "presence",
+                filter=Q(presence__status="absent", **attendance_params),
+                distinct=True,
+            ),
+            exempt_hours=Count(
+                "presence",
+                filter=Q(presence__status="exempt", **attendance_params),
+                distinct=True,
+            ),
+            excused_hours=Count(
+                "presence",
+                filter=Q(presence__status="excused", **attendance_params),
+                distinct=True,
+            ),
         )
 
     def visible_to_user(self, user):

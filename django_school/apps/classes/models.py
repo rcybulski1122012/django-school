@@ -40,6 +40,9 @@ class Class(models.Model):
     def get_timetable_url(self):
         return reverse("lessons:class_timetable", args=[self.slug])
 
+    def attendance_url(self):
+        return reverse("lessons:class_attendance", args=[self.slug])
+
     def save(self, **kwargs):
         if not self.slug:
             self.slug = slugify(self.number)

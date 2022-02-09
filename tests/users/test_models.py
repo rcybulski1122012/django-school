@@ -1,6 +1,9 @@
+import datetime
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
+from django_school.apps.lessons.models import Presence
 from django_school.apps.users.models import ROLES
 from tests.utils import ClassesMixin, GradesMixin, LessonsMixin, UsersMixin
 
@@ -156,6 +159,20 @@ class StudentsManagerTestCase(
         queryset = User.students.visible_to_user(self.student)
 
         self.assertQuerysetEqual(queryset, [self.student])
+
+    def test_with_attendance(self):
+        lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
+        lesson_session = self.create_lesson_session(lesson, datetime.datetime.today())
+        for status in Presence.PRESENCE_STATUSES:
+            self.create_presences(lesson_session, [self.student], status=status[0])
+
+        student = User.students.with_attendance().get()
+
+        self.assertEqual(student.total_attendance, 4)
+        self.assertEqual(student.present_hours, 1)
+        self.assertEqual(student.absent_hours, 1)
+        self.assertEqual(student.exempt_hours, 1)
+        self.assertEqual(student.excused_hours, 1)
 
 
 class TeachersManagerTestCase(UsersMixin, TestCase):

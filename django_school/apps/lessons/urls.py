@@ -5,6 +5,7 @@ from django_school.apps.lessons.views import (ClassSubjectListView,
                                               TeacherLessonSessionsListView,
                                               TeacherTimetableView,
                                               attached_file_delete_view,
+                                              class_attendance_summary_view,
                                               lesson_session_detail_view,
                                               student_attendance_summary_view,
                                               timetables_list_view)
@@ -47,5 +48,10 @@ urlpatterns = [
         "attendance/student/<slug:student_slug>/",
         student_attendance_summary_view,
         name="student_attendance",
+    ),
+    path(
+        "attendance/class/<slug:class_slug>/",
+        class_attendance_summary_view,
+        name="class_attendance",
     ),
 ]

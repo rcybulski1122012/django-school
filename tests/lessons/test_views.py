@@ -533,14 +533,6 @@ class StudentAttendanceSummaryViewTestCase(
 
         self.assertEqual(response.context["student"], self.student)
 
-    def test_context_contains_statuses_and_total(self):
-        self.login(self.teacher)
-
-        response = self.client.get(self.get_url())
-
-        self.assertEqual(response.context["total"], 5)
-        self.assertEqual(response.context["statuses"]["absent"], 5)
-
     def test_renders_percentage(self):
         self.create_presences(self.lesson_session, [self.student], status="present")
         self.login(self.teacher)
@@ -559,12 +551,71 @@ class StudentAttendanceSummaryViewTestCase(
         self.assertEqual(response.status_code, 404)
 
     def test_renders_attendance_only_for_given_subject(self):
-        subject2 = self.create_subject(name="math")
+        subject2 = self.create_subject(name="subject2")
         lesson2 = self.create_lesson(subject2, self.teacher, self.school_class)
         lesson_session2 = self.create_lesson_session(lesson2, datetime.datetime.today())
         self.create_presences(lesson_session2, [self.student], status="absent")
         self.login(self.teacher)
 
-        response = self.client.get(self.get_url(subject_name="math"))
+        response = self.client.get(self.get_url(subject_name="subject2"))
 
-        self.assertEqual(response.context["total"], 1)
+        student = response.context["student"]
+        self.assertEqual(student.total_attendance, 1)
+
+
+class ClassAttendanceSummaryViewTestCase(
+    TeacherViewTestMixin,
+    ResourceViewTestMixin,
+    UsersMixin,
+    ClassesMixin,
+    LessonsMixin,
+    TestCase,
+):
+    path_name = "lessons:class_attendance"
+
+    def setUp(self):
+        self.teacher = self.create_teacher()
+        self.school_class = self.create_class()
+        self.student = self.create_student(school_class=self.school_class)
+        self.student2 = self.create_student(
+            username="student2", school_class=self.school_class
+        )
+        self.subject = self.create_subject()
+        self.lesson = self.create_lesson(
+            self.subject,
+            self.teacher,
+            self.school_class,
+            weekday="fri",
+        )
+        self.lesson_session = self.create_lesson_session(
+            self.lesson, datetime.datetime.today()
+        )
+
+        for i in range(5):
+            self.create_presences(
+                self.lesson_session, [self.student, self.student2], status="absent"
+            )
+
+    def get_url(self, class_slug=None):
+        class_slug = class_slug or self.school_class.slug
+
+        return reverse(self.path_name, args=[class_slug])
+
+    def get_nonexistent_resource_url(self):
+        return self.get_url(class_slug="does-not-exist")
+
+    def test_returns_404_if_the_teacher_does_not_teach_the_class(self):
+        teacher2 = self.create_teacher(username="teacher2")
+        self.login(teacher2)
+
+        response = self.client.get(self.get_url())
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_context_contain_list_of_students_with_prefetched_attendance(self):
+        self.login(self.teacher)
+
+        response = self.client.get(self.get_url())
+
+        student = response.context["students"][0]
+        self.assertEqual(student.total_attendance, 5)

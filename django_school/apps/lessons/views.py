@@ -193,28 +193,42 @@ def student_attendance_summary_view(request, student_slug):
     subject = (
         get_object_or_404(Subject, name__iexact=subject_name) if subject_name else None
     )
-    student = get_object_or_404(
-        User.students.visible_to_user(request.user), slug=student_slug
-    )
-
-    qs = student.presence_set
     if subject:
-        qs = qs.filter(lesson_session__lesson__subject=subject)
+        attendance_params = {"presence__lesson_session__lesson__subject": subject}
+    else:
+        attendance_params = {}
 
-    statuses = [p[0] for p in qs.values_list("status") if p[0] != "none"]
+    student = get_object_or_404(
+        User.students.visible_to_user(request.user).with_attendance(
+            **attendance_params
+        ),
+        slug=student_slug,
+    )
     subjects = Subject.objects.filter(
         lessons__school_class__students=student
     ).values_list("name", flat=True)
-    total = len(statuses)
-    counter = Counter(statuses)
-    statuses = defaultdict(int, counter.most_common())
 
     ctx = {
         "student": student,
-        "statuses": statuses,
-        "total": total,
         "subject": subject,
         "subjects": subjects,
     }
 
     return render(request, "lessons/student_attendance.html", ctx)
+
+
+@login_required
+@teacher_view
+def class_attendance_summary_view(request, class_slug):
+    school_class = get_object_or_404(
+        Class.objects.visible_to_user(request.user), slug=class_slug
+    )
+
+    students = User.students.filter(school_class=school_class).with_attendance()
+
+    ctx = {
+        "students": students,
+        "school_class": school_class,
+    }
+
+    return render(request, "lessons/class_attendance.html", ctx)

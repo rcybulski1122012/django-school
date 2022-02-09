@@ -18,11 +18,11 @@
         </thead>
         <tbody>
 {#        {# widthratio -> trick to divide two numbers in template  #}
-          <tr><td>Present</td><td>{{ statuses.present }}</td><td>{% widthratio statuses.present total 100 %}%</td></tr>
-          <tr><td>Absent</td><td>{{ statuses.absent }}</td><td>{% widthratio statuses.absent total 100 %}%</td></tr>
-          <tr><td>Exempt</td><td>{{ statuses.exempt }}</td><td>{% widthratio statuses.exempt total 100 %}%</td></tr>
-          <tr><td>Excused</td><td>{{ statuses.excused }}</td><td>{% widthratio statuses.excused total 100 %}%</td></tr>
-          <tr><td>Total</td><td>{{ total }}</td><td></td></tr>
+          <tr><td>Present</td><td>{{ student.present_hours }}</td><td>{% widthratio student.present_hours student.total_attendance 100 %}%</td></tr>
+          <tr><td>Absent</td><td>{{ student.absent_hours }}</td><td>{% widthratio student.absent_hours student.total_attendance 100 %}%</td></tr>
+          <tr><td>Exempt</td><td>{{ student.exempt_hours }}</td><td>{% widthratio student.exempt_hours student.total_attendance 100 %}%</td></tr>
+          <tr><td>Excused</td><td>{{ student.excused_hours }}</td><td>{% widthratio student.excused_hours student.total_attendance 100 %}%</td></tr>
+          <tr><td>Total</td><td>{{ student.total_attendance }}</td><td></td></tr>
         </tbody>
       </table>
 
@@ -54,7 +54,7 @@
   const data = {
       labels: ['Present', 'Absent', 'Exempt', 'Excused'],
       datasets: [{
-          data: [{{ statuses.present }}, {{ statuses.absent }}, {{ statuses.exempt }}, {{ statuses.excused }}],
+          data: [{{ student.present_hours}}, {{ student.absent_hours }}, {{ student.exempt_hours }}, {{ student.excused_hours }}],
           backgroundColor: [
               'rgb(11, 212, 0)',
               'rgb(212, 0, 11)',
@@ -64,7 +64,7 @@
       }]
   }
 
-  const myChart = new Chart(
+  const attendanceChart = new Chart(
       document.getElementById('attendanceChart'),
       {
           type: 'pie',
