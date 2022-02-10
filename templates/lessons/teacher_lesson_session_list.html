@@ -9,9 +9,9 @@
   <div class="row">
     <div class="col-9">
       <ul class="list-group">
-        {% for session in lesson_sessions %}
+        {% for lesson_session in lesson_sessions %}
           <li class="list-group-item">
-            <a href="{% url "lessons:session_detail" session.pk %}">{{ session.lesson }}</a>
+            <a href="{{ lesson_session.detail_url }}">{{ lesson_session.lesson }}</a>
           </li>
         {% empty %}
           <p>There are no lessons on the given date.</p>

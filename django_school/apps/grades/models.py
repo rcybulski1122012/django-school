@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.urls import reverse
 
 from django_school.apps.classes.models import Class
 from django_school.apps.lessons.models import Lesson, Subject
@@ -21,6 +22,14 @@ class GradeCategory(models.Model):
 
     def __str__(self):
         return self.name
+
+    @property
+    def update_url(self):
+        return reverse("grades:categories:update", args=[self.pk])
+
+    @property
+    def delete_url(self):
+        return reverse("grades:categories:delete", args=[self.pk])
 
 
 class Grade(models.Model):
@@ -91,3 +100,11 @@ class Grade(models.Model):
 
         if self.category.subject != self.subject:
             raise ValidationError("The grade category is not a category of the subject")
+
+    @property
+    def update_url(self):
+        return reverse("grades:update", args=[self.pk])
+
+    @property
+    def delete_url(self):
+        return reverse("grade:delete", args=[self.pk])

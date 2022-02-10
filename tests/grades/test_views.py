@@ -3,14 +3,9 @@ from django.urls import reverse
 
 from django_school.apps.grades.forms import GradeCategoryForm
 from django_school.apps.grades.models import Grade, GradeCategory
-from tests.utils import (
-    ClassesMixin,
-    GradesMixin,
-    LessonsMixin,
-    ResourceViewTestMixin,
-    TeacherViewTestMixin,
-    UsersMixin,
-)
+from tests.utils import (ClassesMixin, GradesMixin, LessonsMixin,
+                         ResourceViewTestMixin, TeacherViewTestMixin,
+                         UsersMixin)
 
 
 class SubjectAndSchoolClassRelatedTestMixin(
@@ -265,7 +260,7 @@ class SingleGradeTestMixin(
         )
 
     def get_url(self, grade_pk=None):
-        grade_pk = grade_pk or self.grade.pl
+        grade_pk = grade_pk or self.grade.pk
 
         return reverse(self.path_name, args=[grade_pk])
 

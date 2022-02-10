@@ -110,7 +110,8 @@ class LessonSession(models.Model):
             f"{self.lesson.subject.name} {self.lesson.school_class.number}, {self.date}"
         )
 
-    def get_absolute_url(self):
+    @property
+    def detail_url(self):
         return reverse("lessons:session_detail", args=[self.pk])
 
 
@@ -122,6 +123,10 @@ class AttachedFile(models.Model):
 
     def __str__(self):
         return self.file.name
+
+    @property
+    def delete_url(self):
+        return reverse("lessons:attached_file_delete", args=[self.pk])
 
 
 class Presence(models.Model):

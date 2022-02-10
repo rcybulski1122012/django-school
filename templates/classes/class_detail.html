@@ -12,7 +12,7 @@
   <ul class="list-group">
     {% for student in school_class.students.all %}
       <li class="list-group-item">
-        <a href="{{ student.get_absolute_url }}">
+        <a href="{{ student.student_detail_url }}">
           {{ student.full_name }}
         </a>
 

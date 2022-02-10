@@ -93,4 +93,4 @@ class ClassDetailViewTestCase(
         response = self.client.get(self.get_url())
 
         self.assertContains(response, self.student.full_name)
-        self.assertContains(response, self.student.get_absolute_url())
+        self.assertContains(response, self.student.student_detail_url)

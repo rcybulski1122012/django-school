@@ -34,15 +34,6 @@ class Class(models.Model):
     def __str__(self):
         return self.number
 
-    def get_absolute_url(self):
-        return reverse("classes:detail", args=[self.slug])
-
-    def get_timetable_url(self):
-        return reverse("lessons:class_timetable", args=[self.slug])
-
-    def attendance_url(self):
-        return reverse("lessons:class_attendance", args=[self.slug])
-
     def save(self, **kwargs):
         if not self.slug:
             self.slug = slugify(self.number)
@@ -53,3 +44,19 @@ class Class(models.Model):
 
         if self.tutor is not None and not self.tutor.is_teacher:
             raise ValidationError("Tutor is not a teacher.")
+
+    @property
+    def detail_url(self):
+        return reverse("classes:detail", args=[self.slug])
+
+    @property
+    def timetable_url(self):
+        return reverse("lessons:class_timetable", args=[self.slug])
+
+    @property
+    def attendance_url(self):
+        return reverse("lessons:class_attendance", args=[self.slug])
+
+    @property
+    def subject_list_url(self):
+        return reverse("lessons:class_subject_list", args=[self.slug])

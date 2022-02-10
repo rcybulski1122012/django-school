@@ -109,9 +109,6 @@ class User(AbstractUser):
     def __str__(self):
         return self.full_name
 
-    def get_absolute_url(self):
-        return reverse("users:detail", args=[self.slug])
-
     def save(self, **kwargs):
         if not self.slug:
             self.slug = slugify(self.full_name)
@@ -134,5 +131,13 @@ class User(AbstractUser):
         return self.role == ROLES.PARENT
 
     @property
+    def student_detail_url(self):
+        return reverse("users:detail", args=[self.slug])
+
+    @property
     def attendance_url(self):
         return reverse("lessons:student_attendance", args=[self.slug])
+
+    @property
+    def teacher_timetable_url(self):
+        return reverse("lessons:teacher_timetable", args=[self.slug])

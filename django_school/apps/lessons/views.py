@@ -1,6 +1,5 @@
 import datetime
 import os
-from collections import Counter, defaultdict
 
 from django.contrib import messages
 from django.contrib.auth import get_user_model
@@ -14,9 +13,12 @@ from django.views.generic import DetailView, ListView
 from django_school.apps.classes.models import Class
 from django_school.apps.common.utils import IsTeacherMixin, teacher_view
 from django_school.apps.lessons.forms import LessonSessionForm, PresenceFormSet
-from django_school.apps.lessons.models import (AttachedFile, Lesson,
-                                               LessonSession, Presence,
-                                               Subject)
+from django_school.apps.lessons.models import (
+    AttachedFile,
+    Lesson,
+    LessonSession,
+    Subject,
+)
 
 User = get_user_model()
 
@@ -176,7 +178,7 @@ def attached_file_delete_view(request, pk):
         AttachedFile.objects.select_related("lesson_session__lesson__teacher"), pk=pk
     )
 
-    if not attached_file.lesson_session.lesson.teacher == request.user:
+    if attached_file.lesson_session.lesson.teacher != request.user:
         raise PermissionDenied
 
     if request.method == "POST":

@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db import models
 from django.db.models import Prefetch
 from django.urls import reverse
+
 from martor.models import MartorField
 
 
@@ -35,7 +36,8 @@ class Message(models.Model):
 
     objects = MessagesQuerySet.as_manager()
 
-    def get_absolute_url(self):
+    @property
+    def detail_url(self):
         return reverse("messages:detail", args=[self.pk])
 
 

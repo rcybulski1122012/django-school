@@ -9,14 +9,14 @@
   <h3>By class</h3>
   <ul class="list-group my-4">
     {% for school_class in school_classes %}
-      <li class="list-group-item"><a href="{{ school_class.get_timetable_url }}">{{ school_class.number }}</a></li>
+      <li class="list-group-item"><a href="{{ school_class.timetable_url }}">{{ school_class.number }}</a></li>
 
     {% endfor %}
   </ul>
 
   <h3>By teacher</h3>
   {% for teacher in teachers %}
-    <li class="list-group-item"><a href="{% url "lessons:teacher_timetable" teacher.slug %}">{{ teacher.full_name }}</a>
+    <li class="list-group-item"><a href="{{ teacher.teacher_timetable_url }}">{{ teacher.full_name }}</a>
     </li>
   {% endfor %}
 {% endblock %}
