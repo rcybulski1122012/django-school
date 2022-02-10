@@ -361,10 +361,9 @@ class ClassSubjectListViewTestCase(
         self.subject = self.create_subject()
 
     def get_url(self, class_slug=None):
-        if class_slug:
-            return reverse(self.path_name, args=[class_slug])
-        else:
-            return reverse(self.path_name, args=[self.school_class.slug])
+        class_slug = class_slug or self.school_class.slug
+
+        return reverse(self.path_name, args=[class_slug])
 
     def get_nonexistent_resource_url(self):
         return self.get_url("123g")
@@ -455,10 +454,9 @@ class AttachedFileDeleteViewTestCase(
         rmtree("temp_dir/")
 
     def get_url(self, file_pk=None):
-        if file_pk:
-            return reverse(self.path_name, args=[file_pk])
-        else:
-            return reverse(self.path_name, args=[self.file.pk])
+        file_pk = file_pk or self.file.pk
+
+        return reverse(self.path_name, args=[file_pk])
 
     def get_nonexistent_resource_url(self):
         return self.get_url(file_pk=12345)

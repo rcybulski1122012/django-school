@@ -3,9 +3,14 @@ from django.urls import reverse
 
 from django_school.apps.grades.forms import GradeCategoryForm
 from django_school.apps.grades.models import Grade, GradeCategory
-from tests.utils import (ClassesMixin, GradesMixin, LessonsMixin,
-                         ResourceViewTestMixin, TeacherViewTestMixin,
-                         UsersMixin)
+from tests.utils import (
+    ClassesMixin,
+    GradesMixin,
+    LessonsMixin,
+    ResourceViewTestMixin,
+    TeacherViewTestMixin,
+    UsersMixin,
+)
 
 
 class SubjectAndSchoolClassRelatedTestMixin(
@@ -260,10 +265,9 @@ class SingleGradeTestMixin(
         )
 
     def get_url(self, grade_pk=None):
-        if grade_pk:
-            return reverse(self.path_name, args=[grade_pk])
-        else:
-            return reverse(self.path_name, args=[self.grade.pk])
+        grade_pk = grade_pk or self.grade.pl
+
+        return reverse(self.path_name, args=[grade_pk])
 
     def get_nonexistent_resource_url(self):
         return self.get_url(grade_pk=12345)
@@ -444,10 +448,9 @@ class SingleGradeCategoryTestMixin(
         self.category = self.create_grade_category(self.subject, self.school_class)
 
     def get_url(self, pk=None, **kwargs):
-        if pk:
-            return reverse(self.path_name, args=[pk])
-        else:
-            return reverse(self.path_name, args=[self.category.pk])
+        pk = pk or self.category.pk
+
+        return reverse(self.path_name, args=[pk])
 
     def get_nonexistent_resource_url(self):
         return self.get_url(pk=12345)

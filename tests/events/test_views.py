@@ -4,15 +4,9 @@ from django.test import TestCase
 from django.urls import reverse
 
 from django_school.apps.events.models import Event
-from tests.utils import (
-    ClassesMixin,
-    EventsMixin,
-    LessonsMixin,
-    LoginRequiredTestMixin,
-    ResourceViewTestMixin,
-    TeacherViewTestMixin,
-    UsersMixin,
-)
+from tests.utils import (ClassesMixin, EventsMixin, LessonsMixin,
+                         LoginRequiredTestMixin, ResourceViewTestMixin,
+                         TeacherViewTestMixin, UsersMixin)
 
 
 class EventsCalendarViewTestCase(
@@ -205,10 +199,9 @@ class EventUpdateViewTestCase(
         self.event = self.create_event(self.teacher, self.school_class, self.date)
 
     def get_url(self, event_pk=None):
-        if event_pk:
-            return reverse(self.path_name, args=[event_pk])
-        else:
-            return reverse(self.path_name, args=[self.event.pk])
+        event_pk = event_pk or self.event.pk
+
+        return reverse(self.path_name, args=[event_pk])
 
     def get_nonexistent_resource_url(self):
         return reverse(self.path_name, args=[123456])
@@ -276,10 +269,9 @@ class EventDeleteViewTestCase(
         self.event = self.create_event(self.teacher, self.school_class, self.date)
 
     def get_url(self, event_pk=None):
-        if event_pk:
-            return reverse(self.path_name, args=[event_pk])
-        else:
-            return reverse(self.path_name, args=[self.event.pk])
+        event_pk = event_pk or self.event.pk
+
+        return reverse(self.path_name, args=[event_pk])
 
     def get_nonexistent_resource_url(self):
         return reverse(self.path_name, args=[123456])

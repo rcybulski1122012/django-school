@@ -178,10 +178,9 @@ class MessageDetailViewTestView(
         self.message = self.create_message(self.sender, [self.receiver])
 
     def get_url(self, message_pk=None, **kwargs):
-        if message_pk:
-            return reverse(self.path_name, args=[message_pk])
-        else:
-            return reverse(self.path_name, args=[self.message.pk])
+        message_pk = message_pk or self.message.pk
+
+        return reverse(self.path_name, args=[message_pk])
 
     def test_returns_404_when_user_is_not_a_sender_or_a_receiver_of_the_message(self):
         self.login(self.user)
