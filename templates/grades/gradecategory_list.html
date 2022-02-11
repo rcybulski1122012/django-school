@@ -20,13 +20,37 @@
           hx-swap="beforeend">
     Add new
   </button>
+
+  <div class="modal fade" id="deleteCategoryModal" tabindex="-1" aria-labelledby="deleteCategoryModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteCategoryModalLabel">Are you sure you want to delete the category?</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Deletion of category will also delete grades assigned to it.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-danger confirmButton">Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block js %}
   <script>
       document.addEventListener("htmx:configRequest", e => {
           e.detail.headers["X-CSRFToken"] = "{{ csrf_token }}"
-      })
+      });
+
+      let modal = new bootstrap.Modal(document.querySelector("#deleteCategoryModal"));
+      let confirmButton = document.querySelector("#deleteCategoryModal .confirmButton")
+      confirmButton.addEventListener("click", () => {
+          modal.hide();
+      });
   </script>
 
   <script src="https://unpkg.com/htmx.org@1.5.0"
