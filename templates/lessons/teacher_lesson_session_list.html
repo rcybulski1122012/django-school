@@ -20,13 +20,20 @@
     </div>
 
     <div class="col-3">
-      <form method="get">
-        <label for="date_to">Date:</label>
+        <label for="date_to" class="mb-1">Date:</label>
         <input type="date" name="date" id="date_to" class="form-control"
                value="{% if date %}{{ date }}{% else %}{% now "Y-m-d" %}{% endif %}">
-        <input type="submit" class="btn btn-outline-success my-3" value="Filter">
-      </form>
     </div>
   </div>
+{% endblock %}
 
+{% block js %}
+  <script>
+      let dateInput = document.querySelector("#date_to");
+      dateInput.addEventListener("change", () => {
+          let date = dateInput.value;
+          let url = `${location.protocol}//${location.host}${location.pathname}?date=${date}`
+          location.replace(url);
+      })
+  </script>
 {% endblock %}
