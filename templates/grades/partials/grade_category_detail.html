@@ -25,11 +25,8 @@
     {
         let deleteCategoryButton = document.querySelector("#deleteCategoryButton{{ category.pk }}");
         deleteCategoryButton.addEventListener("click", () => {
-            let confirmButton = document.querySelector("#deleteCategoryModal .confirmButton");
-            confirmButton.setAttribute("hx-target", "#category{{ category.pk }}");
-            confirmButton.setAttribute("hx-swap", "outerHTML");
-            confirmButton.setAttribute("hx-post", "{{ category.delete_url }}");
-            htmx.process(confirmButton);
+            let modalForm = document.querySelector("#modalForm");
+            modalForm.setAttribute("action", `{{ category.delete_url }}?redirect_url=${window.location}`);
         });
     }
 </script>

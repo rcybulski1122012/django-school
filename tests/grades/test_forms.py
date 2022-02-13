@@ -1,8 +1,11 @@
 from django.test import TestCase
 
-from django_school.apps.grades.forms import (BulkGradeCreationCommonInfoForm,
-                                             BulkGradeCreationFormSet,
-                                             GradeCategoryForm, GradeForm)
+from django_school.apps.grades.forms import (
+    BulkGradeCreationCommonInfoForm,
+    BulkGradeCreationFormSet,
+    GradeCategoryForm,
+    GradeForm,
+)
 from tests.utils import ClassesMixin, GradesMixin, LessonsMixin, UsersMixin
 
 
@@ -22,7 +25,9 @@ class GradeFormTestCase(UsersMixin, ClassesMixin, LessonsMixin, GradesMixin, Tes
         school_class2 = self.create_class(number="2c")
         self.create_user(username="student2", school_class=school_class2)
 
-        form = GradeForm(school_class=self.school_class, subject=self.subject)
+        form = GradeForm(
+            school_class=self.school_class, subject=self.subject, teacher=self.teacher
+        )
 
         student_qs = form.fields["student"].queryset
         self.assertQuerysetEqual(student_qs, [self.student])
@@ -33,10 +38,22 @@ class GradeFormTestCase(UsersMixin, ClassesMixin, LessonsMixin, GradesMixin, Tes
         self.create_grade_category(self.subject, school_class2)
         self.create_grade_category(subject2, self.school_class)
 
-        form = GradeForm(school_class=self.school_class, subject=self.subject)
+        form = GradeForm(
+            school_class=self.school_class, subject=self.subject, teacher=self.teacher
+        )
 
         categories_qs = form.fields["category"].queryset
         self.assertQuerysetEqual(categories_qs, [self.grade_category])
+
+    def test_is_valid_assigns_teacher_and_subject_to_instance(self):
+        form = GradeForm(
+            school_class=self.school_class, subject=self.subject, teacher=self.teacher
+        )
+
+        form.is_valid()
+
+        self.assertEqual(form.instance.teacher, self.teacher)
+        self.assertEqual(form.instance.subject, self.subject)
 
 
 class BulkGradeCreationCommonInfoFormTestCase(
@@ -58,20 +75,12 @@ class BulkGradeCreationCommonInfoFormTestCase(
         self.create_grade_category(self.subject, school_class2)
 
         form = BulkGradeCreationCommonInfoForm(
-            school_class=self.school_class, subject=self.subject, teacher=self.teacher
+            school_class=self.school_class, subject=self.subject
         )
 
         category_qs = form.fields["category"].queryset
 
         self.assertQuerysetEqual(category_qs, [self.category])
-
-    def test_sets_teacher_and_subject_initial_values(self):
-        form = BulkGradeCreationCommonInfoForm(
-            school_class=self.school_class, subject=self.subject, teacher=self.teacher
-        )
-
-        self.assertEqual(form.fields["subject"].initial, self.subject.pk)
-        self.assertEqual(form.fields["teacher"].initial, self.teacher.pk)
 
 
 class BulkGradeCreationFormSetTestCase(UsersMixin, TestCase):

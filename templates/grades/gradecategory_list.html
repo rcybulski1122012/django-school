@@ -32,8 +32,11 @@
         <p>Deletion of category will also delete grades assigned to it.</p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-danger confirmButton">Confirm</button>
+        <form method="post" id="modalForm">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-danger confirmButton">Confirm</button>
+          {% csrf_token %}
+        </form>
       </div>
     </div>
   </div>
@@ -44,12 +47,6 @@
   <script>
       document.addEventListener("htmx:configRequest", e => {
           e.detail.headers["X-CSRFToken"] = "{{ csrf_token }}"
-      });
-
-      let modal = new bootstrap.Modal(document.querySelector("#deleteCategoryModal"));
-      let confirmButton = document.querySelector("#deleteCategoryModal .confirmButton")
-      confirmButton.addEventListener("click", () => {
-          modal.hide();
       });
   </script>
 

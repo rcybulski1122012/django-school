@@ -6,20 +6,11 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from django_school.apps.lessons.models import (
-    AttachedFile,
-    Lesson,
-    LessonSession,
-    Presence,
-)
-from tests.utils import (
-    ClassesMixin,
-    LessonsMixin,
-    LoginRequiredTestMixin,
-    ResourceViewTestMixin,
-    TeacherViewTestMixin,
-    UsersMixin,
-)
+from django_school.apps.lessons.models import (AttachedFile, Lesson,
+                                               LessonSession, Presence)
+from tests.utils import (ClassesMixin, LessonsMixin, LoginRequiredTestMixin,
+                         ResourceViewTestMixin, TeacherViewTestMixin,
+                         UsersMixin)
 
 
 class TimetableViewMixin(
@@ -302,7 +293,7 @@ class LessonSessionDetailViewTestCase(
         )
         rmtree(self.temp_dir_path)
 
-    def test_redirects_to_lesson_sessions_list_after_successful_update(self):
+    def test_redirects_to_lesson_sessions_detail_after_successful_update(self):
         self.login(self.teacher)
         presences = self.create_presences(self.lesson_session, [self.student])
 
@@ -312,7 +303,7 @@ class LessonSessionDetailViewTestCase(
 
         response = self.client.post(self.get_url(), data=data)
 
-        self.assertRedirects(response, reverse("lessons:session_list"))
+        self.assertRedirects(response, self.lesson_session.detail_url)
 
     def test_renders_success_message_after_successful_update(self):
         self.login(self.teacher)

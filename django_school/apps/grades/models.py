@@ -24,6 +24,10 @@ class GradeCategory(models.Model):
         return self.name
 
     @property
+    def detail_url(self):
+        return reverse("grades:categories:detail", args=[self.pk])
+
+    @property
     def update_url(self):
         return reverse("grades:categories:update", args=[self.pk])
 

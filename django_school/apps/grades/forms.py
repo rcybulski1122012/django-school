@@ -17,23 +17,23 @@ class GradeForm(forms.ModelForm):
             "weight",
             "comment",
             "student",
-            "subject",
-            "teacher",
         ]
-        widgets = {
-            "subject": forms.HiddenInput(),
-            "teacher": forms.HiddenInput(),
-        }
 
     def __init__(self, *args, **kwargs):
         school_class = kwargs.pop("school_class")
-        subject = kwargs.pop("subject")
+        self.subject = kwargs.pop("subject")
+        self.teacher = kwargs.pop("teacher")
         super().__init__(*args, **kwargs)
 
         self.fields["student"].queryset = User.objects.filter(school_class=school_class)
         self.fields["category"].queryset = GradeCategory.objects.filter(
-            subject=subject, school_class=school_class
+            subject=self.subject, school_class=school_class
         )
+
+    def is_valid(self):
+        self.instance.subject = self.subject
+        self.instance.teacher = self.teacher
+        return super().is_valid()
 
 
 class BulkGradeCreationCommonInfoForm(forms.Form):
@@ -43,24 +43,15 @@ class BulkGradeCreationCommonInfoForm(forms.Form):
         required=True,
     )
     comment = forms.CharField(required=False, widget=forms.Textarea())
-    teacher = forms.ModelChoiceField(
-        queryset=User.objects.all(), widget=forms.HiddenInput()
-    )
-    subject = forms.ModelChoiceField(
-        queryset=Subject.objects.all(), widget=forms.HiddenInput()
-    )
 
     def __init__(self, *args, **kwargs):
         school_class = kwargs.pop("school_class")
         subject = kwargs.pop("subject")
-        teacher = kwargs.pop("teacher")
         super().__init__(*args, **kwargs)
 
         self.fields["category"].queryset = GradeCategory.objects.filter(
             subject=subject, school_class=school_class
         )
-        self.fields["teacher"].initial = teacher.pk
-        self.fields["subject"].initial = subject.pk
 
 
 class BulkGradeCreationForm(forms.ModelForm):

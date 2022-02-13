@@ -1,20 +1,37 @@
 from django.test import TestCase
 from django.urls import reverse
 
-from tests.utils import (ClassesMixin, ResourceViewTestMixin,
-                         TeacherViewTestMixin, UsersMixin)
+from tests.utils import (
+    ClassesMixin,
+    ResourceViewTestMixin,
+    TeacherViewTestMixin,
+    UsersMixin,
+    LessonsMixin,
+)
 
 
-class ClassesListViewTestCase(TeacherViewTestMixin, UsersMixin, ClassesMixin, TestCase):
+class ClassesListViewTestCase(
+    TeacherViewTestMixin, UsersMixin, ClassesMixin, LessonsMixin, TestCase
+):
     path_name = "classes:list"
 
     def setUp(self):
         self.teacher = self.create_teacher()
         self.school_class = self.create_class()
         self.student = self.create_student()
+        self.subject = self.create_subject()
+        self.create_lesson(self.subject, self.teacher, self.school_class)
 
     def get_url(self):
         return reverse(self.path_name)
+
+    def test_selects_classes_taught_by_the_teacher(self):
+        school_class2 = self.create_class(number="2c")
+        self.login(self.teacher)
+
+        response = self.client.get(self.get_url())
+
+        self.assertNotIn(school_class2, response.context["school_classes"])
 
     def test_context_contains_list_of_classes_ordered_by_number(self):
         self.login(self.teacher)
@@ -48,7 +65,12 @@ class ClassesListViewTestCase(TeacherViewTestMixin, UsersMixin, ClassesMixin, Te
 
 
 class ClassDetailViewTestCase(
-    TeacherViewTestMixin, ResourceViewTestMixin, UsersMixin, ClassesMixin, TestCase
+    TeacherViewTestMixin,
+    ResourceViewTestMixin,
+    UsersMixin,
+    ClassesMixin,
+    LessonsMixin,
+    TestCase,
 ):
     path_name = "classes:detail"
 
@@ -63,6 +85,8 @@ class ClassDetailViewTestCase(
             last_name="ForTesting",
             school_class=self.school_class,
         )
+        self.subject = self.create_subject()
+        self.create_lesson(self.subject, self.teacher, self.school_class)
 
     def get_url(self, class_slug=None):
         class_slug = class_slug or self.school_class.slug
@@ -71,6 +95,14 @@ class ClassDetailViewTestCase(
 
     def get_nonexistent_resource_url(self):
         return self.get_url(class_slug="slug")
+
+    def test_return_404_if_the_teacher_does_not_teach_the_class(self):
+        school_class2 = self.create_class(number="2c")
+        self.login(self.teacher)
+
+        response = self.client.get(self.get_url(class_slug=school_class2.slug))
+
+        self.assertEqual(response.status_code, 404)
 
     def test_context_contains_school_class(self):
         self.login(self.teacher)

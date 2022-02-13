@@ -13,7 +13,11 @@
       <thead>
       <tr>
         <th>Student</th>
-        <th style="width:10%"></th>
+        <th style="width:10%" >
+          <a href="{% url "grades:categories:create" school_class.slug subject.slug %}" class="text-decoration-none">
+            Add category
+          </a>
+        </th>
         {% for category in categories %}
           <th>
             {{ category.name }}

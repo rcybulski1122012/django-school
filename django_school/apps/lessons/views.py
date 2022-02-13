@@ -13,12 +13,8 @@ from django.views.generic import DetailView, ListView
 from django_school.apps.classes.models import Class
 from django_school.apps.common.utils import IsTeacherMixin, teacher_view
 from django_school.apps.lessons.forms import LessonSessionForm, PresenceFormSet
-from django_school.apps.lessons.models import (
-    AttachedFile,
-    Lesson,
-    LessonSession,
-    Subject,
-)
+from django_school.apps.lessons.models import (AttachedFile, Lesson,
+                                               LessonSession, Subject)
 
 User = get_user_model()
 
@@ -130,7 +126,7 @@ def lesson_session_detail_view(request, session_pk):
             messages.success(
                 request, "The lesson session has been updated successfully."
             )
-            return redirect("lessons:session_list")
+            return redirect(lesson_session.detail_url)
 
     return render(
         request,

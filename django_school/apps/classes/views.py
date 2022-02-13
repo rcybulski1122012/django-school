@@ -11,6 +11,9 @@ class ClassesListView(LoginRequiredMixin, IsTeacherMixin, ListView):
     context_object_name = "school_classes"
     template_name = "classes/class_list.html"
 
+    def get_queryset(self):
+        return super().get_queryset().visible_to_user(self.request.user)
+
 
 class ClassDetailView(LoginRequiredMixin, IsTeacherMixin, DetailView):
     model = Class
@@ -19,4 +22,4 @@ class ClassDetailView(LoginRequiredMixin, IsTeacherMixin, DetailView):
     template_name = "classes/class_detail.html"
 
     def get_queryset(self):
-        return super().get_queryset().with_students()
+        return super().get_queryset().visible_to_user(self.request.user).with_students()

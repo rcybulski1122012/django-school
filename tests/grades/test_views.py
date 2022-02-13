@@ -1,11 +1,17 @@
+from django.conf import settings
 from django.test import TestCase
 from django.urls import reverse
 
 from django_school.apps.grades.forms import GradeCategoryForm
 from django_school.apps.grades.models import Grade, GradeCategory
-from tests.utils import (ClassesMixin, GradesMixin, LessonsMixin,
-                         ResourceViewTestMixin, TeacherViewTestMixin,
-                         UsersMixin)
+from tests.utils import (
+    ClassesMixin,
+    GradesMixin,
+    LessonsMixin,
+    ResourceViewTestMixin,
+    TeacherViewTestMixin,
+    UsersMixin,
+)
 
 
 class SubjectAndSchoolClassRelatedTestMixin(
@@ -66,10 +72,8 @@ class GradeCreateViewTestCase(SubjectAndSchoolClassRelatedTestMixin, TestCase):
             "grade": 5.00,
             "weight": 1,
             "comment": "Math Exam",
-            "subject": self.subject.pk,
             "student": self.student.pk,
             "category": self.category.pk,
-            "teacher": self.teacher.pk,
         }
 
     def test_creates_grade(self):
@@ -411,9 +415,7 @@ class GradeCategoriesViewTestCase(SubjectAndSchoolClassRelatedTestMixin, TestCas
 
         new_category = GradeCategory.objects.exclude(pk=self.category.pk).get()
 
-        self.assertRedirects(
-            response, reverse("grades:categories:detail", args=[new_category.pk])
-        )
+        self.assertRedirects(response, new_category.detail_url)
 
     def test_renders_grade_category_form_if_data_is_invalid_and_request_method_is_POST(
         self,
@@ -473,8 +475,52 @@ class GradeCategoryDetailViewTestCase(SingleGradeCategoryTestMixin, TestCase):
         self.assertContains(response, self.category.name)
 
 
-class GradeCategoryDeleteViewTestCase(SingleGradeCategoryTestMixin, TestCase):
+# does not inherit from SingleGradeCategoryTestMixin because the view requires post method
+class GradeCategoryDeleteViewTestCase(
+    UsersMixin, ClassesMixin, LessonsMixin, GradesMixin, TestCase
+):
     path_name = "grades:categories:delete"
+
+    def setUp(self):
+        self.teacher = self.create_teacher()
+        self.school_class = self.create_class()
+        self.student = self.create_student(school_class=self.school_class)
+        self.subject = self.create_subject()
+        self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
+        self.category = self.create_grade_category(self.subject, self.school_class)
+
+    def get_url(self, pk=None):
+        pk = pk or self.category.pk
+        url = reverse(self.path_name, args=[pk])
+        redirect_url = reverse(
+            "grades:categories:create", args=[self.school_class.slug, self.subject.slug]
+        )
+
+        return f"{url}?redirect_url={redirect_url}"
+
+    def get_nonexistent_resource_url(self):
+        return self.get_url(pk=12345)
+
+    def test_redirects_to_login_page_when_user_is_not_logged_in(self):
+        expected_url = f"{settings.LOGIN_URL}?next={self.get_url()}"
+
+        response = self.client.post(self.get_url())
+
+        self.assertRedirects(response, expected_url)
+
+    def test_returns_404_if_category_does_not_exists(self):
+        self.login(self.teacher)
+
+        response = self.client.post(self.get_nonexistent_resource_url())
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_returns_403_when_user_is_not_a_teacher(self):
+        self.login(self.student)
+
+        response = self.client.post(self.get_url())
+
+        self.assertEqual(response.status_code, 403)
 
     def test_deletes_category(self):
         self.login(self.teacher)
@@ -482,6 +528,20 @@ class GradeCategoryDeleteViewTestCase(SingleGradeCategoryTestMixin, TestCase):
         self.client.post(self.get_url())
 
         self.assertFalse(GradeCategory.objects.exists())
+
+    def test_returns_404_if_no_redirect_url_given(self):
+        self.login(self.teacher)
+        url = reverse(self.path_name, args=[self.category.pk])
+        response = self.client.post(url)
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_returns_405_if_request_method_is_not_POST(self):
+        self.login(self.teacher)
+
+        response = self.client.get(self.get_url())
+
+        self.assertEqual(response.status_code, 405)
 
 
 class GradeCategoryUpdateViewTestCase(SingleGradeCategoryTestMixin, TestCase):
@@ -507,6 +567,4 @@ class GradeCategoryUpdateViewTestCase(SingleGradeCategoryTestMixin, TestCase):
 
         response = self.client.post(self.get_url(), self.get_example_form_data())
 
-        self.assertRedirects(
-            response, reverse("grades:categories:detail", args=[self.category.pk])
-        )
+        self.assertRedirects(response, self.category.detail_url)

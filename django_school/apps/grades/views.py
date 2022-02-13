@@ -6,6 +6,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.views.decorators.http import require_http_methods
 from django.views.generic import (CreateView, DeleteView, DetailView,
                                   TemplateView, UpdateView)
 
@@ -64,8 +65,6 @@ class GradeCreateView(
     def get_initial(self):
         return {
             "student": self.request.GET.get("student"),
-            "teacher": self.request.user.pk,
-            "subject": self.subject.pk,
         }
 
     def get_form_kwargs(self):
@@ -74,6 +73,7 @@ class GradeCreateView(
             {
                 "school_class": self.school_class,
                 "subject": self.subject,
+                "teacher": self.request.user,
             }
         )
         return kwargs
@@ -100,7 +100,6 @@ def create_grades_in_bulk_view(request, class_slug, subject_slug):
 
     common_form = BulkGradeCreationCommonInfoForm(
         request.POST or None,
-        teacher=request.user,
         subject=subject,
         school_class=school_class,
         initial=initial,
@@ -112,7 +111,9 @@ def create_grades_in_bulk_view(request, class_slug, subject_slug):
 
     if request.method == "POST":
         if common_form.is_valid():
-            grades_formset.set_common_data(common_data=common_form.cleaned_data)
+            common_data = common_form.cleaned_data
+            common_data.update({"subject": subject, "teacher": request.user})
+            grades_formset.set_common_data(common_data=common_data)
             if grades_formset.is_valid():
                 grades_formset.save()
 
@@ -219,7 +220,7 @@ def grade_categories_view(request, class_slug, subject_slug):
 
         if form.is_valid():
             category = form.save()
-            return redirect("grades:categories:detail", pk=category.pk)
+            return redirect(category.detail_url)
         else:
             return render(
                 request, "grades/partials/grade_category_form.html", {"form": form}
@@ -273,21 +274,26 @@ class GradeCategoryDetailView(
 
 
 @login_required
+@require_http_methods(["POST"])
 @teacher_view
 def grade_category_delete_view(request, pk):
     category = get_object_or_404(
         GradeCategory.objects.select_related("school_class", "subject"), pk=pk
     )
 
-    if not does_the_teacher_teach_the_subject_to_the_class(
-        request.user, category.subject, category.school_class
+    redirect_url = request.GET.get("redirect_url")  # required
+
+    if (
+        not does_the_teacher_teach_the_subject_to_the_class(
+            request.user, category.subject, category.school_class
+        )
+        or redirect_url is None
     ):
         raise Http404
 
-    if request.method == "POST":
-        category.delete()
+    category.delete()
 
-    return HttpResponse()
+    return redirect(redirect_url)
 
 
 class GradeCategoryUpdateView(
@@ -299,4 +305,4 @@ class GradeCategoryUpdateView(
     context_object_name = "category"
 
     def get_success_url(self):
-        return reverse("grades:categories:detail", args=[self.object.pk])
+        return self.object.detail_url
