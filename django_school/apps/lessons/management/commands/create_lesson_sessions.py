@@ -7,7 +7,7 @@ from django_school.apps.lessons.utils import create_lesson_session
 
 
 class Command(BaseCommand):
-    help = "Creates LessonSession ans Presence objects for lessons planned for today."
+    help = "Creates LessonSession ans Attendance objects for lessons planned for today."
 
     def handle(self, *args, **kwargs):
         current_day = date.today().strftime("%a").lower()

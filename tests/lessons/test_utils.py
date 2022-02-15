@@ -1,12 +1,12 @@
 from django.test import TestCase
 
-from django_school.apps.lessons.models import LessonSession, Presence
+from django_school.apps.lessons.models import Attendance, LessonSession
 from django_school.apps.lessons.utils import create_lesson_session
 from tests.utils import ClassesMixin, LessonsMixin, UsersMixin
 
 
 class CreateLessonSessionTestCase(LessonsMixin, ClassesMixin, UsersMixin, TestCase):
-    def test_creates_lesson_session_and_presences(self):
+    def test_creates_lesson_session_and_attendances(self):
         subject = self.create_subject()
         user = self.create_user()
         school_class = self.create_class()
@@ -22,6 +22,6 @@ class CreateLessonSessionTestCase(LessonsMixin, ClassesMixin, UsersMixin, TestCa
 
         create_lesson_session(lesson)
 
-        students_with_presence = [p.student for p in Presence.objects.all()]
+        students_with_attendances = [p.student for p in Attendance.objects.all()]
         self.assertEqual(LessonSession.objects.first().lesson, lesson)
-        self.assertQuerysetEqual(students_with_presence, students, ordered=False)
+        self.assertQuerysetEqual(students_with_attendances, students, ordered=False)

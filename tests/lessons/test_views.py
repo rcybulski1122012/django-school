@@ -6,8 +6,8 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from django_school.apps.lessons.models import (AttachedFile, Lesson,
-                                               LessonSession, Presence)
+from django_school.apps.lessons.models import (AttachedFile, Attendance,
+                                               Lesson, LessonSession)
 from tests.utils import (ClassesMixin, LessonsMixin, LoginRequiredTestMixin,
                          ResourceViewTestMixin, TeacherViewTestMixin,
                          UsersMixin)
@@ -231,20 +231,20 @@ class LessonSessionDetailViewTestCase(
         return self.get_url(lesson_session_pk=1234)
 
     @staticmethod
-    def prepare_form_data(lesson_session, presences, topic, statuses):
+    def prepare_form_data(lesson_session, attendances, topic, statuses):
         statuses_count = len(statuses)
         data = {
             "topic": topic,
-            "presence_set-TOTAL_FORMS": statuses_count,
-            "presence_set-INITIAL_FORMS": statuses_count,
+            "attendance_set-TOTAL_FORMS": statuses_count,
+            "attendance_set-INITIAL_FORMS": statuses_count,
         }
 
-        for index, (presence, status) in enumerate(zip(presences, statuses)):
+        for index, (attendance, status) in enumerate(zip(attendances, statuses)):
             data.update(
                 {
-                    f"presence_set-{index}-status": status,
-                    f"presence_set-{index}-id": presence.pk,
-                    f"presence_set-{index}-lesson_session": lesson_session.pk,
+                    f"attendance_set-{index}-status": status,
+                    f"attendance_set-{index}-id": attendance.pk,
+                    f"attendance_set-{index}-lesson_session": lesson_session.pk,
                 }
             )
 
@@ -258,26 +258,26 @@ class LessonSessionDetailViewTestCase(
 
         self.assertEqual(response.status_code, 403)
 
-    def test_updates_lesson_session_and_presences(self):
+    def test_updates_lesson_session_and_attendances(self):
         self.login(self.teacher)
-        presences = self.create_presences(self.lesson_session, [self.student])
+        attendances = self.create_attendance(self.lesson_session, [self.student])
         expected_statuses = ["absent"]
         data = self.prepare_form_data(
-            self.lesson_session, presences, "New topic", expected_statuses
+            self.lesson_session, attendances, "New topic", expected_statuses
         )
 
         self.client.post(self.get_url(), data=data)
 
-        presences = Presence.objects.all()
-        updated_statuses = [presence.status for presence in presences]
+        attendances = Attendance.objects.all()
+        updated_statuses = [attendance.status for attendance in attendances]
         self.assertEqual(updated_statuses, expected_statuses)
 
     @override_settings(MEDIA_ROOT=temp_dir_path)
     def test_updates_files(self):
         self.login(self.teacher)
-        presences = self.create_presences(self.lesson_session, [self.student])
+        attencances = self.create_attendance(self.lesson_session, [self.student])
         data = self.prepare_form_data(
-            self.lesson_session, presences, "New topic", ["absent"]
+            self.lesson_session, attencances, "New topic", ["absent"]
         )
         files = [
             SimpleUploadedFile("file1.txt", b"file_content"),
@@ -295,10 +295,10 @@ class LessonSessionDetailViewTestCase(
 
     def test_redirects_to_lesson_sessions_detail_after_successful_update(self):
         self.login(self.teacher)
-        presences = self.create_presences(self.lesson_session, [self.student])
+        attendances = self.create_attendance(self.lesson_session, [self.student])
 
         data = self.prepare_form_data(
-            self.lesson_session, presences, "New Topic", ["absent"]
+            self.lesson_session, attendances, "New Topic", ["absent"]
         )
 
         response = self.client.post(self.get_url(), data=data)
@@ -307,9 +307,9 @@ class LessonSessionDetailViewTestCase(
 
     def test_renders_success_message_after_successful_update(self):
         self.login(self.teacher)
-        presences = self.create_presences(self.lesson_session, [self.student])
+        attendances = self.create_attendance(self.lesson_session, [self.student])
         data = self.prepare_form_data(
-            self.lesson_session, presences, "New Topic", ["absent"]
+            self.lesson_session, attendances, "New Topic", ["absent"]
         )
 
         response = self.client.post(self.get_url(), data=data, follow=True)
@@ -324,11 +324,11 @@ class LessonSessionDetailViewTestCase(
         response = self.client.get(self.get_url())
 
         self.assertIn("lesson_session_form", response.context)
-        self.assertIn("presences_formset", response.context)
+        self.assertIn("attendance_formset", response.context)
 
     def test_renders_students_full_names_as_labels(self):
         self.login(self.teacher)
-        self.create_presences(self.lesson_session, [self.student])
+        self.create_attendance(self.lesson_session, [self.student])
 
         response = self.client.get(self.get_url())
 
@@ -378,7 +378,11 @@ class ClassSubjectListViewTestCase(
         self.assertContains(
             response,
             reverse(
-                "grades:class_grades", args=[self.school_class.slug, self.subject.slug]
+                "grades:class_grades",
+                args=[
+                    self.school_class.slug,
+                    self.subject.slug,
+                ],
             ),
         )
         self.assertContains(
@@ -493,7 +497,7 @@ class StudentAttendanceSummaryViewTestCase(
         )
 
         for i in range(5):
-            self.create_presences(self.lesson_session, [self.student], status="absent")
+            self.create_attendance(self.lesson_session, [self.student], status="absent")
 
     def get_url(self, student_slug=None, subject_name=None):
         student_slug = student_slug or self.student.slug
@@ -523,7 +527,7 @@ class StudentAttendanceSummaryViewTestCase(
         self.assertEqual(response.context["student"], self.student)
 
     def test_renders_percentage(self):
-        self.create_presences(self.lesson_session, [self.student], status="present")
+        self.create_attendance(self.lesson_session, [self.student], status="present")
         self.login(self.teacher)
 
         response = self.client.get(self.get_url())
@@ -543,7 +547,7 @@ class StudentAttendanceSummaryViewTestCase(
         subject2 = self.create_subject(name="subject2")
         lesson2 = self.create_lesson(subject2, self.teacher, self.school_class)
         lesson_session2 = self.create_lesson_session(lesson2, datetime.datetime.today())
-        self.create_presences(lesson_session2, [self.student], status="absent")
+        self.create_attendance(lesson_session2, [self.student], status="absent")
         self.login(self.teacher)
 
         response = self.client.get(self.get_url(subject_name="subject2"))
@@ -581,7 +585,7 @@ class ClassAttendanceSummaryViewTestCase(
         )
 
         for i in range(5):
-            self.create_presences(
+            self.create_attendance(
                 self.lesson_session, [self.student, self.student2], status="absent"
             )
 

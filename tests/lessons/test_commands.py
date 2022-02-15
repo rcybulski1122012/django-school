@@ -4,7 +4,7 @@ from unittest.mock import patch
 from django.core.management import call_command
 from django.test import TestCase
 
-from django_school.apps.lessons.models import LessonSession, Presence
+from django_school.apps.lessons.models import Attendance, LessonSession
 from tests.utils import ClassesMixin, LessonsMixin, UsersMixin
 
 
@@ -17,7 +17,7 @@ class GenerateLessonSessionTestCase(UsersMixin, ClassesMixin, LessonsMixin, Test
             username="Student123", school_class=self.school_class
         )
 
-    def test_creates_lesson_sessions_and_presences_for_today(self):
+    def test_creates_lesson_sessions_and_attendances_for_today(self):
         friday_lesson = self.create_lesson(
             self.subject, self.teacher, self.school_class, weekday="fri"
         )
@@ -30,11 +30,11 @@ class GenerateLessonSessionTestCase(UsersMixin, ClassesMixin, LessonsMixin, Test
             call_command("create_lesson_sessions")
 
         lesson_session = LessonSession.objects.all()[0]
-        presence = Presence.objects.get(lesson_session=lesson_session)
+        attendance = Attendance.objects.get(lesson_session=lesson_session)
         self.assertEqual(lesson_session.lesson, friday_lesson)
-        self.assertEqual(presence.student, self.student)
-        self.assertEqual(presence.lesson_session, lesson_session)
-        self.assertEqual(presence.status, "none")
+        self.assertEqual(attendance.student, self.student)
+        self.assertEqual(attendance.lesson_session, lesson_session)
+        self.assertEqual(attendance.status, "none")
 
     def test_performs_optimal_number_of_queries(self):
         self.create_user(username="Student321", school_class=self.school_class)
@@ -45,7 +45,8 @@ class GenerateLessonSessionTestCase(UsersMixin, ClassesMixin, LessonsMixin, Test
 
         with self.assertNumQueries(12):
             with patch(
-                "django_school.apps.lessons.management.commands.create_lesson_sessions.date"
+                "django_school.apps.lessons.management"
+                ".commands.create_lesson_sessions.date"
             ) as mock_date:
                 mock_date.today.return_value = date(2021, 1, 1)
                 call_command("create_lesson_sessions")

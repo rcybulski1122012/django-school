@@ -1,5 +1,3 @@
-import datetime
-
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -80,7 +78,10 @@ class Lesson(models.Model):
     )
 
     def __str__(self):
-        return f"{self.school_class}: {self.subject.name}, {self.get_weekday_display()}: {self.get_time_display()}"
+        return (
+            f"{self.school_class}: {self.subject.name}, "
+            f"{self.get_weekday_display()}: {self.get_time_display()}"
+        )
 
     def clean(self):
         super().clean()
@@ -103,7 +104,9 @@ class LessonSession(models.Model):
     lesson = models.ForeignKey(
         Lesson, on_delete=models.CASCADE, related_name="sessions"
     )
-    presences = models.ManyToManyField(settings.AUTH_USER_MODEL, through="Presence")
+    attendances = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, through="lessons.Attendance"
+    )
 
     def __str__(self):
         return (
@@ -129,8 +132,8 @@ class AttachedFile(models.Model):
         return reverse("lessons:attached_file_delete", args=[self.pk])
 
 
-class Presence(models.Model):
-    PRESENCE_STATUSES = [
+class Attendance(models.Model):
+    ATTENDANCE_STATUSES = [
         ("present", "Present"),
         ("absent", "Absent"),
         ("exempt", "Exempt"),
@@ -140,7 +143,9 @@ class Presence(models.Model):
 
     student = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     lesson_session = models.ForeignKey(LessonSession, on_delete=models.CASCADE)
-    status = models.CharField(max_length=16, choices=PRESENCE_STATUSES, default="none")
+    status = models.CharField(
+        max_length=16, choices=ATTENDANCE_STATUSES, default="none"
+    )
 
     def clean(self):
         super().clean()

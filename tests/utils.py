@@ -8,9 +8,8 @@ from django_school.apps.classes.models import Class
 from django_school.apps.common.models import Address
 from django_school.apps.events.models import Event
 from django_school.apps.grades.models import Grade, GradeCategory
-from django_school.apps.lessons.models import (AttachedFile, Lesson,
-                                               LessonSession, Presence,
-                                               Subject)
+from django_school.apps.lessons.models import (AttachedFile, Attendance,
+                                               Lesson, LessonSession, Subject)
 from django_school.apps.messages.models import Message, MessageStatus
 from django_school.apps.users.models import ROLES
 
@@ -130,15 +129,15 @@ class LessonsMixin:
         return lesson_session
 
     @staticmethod
-    def create_presences(lesson_session, students, status="none"):
-        presences = [
-            Presence(lesson_session=lesson_session, student=student, status=status)
+    def create_attendance(lesson_session, students, status="none"):
+        attendances = [
+            Attendance(lesson_session=lesson_session, student=student, status=status)
             for student in students
         ]
 
         with transaction.atomic():
-            Presence.objects.bulk_create(presences)
-            return Presence.objects.order_by("-id")[: len(presences)]
+            Attendance.objects.bulk_create(attendances)
+            return Attendance.objects.order_by("-id")[: len(attendances)]
 
     @staticmethod
     def create_file(lesson_session, name=DEFAULT_FILE_NAME):

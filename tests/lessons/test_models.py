@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from django_school.apps.lessons.models import Presence, Subject
+from django_school.apps.lessons.models import Attendance, Subject
 from tests.utils import ClassesMixin, LessonsMixin, UsersMixin
 
 
@@ -61,7 +61,7 @@ class LessonModelTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
             self.create_lesson(self.subject, self.student, self.school_class).clean()
 
 
-class PresenceModelTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
+class AttendanceModelTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
     def test_clean_raises_ValidationError_if_student_is_not_in_lesson_session_class(
         self,
     ):
@@ -73,4 +73,4 @@ class PresenceModelTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
         lesson_session = self.create_lesson_session(lesson)
 
         with self.assertRaises(ValidationError):
-            Presence(student=student, lesson_session=lesson_session).clean()
+            Attendance(student=student, lesson_session=lesson_session).clean()

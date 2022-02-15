@@ -33,28 +33,28 @@ class StudentsQuerySet(models.QuerySet):
     def with_attendance(self, **attendance_params):
         return self.annotate(
             total_attendance=Count(
-                "presence",
-                ~Q(presence__status="none") & Q(**attendance_params),
+                "attendance",
+                ~Q(attendance__status="none") & Q(**attendance_params),
                 distinct=True,
             ),
             present_hours=Count(
-                "presence",
-                filter=Q(presence__status="present", **attendance_params),
+                "attendance",
+                filter=Q(attendance__status="present", **attendance_params),
                 distinct=True,
             ),
             absent_hours=Count(
-                "presence",
-                filter=Q(presence__status="absent", **attendance_params),
+                "attendance",
+                filter=Q(attendance__status="absent", **attendance_params),
                 distinct=True,
             ),
             exempt_hours=Count(
-                "presence",
-                filter=Q(presence__status="exempt", **attendance_params),
+                "attendance",
+                filter=Q(attendance__status="exempt", **attendance_params),
                 distinct=True,
             ),
             excused_hours=Count(
-                "presence",
-                filter=Q(presence__status="excused", **attendance_params),
+                "attendance",
+                filter=Q(attendance__status="excused", **attendance_params),
                 distinct=True,
             ),
         )

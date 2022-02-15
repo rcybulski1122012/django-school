@@ -12,7 +12,8 @@ from django.views.generic import DetailView, ListView
 
 from django_school.apps.classes.models import Class
 from django_school.apps.common.utils import IsTeacherMixin, teacher_view
-from django_school.apps.lessons.forms import LessonSessionForm, PresenceFormSet
+from django_school.apps.lessons.forms import (AttendanceFormSet,
+                                              LessonSessionForm)
 from django_school.apps.lessons.models import (AttachedFile, Lesson,
                                                LessonSession, Subject)
 
@@ -117,12 +118,14 @@ def lesson_session_detail_view(request, session_pk):
     lesson_session_form = LessonSessionForm(
         request.POST or None, request.FILES or None, instance=lesson_session
     )
-    presences_formset = PresenceFormSet(request.POST or None, instance=lesson_session)
+    attendance_formset = AttendanceFormSet(
+        request.POST or None, instance=lesson_session
+    )
 
     if request.method == "POST":
-        if lesson_session_form.is_valid() and presences_formset.is_valid():
+        if lesson_session_form.is_valid() and attendance_formset.is_valid():
             lesson_session_form.save(request_files=request.FILES)
-            presences_formset.save()
+            attendance_formset.save()
             messages.success(
                 request, "The lesson session has been updated successfully."
             )
@@ -134,7 +137,7 @@ def lesson_session_detail_view(request, session_pk):
         {
             "lesson_session_form": lesson_session_form,
             "lesson_session": lesson_session,
-            "presences_formset": presences_formset,
+            "attendance_formset": attendance_formset,
         },
     )
 
@@ -192,7 +195,7 @@ def student_attendance_summary_view(request, student_slug):
         get_object_or_404(Subject, name__iexact=subject_name) if subject_name else None
     )
     if subject:
-        attendance_params = {"presence__lesson_session__lesson__subject": subject}
+        attendance_params = {"attendance__lesson_session__lesson__subject": subject}
     else:
         attendance_params = {}
 

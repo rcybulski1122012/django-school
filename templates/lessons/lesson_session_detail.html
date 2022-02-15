@@ -11,7 +11,7 @@
   <a href="{% url "grades:class_grades" lesson_session.lesson.school_class.slug lesson_session.lesson.subject.slug %}"
      class="d-inline-block h1">Grades</a>
   <form method="post" enctype="multipart/form-data">
-    {{ presences_formset.management_form }}
+    {{ attendance_formset.management_form }}
     {{ lesson_session_form|crispy }}
 
     {% for file in lesson_session.attached_files.all %}
@@ -30,13 +30,13 @@
     {% endfor %}
 
     <hr>
-    <h3>Presences:</h3>
+    <h3>Attendance:</h3>
 
-    {% for presence_form in presences_formset %}
-      <label for="{{ presence_form.status.id_for_label }}">
-        {{ presence_form.instance.student }}
+    {% for attendance_form in attendance_formset %}
+      <label for="{{ attendance_form.status.id_for_label }}">
+        {{ attendance_form.instance.student }}
       </label>
-      {{ presence_form|crispy }}
+      {{ attendance_form|crispy }}
     {% endfor %}
 
     <input type="submit" value="Update" class="btn btn-outline-success mt-2">

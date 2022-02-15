@@ -1,7 +1,7 @@
 from django import forms
 
-from django_school.apps.lessons.models import (AttachedFile, LessonSession,
-                                               Presence)
+from django_school.apps.lessons.models import (AttachedFile, Attendance,
+                                               LessonSession)
 
 
 class LessonSessionForm(forms.ModelForm):
@@ -36,25 +36,25 @@ class LessonSessionForm(forms.ModelForm):
         return lesson_session, files
 
 
-class PresenceForm(forms.ModelForm):
+class AttendanceForm(forms.ModelForm):
     class Meta:
-        model = Presence
+        model = Attendance
         fields = ["status"]
 
 
-class BasePresenceFormSet(forms.BaseInlineFormSet):
+class BaseAttendanceFormSet(forms.BaseInlineFormSet):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.queryset = self.queryset.select_related("student")
 
 
-PresenceFormSet = forms.inlineformset_factory(
+AttendanceFormSet = forms.inlineformset_factory(
     LessonSession,
-    Presence,
+    Attendance,
     fields=("status",),
     can_delete=False,
     max_num=0,
     labels={"status": ""},
-    formset=BasePresenceFormSet,
+    formset=BaseAttendanceFormSet,
 )

@@ -8,10 +8,9 @@ from django.utils.text import slugify
 from django_school.apps.classes.models import Class
 from django_school.apps.events.models import Event
 from django_school.apps.grades.models import Grade, GradeCategory
-from django_school.apps.lessons.models import (Lesson, LessonSession, Presence,
-                                               Subject)
-from django_school.apps.lessons.utils import (create_lesson_session,
-                                              find_closest_future_date)
+from django_school.apps.lessons.models import (Attendance, Lesson,
+                                               LessonSession, Subject)
+from django_school.apps.lessons.utils import find_closest_future_date
 from django_school.apps.users.models import ROLES
 
 User = get_user_model()
@@ -232,24 +231,26 @@ class Command(BaseCommand):
 
         Lesson.objects.bulk_create(lessons)
 
-        self.create_lesson_sessions_and_presences(lessons)
+        self.create_lesson_sessions_and_attendances(lessons)
 
     @staticmethod
-    def create_lesson_sessions_and_presences(lessons):
+    def create_lesson_sessions_and_attendances(lessons):
         lesson_sessions = []
-        presences = []
+        attendances = []
         for lesson in lessons:
             lesson_date = find_closest_future_date(lesson.weekday)
             lesson_session = LessonSession(lesson=lesson, date=lesson_date)
             lesson_sessions.append(lesson_session)
-            status = random.choice(Presence.PRESENCE_STATUSES[:-1])[0]
-            presences += [
-                Presence(student=student, lesson_session=lesson_session, status=status)
+            status = random.choice(Attendance.ATTENDANCE_STATUSES[:-1])[0]
+            attendances += [
+                Attendance(
+                    student=student, lesson_session=lesson_session, status=status
+                )
                 for student in lesson.school_class.students.all()
             ]
 
         LessonSession.objects.bulk_create(lesson_sessions)
-        Presence.objects.bulk_create(presences)
+        Attendance.objects.bulk_create(attendances)
 
     @staticmethod
     def create_grades_categories_and_grades():

@@ -1,17 +1,17 @@
 import datetime
 
-from django_school.apps.lessons.models import LessonSession, Presence
+from django_school.apps.lessons.models import Attendance, LessonSession
 
 
 def create_lesson_session(lesson, date=None):
     lesson_session = LessonSession.objects.create(lesson=lesson, date=date)
 
-    presences = [
-        Presence(student=student, lesson_session=lesson_session, status="none")
+    attendances = [
+        Attendance(student=student, lesson_session=lesson_session, status="none")
         for student in lesson.school_class.students.all()
     ]
 
-    Presence.objects.bulk_create(presences)
+    Attendance.objects.bulk_create(attendances)
 
 
 def find_closest_future_date(weekday):
