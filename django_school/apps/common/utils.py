@@ -5,7 +5,7 @@ from django.core.exceptions import PermissionDenied
 from django_school.apps.lessons.models import Lesson
 
 
-class IsTeacherMixin:
+class TeacherStatusRequiredMixin:
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_teacher:
             raise PermissionDenied()
@@ -13,7 +13,7 @@ class IsTeacherMixin:
         return super().dispatch(request, *args, **kwargs)
 
 
-def teacher_view(func):
+def teacher_status_required(func):
     @wraps(func)
     def wrapper(request, *args, **kwargs):
         if not request.user.is_teacher:

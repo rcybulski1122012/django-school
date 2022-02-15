@@ -11,8 +11,8 @@ from django.views.generic import (CreateView, DeleteView, DetailView,
 
 from django_school.apps.classes.models import Class
 from django_school.apps.common.utils import (
-    AjaxRequiredMixin, GetObjectCacheMixin, IsTeacherMixin,
-    does_the_teacher_teach_the_subject_to_the_class, teacher_view)
+    AjaxRequiredMixin, GetObjectCacheMixin, TeacherStatusRequiredMixin,
+    does_the_teacher_teach_the_subject_to_the_class, teacher_status_required)
 from django_school.apps.grades.forms import (BulkGradeCreationCommonInfoForm,
                                              BulkGradeCreationFormSet,
                                              GradeCategoryForm, GradeForm)
@@ -51,7 +51,7 @@ class SubjectAndSchoolClassRelatedMixin:
 
 class GradeCreateView(
     LoginRequiredMixin,
-    IsTeacherMixin,
+    TeacherStatusRequiredMixin,
     SubjectAndSchoolClassRelatedMixin,
     SuccessMessageMixin,
     CreateView,
@@ -85,7 +85,7 @@ class GradeCreateView(
 
 
 @login_required
-@teacher_view
+@teacher_status_required
 def create_grades_in_bulk_view(request, class_slug, subject_slug):
     school_class = get_object_or_404(Class, slug=class_slug)
     subject = get_object_or_404(Subject, slug=subject_slug)
@@ -136,7 +136,10 @@ def create_grades_in_bulk_view(request, class_slug, subject_slug):
 
 
 class ClassGradesView(
-    LoginRequiredMixin, IsTeacherMixin, SubjectAndSchoolClassRelatedMixin, TemplateView
+    LoginRequiredMixin,
+    TeacherStatusRequiredMixin,
+    SubjectAndSchoolClassRelatedMixin,
+    TemplateView,
 ):
     template_name = "grades/class_grades.html"
 
@@ -178,7 +181,7 @@ class SingleGradeMixin:
 
 class GradeUpdateView(
     LoginRequiredMixin,
-    IsTeacherMixin,
+    TeacherStatusRequiredMixin,
     SingleGradeMixin,
     SuccessMessageMixin,
     UpdateView,
@@ -190,7 +193,7 @@ class GradeUpdateView(
 
 class GradeDeleteView(
     LoginRequiredMixin,
-    IsTeacherMixin,
+    TeacherStatusRequiredMixin,
     SingleGradeMixin,
     DeleteView,
 ):
@@ -203,7 +206,7 @@ class GradeDeleteView(
 
 
 @login_required
-@teacher_view
+@teacher_status_required
 def grade_categories_view(request, class_slug, subject_slug):
     school_class = get_object_or_404(Class, slug=class_slug)
     subject = get_object_or_404(Subject, slug=subject_slug)
@@ -265,7 +268,7 @@ class GradeCategoryFormTemplateView(TemplateView):
 
 
 class GradeCategoryDetailView(
-    LoginRequiredMixin, IsTeacherMixin, GradeCategoryAccessMixin, DetailView
+    LoginRequiredMixin, TeacherStatusRequiredMixin, GradeCategoryAccessMixin, DetailView
 ):
     model = GradeCategory
     template_name = "grades/partials/grade_category_detail.html"
@@ -274,7 +277,7 @@ class GradeCategoryDetailView(
 
 class GradeCategoryDeleteView(
     LoginRequiredMixin,
-    IsTeacherMixin,
+    TeacherStatusRequiredMixin,
     GradeCategoryAccessMixin,
     GetObjectCacheMixin,
     AjaxRequiredMixin,
@@ -294,7 +297,7 @@ class GradeCategoryDeleteView(
 
 
 class GradeCategoryUpdateView(
-    LoginRequiredMixin, IsTeacherMixin, GradeCategoryAccessMixin, UpdateView
+    LoginRequiredMixin, TeacherStatusRequiredMixin, GradeCategoryAccessMixin, UpdateView
 ):
     model = GradeCategory
     form_class = GradeCategoryForm

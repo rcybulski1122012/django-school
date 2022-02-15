@@ -4,17 +4,13 @@ from django.test import RequestFactory, TestCase
 from django.views import View
 
 from django_school.apps.common.utils import (
-    AjaxRequiredMixin,
-    GetObjectCacheMixin,
-    IsTeacherMixin,
-    does_the_teacher_teach_the_subject_to_the_class,
-    teacher_view,
-)
+    AjaxRequiredMixin, GetObjectCacheMixin, TeacherStatusRequiredMixin,
+    does_the_teacher_teach_the_subject_to_the_class, teacher_status_required)
 from tests.utils import ClassesMixin, LessonsMixin, UsersMixin
 
 
-class TestIsTeacherMixin(UsersMixin, TestCase):
-    class DummyView(IsTeacherMixin, View):
+class TeacherStatusRequiredMixinTestCase(UsersMixin, TestCase):
+    class DummyView(TeacherStatusRequiredMixin, View):
         def get(self, *args, **kwargs):
             return HttpResponse("OK")
 
@@ -32,9 +28,9 @@ class TestIsTeacherMixin(UsersMixin, TestCase):
             view.dispatch(request)
 
 
-class TeacherViewDecoratorTestCase(UsersMixin, TestCase):
+class TeacherStatusRequiredTestCase(UsersMixin, TestCase):
     @staticmethod
-    @teacher_view
+    @teacher_status_required
     def dummy_view(request):
         return HttpResponse("OK")
 

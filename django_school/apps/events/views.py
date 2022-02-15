@@ -7,7 +7,8 @@ from django.urls import reverse_lazy
 from django.views.generic import (CreateView, DeleteView, TemplateView,
                                   UpdateView)
 
-from django_school.apps.common.utils import AjaxRequiredMixin, IsTeacherMixin
+from django_school.apps.common.utils import (AjaxRequiredMixin,
+                                             TeacherStatusRequiredMixin)
 from django_school.apps.events.calendar import EventCalendar
 from django_school.apps.events.forms import EventForm
 from django_school.apps.events.models import Event
@@ -59,7 +60,7 @@ class EventsCalendarView(LoginRequiredMixin, TemplateView):
 
 
 class EventCreateView(
-    LoginRequiredMixin, IsTeacherMixin, SuccessMessageMixin, CreateView
+    LoginRequiredMixin, TeacherStatusRequiredMixin, SuccessMessageMixin, CreateView
 ):
     model = Event
     form_class = EventForm
@@ -74,7 +75,7 @@ class EventCreateView(
 
 
 class EventUpdateView(
-    LoginRequiredMixin, IsTeacherMixin, SuccessMessageMixin, UpdateView
+    LoginRequiredMixin, TeacherStatusRequiredMixin, SuccessMessageMixin, UpdateView
 ):
     model = Event
     form_class = EventForm
@@ -95,7 +96,7 @@ class EventUpdateView(
 
 class EventDeleteView(
     LoginRequiredMixin,
-    IsTeacherMixin,
+    TeacherStatusRequiredMixin,
     AjaxRequiredMixin,
     DeleteView,
 ):

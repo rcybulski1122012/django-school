@@ -11,7 +11,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView
 
 from django_school.apps.classes.models import Class
-from django_school.apps.common.utils import IsTeacherMixin, teacher_view
+from django_school.apps.common.utils import (TeacherStatusRequiredMixin,
+                                             teacher_status_required)
 from django_school.apps.lessons.forms import (AttendanceFormSet,
                                               LessonSessionForm)
 from django_school.apps.lessons.models import (AttachedFile, Lesson,
@@ -72,7 +73,9 @@ def timetables_list_view(request):
     )
 
 
-class TeacherLessonSessionsListView(LoginRequiredMixin, IsTeacherMixin, ListView):
+class TeacherLessonSessionsListView(
+    LoginRequiredMixin, TeacherStatusRequiredMixin, ListView
+):
     model = LessonSession
     template_name = "lessons/teacher_lesson_session_list.html"
     context_object_name = "lesson_sessions"
@@ -101,7 +104,7 @@ class TeacherLessonSessionsListView(LoginRequiredMixin, IsTeacherMixin, ListView
 
 
 @login_required
-@teacher_view
+@teacher_status_required
 def lesson_session_detail_view(request, session_pk):
     lesson_session = get_object_or_404(
         LessonSession.objects.select_related(
@@ -142,7 +145,7 @@ def lesson_session_detail_view(request, session_pk):
     )
 
 
-class ClassSubjectListView(LoginRequiredMixin, IsTeacherMixin, ListView):
+class ClassSubjectListView(LoginRequiredMixin, TeacherStatusRequiredMixin, ListView):
     model = Subject
     template_name = "lessons/class_subject_list.html"
     context_object_name = "subjects"
@@ -171,7 +174,7 @@ class ClassSubjectListView(LoginRequiredMixin, IsTeacherMixin, ListView):
 
 
 @login_required
-@teacher_view
+@teacher_status_required
 def attached_file_delete_view(request, pk):
     attached_file = get_object_or_404(
         AttachedFile.objects.select_related("lesson_session__lesson__teacher"), pk=pk
@@ -219,7 +222,7 @@ def student_attendance_summary_view(request, student_slug):
 
 
 @login_required
-@teacher_view
+@teacher_status_required
 def class_attendance_summary_view(request, class_slug):
     school_class = get_object_or_404(
         Class.objects.visible_to_user(request.user), slug=class_slug

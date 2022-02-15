@@ -2,10 +2,10 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import DetailView, ListView
 
 from django_school.apps.classes.models import Class
-from django_school.apps.common.utils import IsTeacherMixin
+from django_school.apps.common.utils import TeacherStatusRequiredMixin
 
 
-class ClassesListView(LoginRequiredMixin, IsTeacherMixin, ListView):
+class ClassesListView(LoginRequiredMixin, TeacherStatusRequiredMixin, ListView):
     model = Class
     ordering = ["number"]
     context_object_name = "school_classes"
@@ -15,7 +15,7 @@ class ClassesListView(LoginRequiredMixin, IsTeacherMixin, ListView):
         return super().get_queryset().visible_to_user(self.request.user)
 
 
-class ClassDetailView(LoginRequiredMixin, IsTeacherMixin, DetailView):
+class ClassDetailView(LoginRequiredMixin, TeacherStatusRequiredMixin, DetailView):
     model = Class
     slug_url_kwarg = "class_slug"
     context_object_name = "school_class"
