@@ -4,9 +4,10 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.urls import reverse_lazy
-from django.views.generic import CreateView, DeleteView, TemplateView, UpdateView
+from django.views.generic import (CreateView, DeleteView, TemplateView,
+                                  UpdateView)
 
-from django_school.apps.common.utils import IsTeacherMixin
+from django_school.apps.common.utils import AjaxRequiredMixin, IsTeacherMixin
 from django_school.apps.events.calendar import EventCalendar
 from django_school.apps.events.forms import EventForm
 from django_school.apps.events.models import Event
@@ -92,9 +93,14 @@ class EventUpdateView(
         return kwargs
 
 
-class EventDeleteView(LoginRequiredMixin, IsTeacherMixin, DeleteView):
+class EventDeleteView(
+    LoginRequiredMixin,
+    IsTeacherMixin,
+    AjaxRequiredMixin,
+    DeleteView,
+):
     model = Event
-    template_name = "events/event_delete.html"
+    template_name = "events/modals/event_delete.html"
     pk_url_kwarg = "event_pk"
     context_object_name = "event"
     success_message = "The event has been deleted successfully."

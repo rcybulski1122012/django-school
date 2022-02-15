@@ -3,17 +3,16 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.http import Http404, HttpResponse
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.views.decorators.http import require_http_methods
 from django.views.generic import (CreateView, DeleteView, DetailView,
                                   TemplateView, UpdateView)
 
 from django_school.apps.classes.models import Class
 from django_school.apps.common.utils import (
-    IsTeacherMixin, does_the_teacher_teach_the_subject_to_the_class,
-    teacher_view)
+    AjaxRequiredMixin, GetObjectCacheMixin, IsTeacherMixin,
+    does_the_teacher_teach_the_subject_to_the_class, teacher_view)
 from django_school.apps.grades.forms import (BulkGradeCreationCommonInfoForm,
                                              BulkGradeCreationFormSet,
                                              GradeCategoryForm, GradeForm)
@@ -273,27 +272,25 @@ class GradeCategoryDetailView(
     context_object_name = "category"
 
 
-@login_required
-@require_http_methods(["POST"])
-@teacher_view
-def grade_category_delete_view(request, pk):
-    category = get_object_or_404(
-        GradeCategory.objects.select_related("school_class", "subject"), pk=pk
-    )
+class GradeCategoryDeleteView(
+    LoginRequiredMixin,
+    IsTeacherMixin,
+    GradeCategoryAccessMixin,
+    GetObjectCacheMixin,
+    AjaxRequiredMixin,
+    DeleteView,
+):
+    model = GradeCategory
+    template_name = "grades/modals/category_delete.html"
 
-    redirect_url = request.GET.get("redirect_url")  # required
-
-    if (
-        not does_the_teacher_teach_the_subject_to_the_class(
-            request.user, category.subject, category.school_class
+    def get_success_url(self):
+        category = self.get_object()
+        redirect_url = reverse(
+            "grades:categories:create",
+            args=[category.school_class.slug, category.subject.slug],
         )
-        or redirect_url is None
-    ):
-        raise Http404
 
-    category.delete()
-
-    return redirect(redirect_url)
+        return redirect_url
 
 
 class GradeCategoryUpdateView(

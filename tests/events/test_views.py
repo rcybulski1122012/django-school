@@ -4,9 +4,15 @@ from django.test import TestCase
 from django.urls import reverse
 
 from django_school.apps.events.models import Event
-from tests.utils import (ClassesMixin, EventsMixin, LessonsMixin,
-                         LoginRequiredTestMixin, ResourceViewTestMixin,
-                         TeacherViewTestMixin, UsersMixin)
+from tests.utils import (
+    ClassesMixin,
+    EventsMixin,
+    LessonsMixin,
+    LoginRequiredTestMixin,
+    ResourceViewTestMixin,
+    TeacherViewTestMixin,
+    UsersMixin,
+)
 
 
 class EventsCalendarViewTestCase(
@@ -260,6 +266,7 @@ class EventDeleteViewTestCase(
     TestCase,
 ):
     path_name = "events:delete"
+    ajax_required = True
 
     def setUp(self):
         self.teacher = self.create_teacher()

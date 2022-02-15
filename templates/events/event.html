@@ -5,6 +5,15 @@
                       <strong>Teacher: </strong> {{ event.teacher.full_name  }}<br>
                       <strong>Scope:</strong> {% if event.school_class %}{{ event.school_class }}{% else %}global{% endif %}<br>
                       {% if user == event.teacher %}<a href='{{ event.update_url }}' class='btn btn-outline-primary'>Update</a>
-                      <a href='{{ event.delete_url }}' class='btn btn-outline-danger'>Delete</a>{% endif %}">
+                      <button
+                        class='btn btn-outline-danger eventDeleteButton'
+                        hx-get='{{ event.delete_url }}'
+                        hx-target='#base-modal .modal-content'
+                        hx-swap='innerHTML'
+                        hx-trigger='click'
+                        data-bs-toggle='modal'
+                        data-bs-target='#base-modal'>
+                          Delete
+                       </button>{% endif %}">
   {{ event.title }}
 </div>

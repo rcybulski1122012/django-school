@@ -8,13 +8,9 @@ from django_school.apps.classes.models import Class
 from django_school.apps.common.models import Address
 from django_school.apps.events.models import Event
 from django_school.apps.grades.models import Grade, GradeCategory
-from django_school.apps.lessons.models import (
-    AttachedFile,
-    Lesson,
-    LessonSession,
-    Presence,
-    Subject,
-)
+from django_school.apps.lessons.models import (AttachedFile, Lesson,
+                                               LessonSession, Presence,
+                                               Subject)
 from django_school.apps.messages.models import Message, MessageStatus
 from django_school.apps.users.models import ROLES
 
@@ -229,34 +225,49 @@ class EventsMixin:
 
 
 class LoginRequiredTestMixin:
+    ajax_required = False
+
     def get_url(self):
         raise NotImplementedError("get_url must be overridden")
 
     def test_redirects_to_login_page_when_user_is_not_logged_in(self):
         expected_url = f"{settings.LOGIN_URL}?next={self.get_url()}"
 
-        response = self.client.get(self.get_url())
+        params = (
+            {"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"} if self.ajax_required else {}
+        )
+        response = self.client.get(self.get_url(), **params)
 
         self.assertRedirects(response, expected_url)
 
 
 class TeacherViewTestMixin(LoginRequiredTestMixin):
+    ajax_required = False
+
     def test_returns_403_when_user_is_not_a_teacher(self):
         self.login(self.student)
 
-        response = self.client.get(self.get_url())
+        params = (
+            {"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"} if self.ajax_required else {}
+        )
+        response = self.client.get(self.get_url(), **params)
 
         self.assertEqual(response.status_code, 403)
 
     def test_returns_200_when_user_is_a_teacher(self):
         self.login(self.teacher)
 
-        response = self.client.get(self.get_url())
+        params = (
+            {"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"} if self.ajax_required else {}
+        )
+        response = self.client.get(self.get_url(), **params)
 
         self.assertEqual(response.status_code, 200)
 
 
 class ResourceViewTestMixin:
+    ajax_required = False
+
     def get_nonexistent_resource_url(self):
         raise NotImplementedError("get_nonexistent_resource_url must be overridden")
 
@@ -268,6 +279,9 @@ class ResourceViewTestMixin:
         elif LoginRequiredTestMixin in mro:
             self.login(self.student)
 
-        response = self.client.get(self.get_nonexistent_resource_url())
+        params = (
+            {"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"} if self.ajax_required else {}
+        )
+        response = self.client.get(self.get_nonexistent_resource_url(), **params)
 
         self.assertEqual(response.status_code, 404)

@@ -10,8 +10,16 @@
               d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
       </svg>
     </button>
-    <button type="button" class="btn btn-danger" id="deleteCategoryButton{{ category.pk }}" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash"
+
+    <button type="button"
+            class="btn btn-danger"
+            hx-get="{{ category.delete_url }}"
+            hx-target="#base-modal .modal-content"
+            hx-swap="innerHTML"
+            hx-trigger="click"
+            data-bs-toggle="modal"
+            data-bs-target="#base-modal">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash"#}
            viewBox="0 0 16 16">
           <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
           <path fill-rule="evenodd"
@@ -20,14 +28,3 @@
     </button>
   </span>
 </li>
-
-<script>
-    {
-        let deleteCategoryButton = document.querySelector("#deleteCategoryButton{{ category.pk }}");
-        deleteCategoryButton.addEventListener("click", () => {
-            let modalForm = document.querySelector("#modalForm");
-            modalForm.setAttribute("action", `{{ category.delete_url }}?redirect_url=${window.location}`);
-        });
-    }
-</script>
-

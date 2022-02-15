@@ -20,27 +20,6 @@
           hx-swap="beforeend">
     Add new
   </button>
-
-  <div class="modal fade" id="deleteCategoryModal" tabindex="-1" aria-labelledby="deleteCategoryModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="deleteCategoryModalLabel">Are you sure you want to delete the category?</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <p>Deletion of category will also delete grades assigned to it.</p>
-      </div>
-      <div class="modal-footer">
-        <form method="post" id="modalForm">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="submit" class="btn btn-danger confirmButton">Confirm</button>
-          {% csrf_token %}
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
 {% endblock %}
 
 {% block js %}

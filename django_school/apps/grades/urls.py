@@ -1,21 +1,21 @@
 from django.urls import include, path
 
 from django_school.apps.grades.views import (ClassGradesView,
+                                             GradeCategoryDeleteView,
                                              GradeCategoryDetailView,
                                              GradeCategoryFormTemplateView,
                                              GradeCategoryUpdateView,
                                              GradeCreateView, GradeDeleteView,
                                              GradeUpdateView,
                                              create_grades_in_bulk_view,
-                                             grade_categories_view,
-                                             grade_category_delete_view)
+                                             grade_categories_view)
 
 app_name = "grades"
 
 categories_urlpatterns = [
     path("htmx/form/", GradeCategoryFormTemplateView.as_view(), name="form"),
     path("htmx/<int:pk>/", GradeCategoryDetailView.as_view(), name="detail"),
-    path("htmx/<int:pk>/delete/", grade_category_delete_view, name="delete"),
+    path("<int:pk>/delete/", GradeCategoryDeleteView.as_view(), name="delete"),
     path(
         "htmx/<int:pk>/update/",
         GradeCategoryUpdateView.as_view(),
