@@ -211,8 +211,6 @@ class LessonSessionsListViewTestCase(
 
 
 class LessonSessionDetailViewTestCase(
-    TeacherViewTestMixin,
-    ResourceViewTestMixin,
     UsersMixin,
     ClassesMixin,
     LessonsMixin,
@@ -261,13 +259,22 @@ class LessonSessionDetailViewTestCase(
 
         return data
 
-    def test_returns_403_when_user_is_not_a_teacher_of_desired_lesson_session(self):
+    def test_returns_404_if_object_does_not_exist(self):
+        self.login(self.teacher)
+
+        response = self.client.get(self.get_nonexistent_resource_url())
+
+        self.assertEqual(response.status_code, 404)
+
+    # teacher cases
+
+    def test_returns_404_when_user_is_not_a_teacher_of_desired_lesson_session(self):
         teacher2 = self.create_teacher(username="teacher2")
         self.login(teacher2)
 
         response = self.client.get(self.get_url())
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 404)
 
     def test_updates_lesson_session_and_attendances(self):
         self.login(self.teacher)
@@ -286,9 +293,9 @@ class LessonSessionDetailViewTestCase(
     @override_settings(MEDIA_ROOT=temp_dir_path)
     def test_updates_files(self):
         self.login(self.teacher)
-        attencances = self.create_attendance(self.lesson_session, [self.student])
+        attendances = self.create_attendance(self.lesson_session, [self.student])
         data = self.prepare_form_data(
-            self.lesson_session, attencances, "New topic", ["absent"]
+            self.lesson_session, attendances, "New topic", ["absent"]
         )
         files = [
             SimpleUploadedFile("file1.txt", b"file_content"),
@@ -329,7 +336,7 @@ class LessonSessionDetailViewTestCase(
             response, "The lesson session has been updated successfully."
         )
 
-    def test_context_contain_form_and_formset(self):
+    def test_context_contain_form_and_formset_if_user_is_a_teacher(self):
         self.login(self.teacher)
 
         response = self.client.get(self.get_url())
@@ -337,13 +344,56 @@ class LessonSessionDetailViewTestCase(
         self.assertIn("lesson_session_form", response.context)
         self.assertIn("attendance_formset", response.context)
 
-    def test_renders_students_full_names_as_labels(self):
+    def test_renders_students_full_names_as_labels_if_user_is_a_teacher(self):
         self.login(self.teacher)
         self.create_attendance(self.lesson_session, [self.student])
 
         response = self.client.get(self.get_url())
 
         self.assertContains(response, self.student.full_name)
+
+    # student cases
+
+    def test_renders_disabled_form_is_user_is_student_and_does_not_render_grades_url(
+        self,
+    ):
+        self.login(self.student)
+        self.create_attendance(self.lesson_session, [self.student])
+
+        response = self.client.get(self.get_url())
+
+        self.assertContains(response, "disabled")
+        grades_url = reverse(
+            "grades:class_grades", args=[self.school_class.slug, self.subject.slug]
+        )
+        self.assertNotContains(response, grades_url)
+
+    def test_context_contains_attendance_status_and_view_renders_it_if_user_is_a_student(
+        self,
+    ):
+        self.login(self.student)
+        status = "absent"
+        self.create_attendance(self.lesson_session, [self.student], status)
+
+        response = self.client.get(self.get_url())
+
+        self.assertEqual(response.context["attendance_status"], status)
+
+    def test_post_request_does_not_affect_is_user_is_a_student(self):
+        self.login(self.student)
+        attendances = self.create_attendance(self.lesson_session, [self.student])
+        expected_statuses = ["absent"]
+        data = self.prepare_form_data(
+            self.lesson_session, attendances, "New topic", expected_statuses
+        )
+
+        response = self.client.post(self.get_url(), data=data)
+        attendance = Attendance.objects.get()
+        self.lesson_session.refresh_from_db()
+
+        self.assertNotEqual(response.status_code, 302)
+        self.assertNotEqual(attendance.status, expected_statuses[0])
+        self.assertNotEqual(self.lesson_session.topic, "New topic")
 
 
 class ClassSubjectListViewTestCase(

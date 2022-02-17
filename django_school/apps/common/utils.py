@@ -5,23 +5,29 @@ from django.core.exceptions import PermissionDenied
 from django_school.apps.lessons.models import Lesson
 
 
-class TeacherStatusRequiredMixin:
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_teacher:
-            raise PermissionDenied()
+def RolesRequiredMixin(*roles):
+    class RolesRequiredMixin_:
+        def dispatch(self, request, *args, **kwargs):
+            if request.user.role not in roles and not request.user.is_superuser:
+                raise PermissionDenied()
 
-        return super().dispatch(request, *args, **kwargs)
+            return super().dispatch(request, *args, **kwargs)
+
+    return RolesRequiredMixin_
 
 
-def teacher_status_required(func):
-    @wraps(func)
-    def wrapper(request, *args, **kwargs):
-        if not request.user.is_teacher:
-            raise PermissionDenied
+def roles_required(*roles):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(request, *args, **kwargs):
+            if request.user.role not in roles and not request.user.is_superuser:
+                raise PermissionDenied
 
-        return func(request, *args, **kwargs)
+            return func(request, *args, **kwargs)
 
-    return wrapper
+        return wrapper
+
+    return decorator
 
 
 def does_the_teacher_teach_the_subject_to_the_class(teacher, subject, school_class):

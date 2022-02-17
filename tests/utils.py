@@ -58,6 +58,12 @@ class UsersMixin:
 
         return parent
 
+    @classmethod
+    def create_superuser(cls, username="superuser", **kwargs):
+        superuser = cls.create_user(username, is_superuser=True, **kwargs)
+
+        return superuser
+
 
 class ClassesMixin:
     DEFAULT_NUMBER = "1a"

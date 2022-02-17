@@ -89,3 +89,9 @@ class LessonSessionFormTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase
         self.assertTrue(form.is_valid())
         form.save()
         self.assertFalse(AttachedFile.objects.exists())
+
+    def test_init_disables_fields(self):
+        form = LessonSessionForm(instance=self.lesson_session, disabled=True)
+
+        for field in form.fields.values():
+            self.assertTrue(field.disabled)

@@ -14,6 +14,15 @@ class LessonSessionForm(forms.ModelForm):
         model = LessonSession
         fields = ["topic"]
 
+    def __init__(self, *args, **kwargs):
+        disabled = kwargs.pop("disabled", False)
+
+        super().__init__(*args, **kwargs)
+
+        if disabled:
+            for field in self.fields.values():
+                field.disabled = True
+
     def save(self, commit=True, request_files=None):
         lesson_session = super().save(commit)
 

@@ -106,6 +106,13 @@ class LessonSessionQuerySet(models.QuerySet):
         else:
             return self.none()
 
+    def with_related_objects(self):
+        return self.select_related(
+            "lesson__teacher",
+            "lesson__school_class",
+            "lesson__subject",
+        )
+
 
 class LessonSession(models.Model):
     topic = models.CharField(max_length=128, blank=True, null=True)

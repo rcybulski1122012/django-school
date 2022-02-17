@@ -11,12 +11,12 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView
 
 from django_school.apps.classes.models import Class
-from django_school.apps.common.utils import (TeacherStatusRequiredMixin,
-                                             teacher_status_required)
+from django_school.apps.common.utils import RolesRequiredMixin, roles_required
 from django_school.apps.lessons.forms import (AttendanceFormSet,
                                               LessonSessionForm)
 from django_school.apps.lessons.models import (AttachedFile, Lesson,
                                                LessonSession, Subject)
+from django_school.apps.users.models import ROLES
 
 User = get_user_model()
 
@@ -73,7 +73,9 @@ def timetables_list_view(request):
     )
 
 
-class LessonSessionsListView(LoginRequiredMixin, ListView):
+class LessonSessionsListView(
+    LoginRequiredMixin, RolesRequiredMixin(ROLES.TEACHER, ROLES.STUDENT), ListView
+):
     model = LessonSession
     template_name = "lessons/teacher_lesson_session_list.html"
     context_object_name = "lesson_sessions"
@@ -103,28 +105,26 @@ class LessonSessionsListView(LoginRequiredMixin, ListView):
 
 
 @login_required
-@teacher_status_required
+@roles_required(ROLES.TEACHER, ROLES.STUDENT)
 def lesson_session_detail_view(request, session_pk):
     lesson_session = get_object_or_404(
-        LessonSession.objects.select_related(
-            "lesson__teacher",
-            "lesson__school_class",
-            "lesson__subject",
-        ).prefetch_related("attached_files"),
+        LessonSession.objects.with_related_objects()
+        .visible_to_user(request.user)
+        .prefetch_related("attached_files"),
         pk=session_pk,
     )
 
-    if request.user != lesson_session.lesson.teacher:
-        raise PermissionDenied()
-
     lesson_session_form = LessonSessionForm(
-        request.POST or None, request.FILES or None, instance=lesson_session
+        request.POST or None,
+        request.FILES or None,
+        instance=lesson_session,
+        disabled=not request.user.is_teacher,
     )
     attendance_formset = AttendanceFormSet(
         request.POST or None, instance=lesson_session
     )
 
-    if request.method == "POST":
+    if request.method == "POST" and request.user.is_teacher:
         if lesson_session_form.is_valid() and attendance_formset.is_valid():
             lesson_session_form.save(request_files=request.FILES)
             attendance_formset.save()
@@ -133,18 +133,27 @@ def lesson_session_detail_view(request, session_pk):
             )
             return redirect(lesson_session.detail_url)
 
+    ctx = {
+        "lesson_session_form": lesson_session_form,
+        "lesson_session": lesson_session,
+        "attendance_formset": attendance_formset,
+    }
+
+    if request.user.is_student:
+        ctx["attendance_status"] = lesson_session.attendance_set.get(
+            student=request.user
+        ).status
+
     return render(
         request,
         "lessons/lesson_session_detail.html",
-        {
-            "lesson_session_form": lesson_session_form,
-            "lesson_session": lesson_session,
-            "attendance_formset": attendance_formset,
-        },
+        ctx,
     )
 
 
-class ClassSubjectListView(LoginRequiredMixin, TeacherStatusRequiredMixin, ListView):
+class ClassSubjectListView(
+    LoginRequiredMixin, RolesRequiredMixin(ROLES.TEACHER), ListView
+):
     model = Subject
     template_name = "lessons/class_subject_list.html"
     context_object_name = "subjects"
@@ -173,7 +182,7 @@ class ClassSubjectListView(LoginRequiredMixin, TeacherStatusRequiredMixin, ListV
 
 
 @login_required
-@teacher_status_required
+@roles_required(ROLES.TEACHER)
 def attached_file_delete_view(request, pk):
     attached_file = get_object_or_404(
         AttachedFile.objects.select_related("lesson_session__lesson__teacher"), pk=pk
@@ -221,7 +230,7 @@ def student_attendance_summary_view(request, student_slug):
 
 
 @login_required
-@teacher_status_required
+@roles_required(ROLES.TEACHER)
 def class_attendance_summary_view(request, class_slug):
     school_class = get_object_or_404(
         Class.objects.visible_to_user(request.user), slug=class_slug

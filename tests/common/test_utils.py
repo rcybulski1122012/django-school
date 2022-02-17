@@ -4,37 +4,46 @@ from django.test import RequestFactory, TestCase
 from django.views import View
 
 from django_school.apps.common.utils import (
-    AjaxRequiredMixin, GetObjectCacheMixin, TeacherStatusRequiredMixin,
-    does_the_teacher_teach_the_subject_to_the_class, teacher_status_required)
+    AjaxRequiredMixin, GetObjectCacheMixin, RolesRequiredMixin,
+    does_the_teacher_teach_the_subject_to_the_class, roles_required)
+from django_school.apps.users.models import ROLES
 from tests.utils import ClassesMixin, LessonsMixin, UsersMixin
 
 
-class TeacherStatusRequiredMixinTestCase(UsersMixin, TestCase):
-    class DummyView(TeacherStatusRequiredMixin, View):
+class RolesRequiredMixinTestCase(UsersMixin, TestCase):
+    class DummyView(RolesRequiredMixin(ROLES.TEACHER), View):
         def get(self, *args, **kwargs):
             return HttpResponse("OK")
 
-    def test_dispatch_raises_404_if_user_is_not_a_teacher(self):
+    def test_dispatch_raises_404_if_user_have_no_required_role(self):
         teacher = self.create_teacher()
         student = self.create_student()
         request = RequestFactory().get("/test")
-        view = self.DummyView()
+        view = self.DummyView.as_view()
 
         request.user = teacher
-        view.dispatch(request)
+        view(request)
 
         request.user = student
         with self.assertRaises(PermissionDenied):
-            view.dispatch(request)
+            view(request)
+
+    def test_dispatch_does_not_raise_404_if_user_is_superuser(self):
+        superuser = self.create_superuser()
+        request = RequestFactory().get("/test")
+        view = self.DummyView.as_view()
+
+        request.user = superuser
+        view(request)
 
 
 class TeacherStatusRequiredTestCase(UsersMixin, TestCase):
     @staticmethod
-    @teacher_status_required
+    @roles_required(ROLES.TEACHER)
     def dummy_view(request):
         return HttpResponse("OK")
 
-    def test_decorated_view_raises_404_if_user_is_not_a_teacher(self):
+    def test_decorated_view_raises_404_if_user_have_no_required_role(self):
         teacher = self.create_teacher()
         student = self.create_student()
         request = RequestFactory().get("/test")
@@ -45,6 +54,13 @@ class TeacherStatusRequiredTestCase(UsersMixin, TestCase):
         request.user = student
         with self.assertRaises(PermissionDenied):
             self.dummy_view(request)
+
+    def test_decorated_view_does_not_raise_404_if_user_is_superuser(self):
+        superuser = self.create_superuser()
+        request = RequestFactory().get("/test")
+        request.user = superuser
+
+        self.dummy_view(request)
 
 
 class DoesTheTeacherTeachTheSubjectToTheClassTestCase(

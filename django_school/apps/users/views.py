@@ -10,14 +10,16 @@ from django.urls import reverse_lazy
 from django.views.generic import DetailView
 
 from django_school.apps.common.forms import AddressForm
-from django_school.apps.common.utils import TeacherStatusRequiredMixin
+from django_school.apps.common.utils import RolesRequiredMixin
 from django_school.apps.users.forms import UserInfoForm
 from django_school.apps.users.models import ROLES
 
 User = get_user_model()
 
 
-class StudentDetailView(LoginRequiredMixin, TeacherStatusRequiredMixin, DetailView):
+class StudentDetailView(
+    LoginRequiredMixin, RolesRequiredMixin(ROLES.TEACHER), DetailView
+):
     model = User
     slug_url_kwarg = "student_slug"
     template_name = "users/student_detail.html"

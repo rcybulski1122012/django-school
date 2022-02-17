@@ -8,10 +8,11 @@ from django.views.generic import (CreateView, DeleteView, TemplateView,
                                   UpdateView)
 
 from django_school.apps.common.utils import (AjaxRequiredMixin,
-                                             TeacherStatusRequiredMixin)
+                                             RolesRequiredMixin)
 from django_school.apps.events.calendar import EventCalendar
 from django_school.apps.events.forms import EventForm
 from django_school.apps.events.models import Event
+from django_school.apps.users.models import ROLES
 
 
 class EventsCalendarView(LoginRequiredMixin, TemplateView):
@@ -60,7 +61,10 @@ class EventsCalendarView(LoginRequiredMixin, TemplateView):
 
 
 class EventCreateView(
-    LoginRequiredMixin, TeacherStatusRequiredMixin, SuccessMessageMixin, CreateView
+    LoginRequiredMixin,
+    RolesRequiredMixin(ROLES.TEACHER),
+    SuccessMessageMixin,
+    CreateView,
 ):
     model = Event
     form_class = EventForm
@@ -75,7 +79,10 @@ class EventCreateView(
 
 
 class EventUpdateView(
-    LoginRequiredMixin, TeacherStatusRequiredMixin, SuccessMessageMixin, UpdateView
+    LoginRequiredMixin,
+    RolesRequiredMixin(ROLES.TEACHER),
+    SuccessMessageMixin,
+    UpdateView,
 ):
     model = Event
     form_class = EventForm
@@ -96,7 +103,7 @@ class EventUpdateView(
 
 class EventDeleteView(
     LoginRequiredMixin,
-    TeacherStatusRequiredMixin,
+    RolesRequiredMixin(ROLES.TEACHER),
     AjaxRequiredMixin,
     DeleteView,
 ):
