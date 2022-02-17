@@ -3,7 +3,6 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 
 from django_school.apps.grades.models import Grade, GradeCategory
-from django_school.apps.lessons.models import Subject
 
 User = get_user_model()
 

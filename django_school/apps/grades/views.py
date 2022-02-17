@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
@@ -150,13 +152,58 @@ class ClassGradesView(
                 "categories": GradeCategory.objects.filter(
                     subject=self.subject, school_class=self.school_class
                 ),
-                "students": User.students.with_weighted_avg(subject=self.subject)
+                "students": User.students.with_weighted_avg_for_subject(
+                    subject=self.subject
+                )
                 .with_subject_grades(subject=self.subject)
                 .filter(school_class=self.school_class),
             }
         )
 
         return context
+
+
+class StudentGradesView(LoginRequiredMixin, GetObjectCacheMixin, DetailView):
+    model = User
+    slug_url_kwarg = "student_slug"
+    template_name = "grades/student_grades.html"
+    context_object_name = "student"
+
+    def get_queryset(self):
+        return User.students.visible_to_user(self.request.user).prefetch_related(
+            "grades_gotten__subject", "grades_gotten__category"
+        )
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data()
+        student = self.get_object()
+        grades = student.grades_gotten.all()
+        ctx["subjects"] = self._get_list_of_subjects(grades)
+        ctx["averages"] = self._get_dict_of_averages(grades)
+
+        return ctx
+
+    @staticmethod
+    def _get_list_of_subjects(grades):
+        subjects = set()
+        for grade in grades:
+            subjects.add(grade.subject)
+
+        return list(subjects)
+
+    @staticmethod
+    def _get_dict_of_averages(grades):
+        averages = defaultdict(int)
+        sums_of_weights = defaultdict(int)
+
+        for grade in grades:
+            averages[grade.subject.name] += grade.grade * grade.weight
+            sums_of_weights[grade.subject.name] += grade.weight
+
+        for key in averages.keys():
+            averages[key] /= sums_of_weights[key]
+
+        return dict(averages)
 
 
 class SingleGradeMixin:

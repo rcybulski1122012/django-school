@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load utils %}
+
+{% block title %}
+  {% if request.user == student %}
+    Your Grades
+  {% else %}
+    {{ student.full_name }} Grades
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  <h1>
+    {% if request.user == student %}
+      Your Grades
+    {% else %}
+      {{ student.full_name }} Grades
+    {% endif %}
+  </h1>
+
+  <div class="table-responsive">
+    <table class="table table-bordered table-responsive">
+      <thead>
+        <tr>
+          <th class="w-25">Subject</th>
+          <th class="w-50">Grades</th>
+          <th class="w-25">Average</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for subject in subjects %}
+          <tr>
+            <th>{{ subject.name }}</th>
+            <td id="{{ subject.slug }}-grades">
+            </td>
+            <td id="{{ subject.slug }}-average"></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}
+
+{% block js %}
+  <script>
+  {% for grade in student.grades_gotten.all %}
+    {
+        const element = document.createElement("span");
+        element.classList.add("pe-3");
+        element.dataset.bsToggle = "popover";
+        element.dataset.bsContent = `
+        <strong>Category:</strong> {{ grade.category.name }}<br>
+        <strong>Weight:</strong> {{ grade.weight }}<br>
+        <strong>Comment:</strong> {{ grade.comment|default:"-" }}<br>
+        <strong>Added:</strong> {{ grade.created|date:"d-m-Y" }}
+        `
+        element.innerHTML = "{{ grade.get_grade_display }}";
+        document.querySelector("#{{ grade.subject.slug }}-grades").appendChild(element);
+    }
+  {% endfor %}
+
+  {% for subject in subjects %}
+      document.querySelector("#{{ subject.slug }}-average").innerHTML = {{ averages|get_item:subject.name|floatformat:"2" }}
+  {% endfor %}
+
+
+  const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+  const popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+    return new bootstrap.Popover(popoverTriggerEl, {
+        container: "body",
+        sanitize: false,
+        html: true
+    });
+  });
+  </script>
+{% endblock %}

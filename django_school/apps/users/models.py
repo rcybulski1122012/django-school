@@ -10,7 +10,7 @@ from django_school.apps.grades.models import Grade
 
 
 class StudentsQuerySet(models.QuerySet):
-    def with_weighted_avg(self, subject):
+    def with_weighted_avg_for_subject(self, subject):
         return self.annotate(
             w_avg=Sum(
                 F("grades_gotten__grade") * F("grades_gotten__weight"),
@@ -141,3 +141,7 @@ class User(AbstractUser):
     @property
     def teacher_timetable_url(self):
         return reverse("lessons:teacher_timetable", args=[self.slug])
+
+    @property
+    def grades_url(self):
+        return reverse("grades:student_grades", args=[self.slug])

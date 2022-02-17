@@ -64,7 +64,7 @@ class StudentsManagerTestCase(
 
         self.assertQuerysetEqual(students, [self.student])
 
-    def test_with_weighted_avg_of_given_subject(self):
+    def test_with_weighted_avg_for_subject_of_given_subject(self):
         subject2 = self.create_subject(name="subject2")
         [
             self.create_grade(
@@ -81,16 +81,20 @@ class StudentsManagerTestCase(
         ]
 
         w_avg_in_subject1 = (
-            User.students.with_weighted_avg(self.subject).get(pk=self.student.pk).w_avg
+            User.students.with_weighted_avg_for_subject(self.subject)
+            .get(pk=self.student.pk)
+            .w_avg
         )
         w_avg_in_subject2 = (
-            User.students.with_weighted_avg(subject2).get(pk=self.student.pk).w_avg
+            User.students.with_weighted_avg_for_subject(subject2)
+            .get(pk=self.student.pk)
+            .w_avg
         )
 
         self.assertAlmostEqual(w_avg_in_subject1, 3.6875)
         self.assertAlmostEqual(w_avg_in_subject2, 3.0625)
 
-    def test_with_weighted_avg_cares_about_weights(self):
+    def test_with_weighted_avg_for_subject_cares_about_weights(self):
         for grade, weight in [(3, 3), (4.5, 2), (5, 1)]:
             self.create_grade(
                 self.grade_category,
@@ -102,19 +106,23 @@ class StudentsManagerTestCase(
             )
 
         w_avg = (
-            User.students.with_weighted_avg(self.subject).get(pk=self.student.pk).w_avg
+            User.students.with_weighted_avg_for_subject(self.subject)
+            .get(pk=self.student.pk)
+            .w_avg
         )
 
         self.assertAlmostEqual(w_avg, 3.833333333333333)
 
-    def test_with_weighted_avg_when_no_grades(self):
-        user = User.students.with_weighted_avg(self.subject).get(pk=self.student.pk)
+    def test_with_weighted_avg_for_subject_when_no_grades(self):
+        user = User.students.with_weighted_avg_for_subject(self.subject).get(
+            pk=self.student.pk
+        )
         self.assertIsNone(user.w_avg)
 
-    def test_with_weighted_avg_does_not_filter_users_qs(self):
+    def test_with_weighted_avg_for_subject_does_not_filter_users_qs(self):
         student2 = self.create_student(username="student2")
         self.create_grade(self.grade_category, self.subject, self.student, self.teacher)
-        users = User.students.with_weighted_avg(self.subject)
+        users = User.students.with_weighted_avg_for_subject(self.subject)
 
         self.assertQuerysetEqual(users, [self.student, student2], ordered=False)
 

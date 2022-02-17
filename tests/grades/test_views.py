@@ -1,17 +1,11 @@
-from django.conf import settings
 from django.test import TestCase
 from django.urls import reverse
 
 from django_school.apps.grades.forms import GradeCategoryForm
 from django_school.apps.grades.models import Grade, GradeCategory
-from tests.utils import (
-    ClassesMixin,
-    GradesMixin,
-    LessonsMixin,
-    ResourceViewTestMixin,
-    TeacherViewTestMixin,
-    UsersMixin,
-)
+from tests.utils import (ClassesMixin, GradesMixin, LessonsMixin,
+                         LoginRequiredTestMixin, ResourceViewTestMixin,
+                         TeacherViewTestMixin, UsersMixin)
 
 
 class SubjectAndSchoolClassRelatedTestMixin(
@@ -160,6 +154,66 @@ class ClassGradesViewTestCase(SubjectAndSchoolClassRelatedTestMixin, TestCase):
         response = self.client.get(self.get_url())
 
         self.assertContains(response, expected_avg)
+
+
+class StudentGradesViewTestCase(
+    LoginRequiredTestMixin,
+    ResourceViewTestMixin,
+    UsersMixin,
+    ClassesMixin,
+    LessonsMixin,
+    GradesMixin,
+    TestCase,
+):
+    path_name = "grades:student_grades"
+
+    def setUp(self):
+        self.teacher = self.create_teacher()
+        self.school_class = self.create_class()
+        self.student = self.create_student(school_class=self.school_class)
+        self.subject = self.create_subject()
+        self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
+        self.category = self.create_grade_category(self.subject, self.school_class)
+        self.grade = self.create_grade(
+            self.category, self.subject, self.student, self.teacher
+        )
+
+    def get_url(self, student_slug=None):
+        student_slug = student_slug or self.student.slug
+
+        return reverse(self.path_name, args=[student_slug])
+
+    def get_nonexistent_resource_url(self):
+        return self.get_url(student_slug="does-not-exist")
+
+    def test_returns_404_if_user_with_given_slug_is_not_a_student(self):
+        self.login(self.teacher)
+
+        response = self.client.get(self.get_url(student_slug=self.teacher.slug))
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_returns_404_if_student_is_not_visible_to_user(self):
+        teacher2 = self.create_teacher(username="teacher2")
+        self.login(teacher2)
+
+        response = self.client.get(self.get_url())
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_context_contains_list_of_subjects_and_dict_of_averages(self):
+        self.login(self.teacher)
+        for grade, weight in [("2", 3), ("2", 2), ("4", 1), ("5", 1), ("4", 2)]:
+            self.create_grade(
+                self.category, self.subject, self.student, self.teacher, grade, weight
+            )
+
+        response = self.client.get(self.get_url())
+
+        subjects = response.context["subjects"]
+        averages = response.context["averages"]
+        self.assertEqual(subjects, [self.subject])
+        self.assertEqual(averages, {self.DEFAULT_SUBJECT_NAME: 3.00})
 
 
 class CreateGradesInBulkViewTestCase(SubjectAndSchoolClassRelatedTestMixin, TestCase):
@@ -406,7 +460,7 @@ class GradeCategoriesViewTestCase(SubjectAndSchoolClassRelatedTestMixin, TestCas
         self.assertEqual(response.context["subject"], self.subject)
         self.assertEqual(response.context["school_class"], self.school_class)
 
-    def test_creates_category_and_redirects_to_category_detail_if_data_is_valid_and_request_method_is_POST(
+    def test_creates_category_and_redirects_to_category_detail_if_data_is_valid_and_request_method_is_POST(  # noqa
         self,
     ):
         self.login(self.teacher)

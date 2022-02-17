@@ -7,6 +7,7 @@ from django_school.apps.grades.views import (ClassGradesView,
                                              GradeCategoryUpdateView,
                                              GradeCreateView, GradeDeleteView,
                                              GradeUpdateView,
+                                             StudentGradesView,
                                              create_grades_in_bulk_view,
                                              grade_categories_view)
 
@@ -35,6 +36,11 @@ urlpatterns = [
             (categories_urlpatterns, "categories"),
             namespace="categories",
         ),
+    ),
+    path(
+        "student/<slug:student_slug>",
+        StudentGradesView.as_view(),
+        name="student_grades",
     ),
     path(
         "<slug:class_slug>/<slug:subject_slug>/add/",
