@@ -2,7 +2,7 @@ from django.urls import path
 
 from django_school.apps.lessons.views import (ClassSubjectListView,
                                               ClassTimetableView,
-                                              TeacherLessonSessionsListView,
+                                              LessonSessionsListView,
                                               TeacherTimetableView,
                                               attached_file_delete_view,
                                               class_attendance_summary_view,
@@ -26,7 +26,7 @@ urlpatterns = [
     ),
     path(
         "sessions/",
-        TeacherLessonSessionsListView.as_view(),
+        LessonSessionsListView.as_view(),
         name="session_list",
     ),
     path(

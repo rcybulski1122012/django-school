@@ -97,6 +97,16 @@ class Lesson(models.Model):
             raise ValidationError("The teacher is not a teacher.")
 
 
+class LessonSessionQuerySet(models.QuerySet):
+    def visible_to_user(self, user):
+        if user.is_teacher:
+            return self.filter(lesson__teacher=user)
+        elif user.is_student:
+            return self.filter(lesson__school_class__students=user)
+        else:
+            return self.none()
+
+
 class LessonSession(models.Model):
     topic = models.CharField(max_length=128, blank=True, null=True)
     date = models.DateField(null=True)
@@ -107,6 +117,8 @@ class LessonSession(models.Model):
     attendances = models.ManyToManyField(
         settings.AUTH_USER_MODEL, through="lessons.Attendance"
     )
+
+    objects = LessonSessionQuerySet.as_manager()
 
     def __str__(self):
         return (

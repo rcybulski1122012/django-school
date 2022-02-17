@@ -103,8 +103,8 @@ class TimetablesListViewTestCase(UsersMixin, ClassesMixin, TestCase):
         )
 
 
-class TeacherLessonSessionsListViewTestCase(
-    TeacherViewTestMixin,
+class LessonSessionsListViewTestCase(
+    LoginRequiredTestMixin,
     UsersMixin,
     ClassesMixin,
     LessonsMixin,
@@ -134,6 +134,17 @@ class TeacherLessonSessionsListViewTestCase(
         self.login(self.teacher)
         teacher2 = self.create_teacher(username="SecondTeacher2")
         lesson2 = self.create_lesson(self.subject, teacher2, self.school_class)
+        session1 = self.create_lesson_session(self.lesson)
+        self.create_lesson_session(lesson2)
+
+        response = self.client.get(self.get_url())
+
+        self.assertQuerysetEqual(response.context["lesson_sessions"], [session1])
+
+    def test_selects_only_lesson_session_of_currently_logged_student(self):
+        self.login(self.student)
+        school_class2 = self.create_class(number="2c")
+        lesson2 = self.create_lesson(self.subject, self.teacher, school_class2)
         session1 = self.create_lesson_session(self.lesson)
         self.create_lesson_session(lesson2)
 

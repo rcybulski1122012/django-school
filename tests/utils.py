@@ -21,6 +21,7 @@ class UsersMixin:
     DEFAULT_PASSWORD = "password"
     TEACHER_USERNAME = "teacher"
     STUDENT_USERNAME = "student"
+    PARENT_USERNAME = "username"
 
     @classmethod
     def create_user(cls, username=DEFAULT_USERNAME, **kwargs):
@@ -50,6 +51,12 @@ class UsersMixin:
         student = cls.create_user(username, role=ROLES.STUDENT, **kwargs)
 
         return student
+
+    @classmethod
+    def create_parent(cls, username=PARENT_USERNAME, **kwargs):
+        parent = cls.create_user(username, role=ROLES.PARENT, **kwargs)
+
+        return parent
 
 
 class ClassesMixin:

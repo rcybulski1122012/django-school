@@ -39,6 +39,7 @@
               </div>
             {% elif request.user.is_student %}
               <a class="nav-link" href="{{ request.user.grades_url }}">Grades</a>
+              <a class="nav-link" href="{% url "lessons:session_list" %}">Lesson Session</a>
             {% endif %}
             <div class="nav-item dropdown">
               <a class="nav-link dropdown-toggle" href="#" id="messagesDropdown" role="button" data-bs-toggle="dropdown"

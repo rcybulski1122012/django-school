@@ -73,9 +73,7 @@ def timetables_list_view(request):
     )
 
 
-class TeacherLessonSessionsListView(
-    LoginRequiredMixin, TeacherStatusRequiredMixin, ListView
-):
+class LessonSessionsListView(LoginRequiredMixin, ListView):
     model = LessonSession
     template_name = "lessons/teacher_lesson_session_list.html"
     context_object_name = "lesson_sessions"
@@ -86,12 +84,13 @@ class TeacherLessonSessionsListView(
         qs = (
             super()
             .get_queryset()
+            .visible_to_user(self.request.user)
+            .filter(date=date)
             .select_related(
                 "lesson__teacher",
                 "lesson__school_class",
                 "lesson__subject",
             )
-            .filter(lesson__teacher=self.request.user, date=date)
         )
 
         return qs

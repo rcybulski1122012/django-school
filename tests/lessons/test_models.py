@@ -1,7 +1,8 @@
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from django_school.apps.lessons.models import Attendance, Subject
+from django_school.apps.lessons.models import (Attendance, LessonSession,
+                                               Subject)
 from tests.utils import ClassesMixin, LessonsMixin, UsersMixin
 
 
@@ -59,6 +60,40 @@ class LessonModelTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
     def test_clean_raises_ValidationError_if_teacher_is_not_a_teacher(self):
         with self.assertRaises(ValidationError):
             self.create_lesson(self.subject, self.student, self.school_class).clean()
+
+
+class LessonSessionQuerySetTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
+    def setUp(self):
+        self.teacher = self.create_teacher()
+        self.school_class = self.create_class()
+        self.student = self.create_student(school_class=self.school_class)
+        self.parent = self.create_parent()
+        self.subject = self.create_subject()
+        self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
+        self.lesson_session = self.create_lesson_session(self.lesson)
+
+    def test_visible_to_user_returns_none_if_user_is_a_parent(self):
+        qs = LessonSession.objects.visible_to_user(self.parent)
+
+        self.assertQuerysetEqual(qs, LessonSession.objects.none())
+
+    def test_visible_to_user_returns_teacher_lessons_if_user_is_a_teacher(self):
+        teacher2 = self.create_teacher(username="teacher2")
+        lesson2 = self.create_lesson(self.subject, teacher2, self.school_class)
+        self.create_lesson_session(lesson2)
+
+        qs = LessonSession.objects.visible_to_user(self.teacher)
+
+        self.assertQuerysetEqual(qs, [self.lesson_session])
+
+    def test_visible_to_user_returns_class_lessons_if_user_is_a_student(self):
+        school_class2 = self.create_class(number="2c")
+        lesson2 = self.create_lesson(self.subject, self.teacher, school_class2)
+        self.create_lesson_session(lesson2)
+
+        qs = LessonSession.objects.visible_to_user(self.student)
+
+        self.assertQuerysetEqual(qs, [self.lesson_session])
 
 
 class AttendanceModelTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
