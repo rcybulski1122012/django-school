@@ -2,7 +2,6 @@ from django.conf import settings
 from django.db import models
 from django.db.models import Prefetch
 from django.urls import reverse
-
 from martor.models import MartorField
 
 
@@ -17,6 +16,12 @@ class MessagesQuerySet(models.QuerySet):
         )
 
         return qs
+
+    def received(self, user):
+        return self.filter(receivers=user)
+
+    def sent(self, user):
+        return self.filter(sender=user)
 
 
 class Message(models.Model):

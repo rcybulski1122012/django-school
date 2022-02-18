@@ -48,7 +48,7 @@
             <div class="nav-item dropdown">
               <a class="nav-link dropdown-toggle" href="#" id="messagesDropdown" role="button" data-bs-toggle="dropdown"
                  aria-expanded="false">
-                Messages
+                Messages {% if unread_messages_count != 0 %}({{ unread_messages_count }}) {% endif %}
               </a>
               <div class="dropdown-menu" aria-labelledby="messagesDropdown">
                 <a class="dropdown-item" href="{% url "messages:received" %}">Received</a>

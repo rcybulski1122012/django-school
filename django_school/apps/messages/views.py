@@ -29,7 +29,7 @@ class ReceivedMessagesListView(MessagesListView):
         return (
             super()
             .get_queryset()
-            .filter(receivers=self.request.user)
+            .received(self.request.user)
             .with_statuses(receiver=self.request.user)
         )
 
@@ -38,7 +38,7 @@ class SentMessagesListView(MessagesListView):
     template_name = "messages/sent_list.html"
 
     def get_queryset(self):
-        return super().get_queryset().filter(sender=self.request.user)
+        return super().get_queryset().sent(self.request.user)
 
 
 class MessageCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
