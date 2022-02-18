@@ -170,6 +170,19 @@ class StudentGradesView(LoginRequiredMixin, GetObjectCacheMixin, DetailView):
     template_name = "grades/student_grades.html"
     context_object_name = "student"
 
+    def get(self, *args, **kwargs):
+        # in template unseen grades are rendered in a different way
+        result = super().get(*args, **kwargs)
+
+        if self.request.user.is_parent:
+            Grade.objects.filter(student__parent=self.request.user).update(
+                seen_by_parent=True
+            )
+        elif self.request.user.is_student:
+            Grade.objects.filter(student=self.request.user).update(seen_by_student=True)
+
+        return result
+
     def get_queryset(self):
         return User.students.visible_to_user(self.request.user).prefetch_related(
             "grades_gotten__subject", "grades_gotten__category"

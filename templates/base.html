@@ -38,11 +38,15 @@
                 </div>
               </div>
             {% elif request.user.is_student %}
-              <a class="nav-link" href="{{ request.user.grades_url }}">Grades</a>
+              <a class="nav-link" href="{{ request.user.grades_url }}">
+                Grades {% if unseen_grades_count != 0 %}({{ unseen_grades_count }}){% endif %}
+              </a>
               <a class="nav-link" href="{{ request.user.attendance_url }}">Attendance</a>
               <a class="nav-link" href="{% url "lessons:session_list" %}">Lesson Sessions</a>
             {% elif request.user.is_parent %}
-              <a class="nav-link" href="{{ request.user.grades_url }}">Grades</a>
+              <a class="nav-link" href="{{ request.user.grades_url }}">
+                Grades {% if unseen_grades_count != 0 %}({{ unseen_grades_count }}){% endif %}
+              </a>
               <a class="nav-link" href="{{ request.user.attendance_url }}">Attendance</a>
             {% endif %}
             <div class="nav-item dropdown">

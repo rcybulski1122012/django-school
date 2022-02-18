@@ -60,6 +60,8 @@ class Grade(models.Model):
     weight = models.PositiveIntegerField()
     comment = models.TextField(null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
+    seen_by_student = models.BooleanField(default=False)
+    seen_by_parent = models.BooleanField(default=False)
 
     category = models.ForeignKey(
         GradeCategory, on_delete=models.CASCADE, related_name="grades"

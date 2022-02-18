@@ -48,6 +48,12 @@
     {
         const element = document.createElement("span");
         element.classList.add("pe-3");
+        {% if request.user.is_student and not grade.seen_by_student %}
+            element.classList.add("text-primary");
+        {% elif request.user.is_parent and not grade.seen_by_parent %}
+            element.classList.add("text-primary");
+        {% endif %}
+
         element.dataset.bsToggle = "popover";
         element.dataset.bsContent = `
         <strong>Category:</strong> {{ grade.category.name }}<br>

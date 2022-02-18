@@ -215,6 +215,25 @@ class StudentGradesViewTestCase(
         self.assertEqual(subjects, [self.subject])
         self.assertEqual(averages, {self.DEFAULT_SUBJECT_NAME: 3.00})
 
+    def test_sets_grades_seen_by_student_attr_to_True_if_the_user_is_a_student(self):
+        self.assertFalse(self.grade.seen_by_student)
+        self.login(self.student)
+
+        self.client.get(self.get_url())
+        self.grade.refresh_from_db()
+
+        self.assertTrue(self.grade.seen_by_student)
+
+    def test_sets_grades_seen_by_parent_attr_to_True_if_the_user_is_a_parent(self):
+        parent = self.create_parent(child=self.student)
+        self.assertFalse(self.grade.seen_by_parent)
+        self.login(parent)
+
+        self.client.get(self.get_url())
+        self.grade.refresh_from_db()
+
+        self.assertTrue(self.grade.seen_by_parent)
+
 
 class CreateGradesInBulkViewTestCase(SubjectAndSchoolClassRelatedTestMixin, TestCase):
     path_name = "grades:add_in_bulk"
