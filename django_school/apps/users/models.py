@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractUser, UserManager
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Count, F, Prefetch, Q, Sum
 from django.urls import reverse
@@ -62,8 +63,10 @@ class StudentsQuerySet(models.QuerySet):
     def visible_to_user(self, user):
         if user.is_teacher:
             return self.filter(school_class__lessons__teacher=user).distinct()
-        else:
+        elif user.is_student:
             return self.filter(pk=user.pk)
+        elif user.is_parent:
+            return self.filter(pk=user.child_id)
 
 
 class StudentsManager(models.Manager):
@@ -74,6 +77,15 @@ class StudentsManager(models.Manager):
 class TeachersManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(role=ROLES.TEACHER)
+
+
+class CustomUserManager(UserManager):
+    def get(self, *args, **kwargs):
+        return (
+            super()
+            .select_related("child__school_class", "school_class")
+            .get(*args, **kwargs)
+        )
 
 
 class ROLES(models.TextChoices):
@@ -101,8 +113,11 @@ class User(AbstractUser):
     school_class = models.ForeignKey(
         Class, models.SET_NULL, null=True, blank=True, related_name="students"
     )
+    child = models.OneToOneField(
+        "self", models.SET_NULL, null=True, blank=True, related_name="parent"
+    )
 
-    objects = UserManager()
+    objects = CustomUserManager()
     students = StudentsManager.from_queryset(StudentsQuerySet)()
     teachers = TeachersManager()
 
@@ -113,6 +128,17 @@ class User(AbstractUser):
         if not self.slug:
             self.slug = slugify(self.full_name)
         super().save(**kwargs)
+
+    def clean(self):
+        super().clean()
+
+        if not self.is_student and self.school_class is not None:
+            raise ValidationError("A class can be assigned only to a student")
+
+        if not self.is_parent and self.child is not None:
+            raise ValidationError("A child can be assigned only to a parent")
+        elif self.child and not self.child.is_student:
+            raise ValidationError("A child must be a student")
 
     @property
     def full_name(self):
@@ -136,7 +162,10 @@ class User(AbstractUser):
 
     @property
     def attendance_url(self):
-        return reverse("lessons:student_attendance", args=[self.slug])
+        if self.is_student:
+            return reverse("lessons:student_attendance", args=[self.slug])
+        elif self.is_parent:
+            return reverse("lessons:student_attendance", args=[self.child.slug])
 
     @property
     def teacher_timetable_url(self):
@@ -144,4 +173,7 @@ class User(AbstractUser):
 
     @property
     def grades_url(self):
-        return reverse("grades:student_grades", args=[self.slug])
+        if self.is_student:
+            return reverse("grades:student_grades", args=[self.slug])
+        elif self.is_parent:
+            return reverse("grades:student_grades", args=[self.child.slug])

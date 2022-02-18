@@ -3,7 +3,7 @@
     <li class="list-group-item">
       <div class="row">
         <div class="col-lg-10 col-sm-8">
-          <a href="{{ school_message.get_absolute_url }}"
+          <a href="{{ school_message.detail_url }}"
              class="link-unstyled message-topic h4 {% if school_message.status.0.is_read == False %} message-unread{% endif %} %}">{{ school_message.topic }}</a>
         </div>
         <div class="col-lg-2 col-sm-4">

@@ -4,15 +4,9 @@ from django.test import TestCase
 from django.urls import reverse
 
 from django_school.apps.events.models import Event
-from tests.utils import (
-    ClassesMixin,
-    EventsMixin,
-    LessonsMixin,
-    LoginRequiredTestMixin,
-    ResourceViewTestMixin,
-    TeacherViewTestMixin,
-    UsersMixin,
-)
+from tests.utils import (ClassesMixin, EventsMixin, LessonsMixin,
+                         LoginRequiredTestMixin, ResourceViewTestMixin,
+                         TeacherViewTestMixin, UsersMixin)
 
 
 class EventsCalendarViewTestCase(
@@ -84,17 +78,6 @@ class EventsCalendarViewTestCase(
 
         self.assertEqual(response.context["year"], self.current_month_date.year)
         self.assertEqual(response.context["month"], self.current_month_date.month)
-
-    def test_renders_global_events_if_user_is_neither_a_teacher_nor_a_student(self):
-        user = self.create_user()
-        global_event = self.create_event(
-            self.teacher, None, self.current_month_date, "Global Event"
-        )
-        self.login(user)
-
-        response = self.client.get(self.get_url())
-
-        self.assertContains(response, global_event.title)
 
     def test_renders_events_created_by_user_if_he_is_a_teacher(self):
         teacher2 = self.create_teacher(username="teacher2")

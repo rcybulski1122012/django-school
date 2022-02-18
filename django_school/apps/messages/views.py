@@ -51,7 +51,7 @@ class MessageCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         teachers = User.teachers.all()
-        classes = Class.objects.prefetch_related("students")
+        classes = Class.objects.prefetch_related("students__parent")
 
         context.update(
             {

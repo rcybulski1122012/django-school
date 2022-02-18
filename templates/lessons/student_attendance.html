@@ -5,7 +5,14 @@
 {% endblock %}
 
 {% block content %}
-  <h1>{{ student.full_name }} attendance {% if subject %}| Subject: {{ subject.name }}{% endif %}</h1>
+  <h1>
+    {% if request.user == student %}
+      Your attendance
+    {% else %}
+      {{ student.full_name }} attendance
+    {% endif %}
+    {% if subject %} | Subject: {{ subject.name }}{% endif %}
+  </h1>
 
   <div class="row">
     <div class="col-9">

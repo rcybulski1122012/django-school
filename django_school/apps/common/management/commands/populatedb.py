@@ -44,6 +44,25 @@ STUDENTS = [
     "Willette Peay",
     "Gaylord Johnson",
 ]
+
+PARENTS = [
+    "Gaylord Glisson",
+    "Trina Moss",
+    "Ella Santos",
+    "Maia Lucas",
+    "Calvert Kimmons",
+    "Matt Glover",
+    "Laurence Mccoy",
+    "Marlon Lipsey",
+    "Ernest Beck",
+    "Grover Terry",
+    "Grayson Read",
+    "Chris Atkinson",
+    "Harley Love",
+    "Eugene Waters",
+    "COlivia Hargraves",
+]
+
 SUBJECTS = [
     "Art",
     "Geography",
@@ -86,10 +105,11 @@ class Command(BaseCommand):
             self.create_superuser,
             self.create_teachers,
             self.create_classes,
-            self.create_students,
+            self.create_students_and_parents,
             self.create_subjects,
             self.create_loggable_teacher,
             self.create_loggable_student,
+            self.create_loggable_parent,
             self.create_lessons,
             self.create_grades_categories_and_grades,
             self.create_events,
@@ -147,6 +167,20 @@ class Command(BaseCommand):
             school_class=school_class,
         )
 
+    def create_loggable_parent(self):
+        child = User.students.get(username="student")
+
+        self.create_loggable_user(
+            username="parent",
+            password="parent",
+            role=ROLES.PARENT,
+            first_name="Nelson",
+            last_name="Gill",
+            gender="male",
+            phone_number="789-456-123",
+            child=child,
+        )
+
     @staticmethod
     def create_classes():
         teachers = list(User.teachers.all())
@@ -176,7 +210,7 @@ class Command(BaseCommand):
         User.objects.bulk_create(teachers)
 
     @staticmethod
-    def create_students():
+    def create_students_and_parents():
         classes = list(Class.objects.all())
         students = []
         for full_name in STUDENTS:
@@ -193,6 +227,22 @@ class Command(BaseCommand):
             )
 
         User.objects.bulk_create(students)
+
+        parents = []
+        for student, parent_full_name in zip(students, PARENTS):
+            first_name, last_name = parent_full_name.split()
+            parents.append(
+                User(
+                    role=ROLES.STUDENT,
+                    first_name=first_name,
+                    last_name=last_name,
+                    slug=slugify(first_name),
+                    username=parent_full_name,
+                    child=student,
+                )
+            )
+
+        User.objects.bulk_create(parents)
 
     @staticmethod
     def create_subjects():

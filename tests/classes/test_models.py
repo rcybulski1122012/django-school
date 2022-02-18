@@ -42,3 +42,12 @@ class ClassQuerySetTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
 
         queryset = Class.objects.visible_to_user(teacher)
         self.assertQuerysetEqual(queryset, [school_class])
+
+    def test_visible_to_user_select_the_class_of_the_child(self):
+        school_class = self.create_class()
+        self.create_class(number="2c")
+        student = self.create_student(school_class=school_class)
+        parent = self.create_parent(child=student)
+
+        queryset = Class.objects.visible_to_user(parent)
+        self.assertQuerysetEqual(queryset, [school_class])

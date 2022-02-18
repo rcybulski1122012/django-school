@@ -73,8 +73,16 @@ class EventQuerySetTestCase(UsersMixin, ClassesMixin, EventsMixin, TestCase):
 
     def test_visible_to_user_selects_global_events(self):
         global_event = self.create_event(self.teacher, None, self.date)
-        user = self.create_user()
+        student = self.create_student()
 
-        result = Event.objects.visible_to_user(user)
+        result = Event.objects.visible_to_user(student)
 
         self.assertQuerysetEqual(result, [global_event])
+
+    def test_visible_to_user_select_events_of_parent_child_class(self):
+        student = self.create_student(school_class=self.school_class)
+        parent = self.create_parent(child=student)
+
+        result = Event.objects.visible_to_user(parent)
+
+        self.assertQuerysetEqual(result, [self.event])

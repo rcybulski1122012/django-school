@@ -13,11 +13,14 @@ class EventQuerySet(models.QuerySet):
         return self.filter(date__year=year, date__month=month)
 
     def visible_to_user(self, user):
-        return self.filter(
-            Q(teacher=user)
-            | Q(school_class_id=user.school_class_id)
-            | Q(school_class=None)
-        )
+        global_events = Q(school_class=None)
+
+        if user.is_teacher:
+            return self.filter(global_events | Q(teacher=user))
+        elif user.is_student:
+            return self.filter(global_events | Q(school_class=user.school_class))
+        elif user.is_parent:
+            return self.filter(global_events | Q(school_class=user.child.school_class))
 
 
 class Event(models.Model):

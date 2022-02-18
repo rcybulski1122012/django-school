@@ -12,8 +12,10 @@ class ClassQuerySet(models.QuerySet):
     def visible_to_user(self, user):
         if user.is_teacher:
             return self.filter(lessons__teacher=user)
-        else:
+        elif user.is_student:
             return self.filter(pk=user.school_class_id)
+        elif user.is_parent:
+            return self.filter(pk=user.child.school_class_id)
 
 
 class Class(models.Model):
