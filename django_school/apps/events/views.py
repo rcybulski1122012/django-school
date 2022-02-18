@@ -11,12 +11,24 @@ from django_school.apps.common.utils import (AjaxRequiredMixin,
                                              RolesRequiredMixin)
 from django_school.apps.events.calendar import EventCalendar
 from django_school.apps.events.forms import EventForm
-from django_school.apps.events.models import Event
+from django_school.apps.events.models import Event, EventStatus
 from django_school.apps.users.models import ROLES
 
 
 class EventsCalendarView(LoginRequiredMixin, TemplateView):
     template_name = "events/events.html"
+
+    def get(self, *args, **kwargs):
+        result = super().get(
+            *args, **kwargs
+        )  # unseen events are rendered in a different way
+
+        year, month = self.get_year_and_month()
+        EventStatus.objects.filter(
+            user=self.request.user, event__date__year=year, event__date__month=month
+        ).update(seen=True)
+
+        return result
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -24,6 +36,7 @@ class EventsCalendarView(LoginRequiredMixin, TemplateView):
         events = (
             Event.objects.for_year_and_month(year, month)
             .visible_to_user(self.request.user)
+            .with_statuses(self.request.user)
             .select_related("school_class", "teacher")
         )
         calendar = EventCalendar(events, user=self.request.user).formatmonth(

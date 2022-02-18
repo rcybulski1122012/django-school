@@ -25,7 +25,9 @@
         <div class="navbar-nav ms-auto">
           <a class="nav-link" href="{% url "lessons:timetables_list" %}">Timetables</a>
           {% if request.user.is_authenticated %}
-              <a class="nav-link" href="{% url "events:calendar" %}">Events</a>
+              <a class="nav-link" href="{% url "events:calendar" %}">
+                Events {% if unseen_events_count != 0 %}({{ unseen_events_count }}){% endif %}
+              </a>
             {% if request.user.is_teacher %}
               <div class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="teachingDropdown" role="button"

@@ -1,7 +1,7 @@
 from django import forms
 
 from django_school.apps.classes.models import Class
-from django_school.apps.events.models import Event
+from django_school.apps.events.models import Event, EventStatus
 
 
 class EventForm(forms.ModelForm):
@@ -21,3 +21,12 @@ class EventForm(forms.ModelForm):
     def is_valid(self):
         self.instance.teacher = self.user
         return super().is_valid()
+
+    def save(self, commit=True):
+        event = super().save(commit=False)
+
+        if commit:
+            event.save()
+            EventStatus.objects.create_multiple(event)
+
+        return event

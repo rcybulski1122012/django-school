@@ -6,7 +6,7 @@ from django.core.management import BaseCommand
 from django.utils.text import slugify
 
 from django_school.apps.classes.models import Class
-from django_school.apps.events.models import Event
+from django_school.apps.events.models import Event, EventStatus
 from django_school.apps.grades.models import Grade, GradeCategory
 from django_school.apps.lessons.models import (Attendance, Lesson,
                                                LessonSession, Subject)
@@ -371,3 +371,6 @@ class Command(BaseCommand):
                 )
 
         Event.objects.bulk_create(events)
+
+        for event in events:
+            EventStatus.objects.create_multiple(event)

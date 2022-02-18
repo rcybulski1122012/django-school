@@ -1,11 +1,14 @@
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 from django.urls import reverse
 from django.utils import timezone
 
 from django_school.apps.classes.models import Class
+
+User = get_user_model()
 
 
 class EventQuerySet(models.QuerySet):
@@ -21,6 +24,17 @@ class EventQuerySet(models.QuerySet):
             return self.filter(global_events | Q(school_class=user.school_class))
         elif user.is_parent:
             return self.filter(global_events | Q(school_class=user.child.school_class))
+
+    def with_statuses(self, user):
+        qs = self.prefetch_related(
+            Prefetch(
+                "statuses",
+                queryset=EventStatus.objects.filter(user=user),
+                to_attr="status",
+            )
+        )
+
+        return qs
 
 
 class Event(models.Model):
@@ -65,3 +79,27 @@ class Event(models.Model):
     @property
     def delete_url(self):
         return reverse("events:delete", args=[self.pk])
+
+
+class EventStatusManager(models.Manager):
+    def create_multiple(self, event):
+        users_qs = (
+            User.objects.filter(
+                Q(school_class=event.school_class)
+                | Q(child__school_class=event.school_class)
+            )
+            if event.school_class
+            else User.objects.exclude(pk=event.teacher_id)
+        )
+        statuses = [EventStatus(event=event, user=user) for user in users_qs]
+        self.model.objects.bulk_create(statuses)
+
+        return statuses
+
+
+class EventStatus(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="statuses")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    seen = models.BooleanField(default=False)
+
+    objects = EventStatusManager()

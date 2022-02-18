@@ -3,7 +3,7 @@ import datetime
 from django.test import TestCase
 from django.urls import reverse
 
-from django_school.apps.events.models import Event
+from django_school.apps.events.models import Event, EventStatus
 from tests.utils import (ClassesMixin, EventsMixin, LessonsMixin,
                          LoginRequiredTestMixin, ResourceViewTestMixin,
                          TeacherViewTestMixin, UsersMixin)
@@ -116,8 +116,8 @@ class EventCreateViewTestCase(
 
     def setUp(self):
         self.teacher = self.create_teacher()
-        self.student = self.create_student()
         self.school_class = self.create_class()
+        self.student = self.create_student(school_class=self.school_class)
         self.date = datetime.date.today() + datetime.timedelta(days=1)
         self.subject = self.create_subject()
         self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
@@ -133,13 +133,14 @@ class EventCreateViewTestCase(
             "date": self.date.strftime("%Y-%m-%d"),
         }
 
-    def test_creates_event(self):
+    def test_creates_event_and_event_statuses(self):
         self.login(self.teacher)
         data = self.get_example_form_data()
 
         self.client.post(self.get_url(), data)
 
         self.assertTrue(Event.objects.exists())
+        self.assertTrue(EventStatus.objects.exists())
 
     def test_redirects_to_calendar_view_after_successful_create(self):
         self.login(self.teacher)

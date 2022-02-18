@@ -11,7 +11,7 @@ class MessagesQuerySetTestCase(UsersMixin, MessagesMixin, TestCase):
 
         self.message = self.create_message(self.sender, [self.receiver])
 
-    def test_selects_statuses_of_receivers(self):
+    def test_with_statuses(self):
         message = Message.objects.with_statuses(receiver=self.receiver).get()
         status = MessageStatus.objects.get()
 

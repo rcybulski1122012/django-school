@@ -3,7 +3,7 @@ import datetime
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from django_school.apps.events.models import Event
+from django_school.apps.events.models import Event, EventStatus
 from tests.utils import ClassesMixin, EventsMixin, UsersMixin
 
 
@@ -86,3 +86,39 @@ class EventQuerySetTestCase(UsersMixin, ClassesMixin, EventsMixin, TestCase):
         result = Event.objects.visible_to_user(parent)
 
         self.assertQuerysetEqual(result, [self.event])
+
+    def test_with_statuses(self):
+        student = self.create_student(school_class=self.school_class)
+        EventStatus.objects.create_multiple(self.event)
+        event = Event.objects.with_statuses(student).first()
+        status = EventStatus.objects.first()
+
+        self.assertEqual(event.status, [status])
+
+
+class EventStatusManagerTestCase(UsersMixin, ClassesMixin, EventsMixin, TestCase):
+    def setUp(self):
+        self.teacher = self.create_teacher()
+        self.school_class = self.create_class()
+        self.student = self.create_student(school_class=self.school_class)
+        self.parent = self.create_parent(child=self.student)
+        self.date = datetime.datetime.today()
+        self.create_teacher(username="teacher2")
+
+    def test_create_multiple_creates_statuses_for_every_user_if_school_class_not_given(
+        self,
+    ):
+        event = self.create_event(self.teacher, None, self.date)
+        EventStatus.objects.create_multiple(event)
+
+        self.assertEqual(
+            EventStatus.objects.count(), 3
+        )  # student, parent and second teacher
+
+    def test_create_multiple_creates_statuses_for_students_and_parents_if_class_given(
+        self,
+    ):
+        event = self.create_event(self.teacher, self.school_class, self.date)
+        EventStatus.objects.create_multiple(event)
+
+        self.assertEqual(EventStatus.objects.count(), 2)

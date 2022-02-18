@@ -78,6 +78,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "django_school.apps.messages.context_processors.unread_messages_count",
                 "django_school.apps.grades.context_processors.unseen_grades_count",
+                "django_school.apps.events.context_processors.unseen_events_count",
             ],
         },
     },
