@@ -1,11 +1,14 @@
-from unittest.mock import MagicMock
+import datetime
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import RequestFactory, TestCase
+from django.utils.datastructures import MultiValueDict
 
-from django_school.apps.lessons.forms import (AttendanceFormSet,
+from django_school.apps.events.models import Event, EventStatus
+from django_school.apps.grades.models import GradeCategory
+from django_school.apps.lessons.forms import (AttendanceFormSet, HomeworkForm,
                                               LessonSessionForm)
-from django_school.apps.lessons.models import AttachedFile
+from django_school.apps.lessons.models import AttachedFile, Homework
 from tests.utils import ClassesMixin, LessonsMixin, UsersMixin
 
 
@@ -67,31 +70,81 @@ class LessonSessionFormTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase
         self.lesson_session = self.create_lesson_session(self.lesson)
 
     def test_saves_files_if_valid(self):
-        files = [
-            SimpleUploadedFile("file1.txt", b"file_content"),
-            SimpleUploadedFile("file2.txt", b"file_content"),
-        ]
-
-        request = RequestFactory().get("/")
-        request.FILES.getlist = MagicMock(return_value=files)
-
+        request = RequestFactory().get("/get")
+        request.FILES["attached_files"] = SimpleUploadedFile(
+            "file1.txt", b"file_content"
+        )
+        request.FILES["attached_files"] = SimpleUploadedFile(
+            "file2.txt", b"file_content"
+        )
         form = LessonSessionForm(
-            {"topic": "new topic"}, request.FILES, instance=self.lesson_session
+            {"topic": "new topic"},
+            files=request.FILES,
+            instance=self.lesson_session,
+            teacher=self.teacher,
         )
 
         self.assertTrue(form.is_valid())
-        _, files = form.save()
-        self.assertQuerysetEqual(files, AttachedFile.objects.all())
+        form.save()
+        self.assertTrue(AttachedFile.objects.exists())
 
     def test_does_not_save_any_files_if_not_attached(self):
-        form = LessonSessionForm({"topic": "new topic"}, instance=self.lesson_session)
+        form = LessonSessionForm(
+            {"topic": "new topic"}, instance=self.lesson_session, teacher=self.teacher
+        )
 
         self.assertTrue(form.is_valid())
         form.save()
         self.assertFalse(AttachedFile.objects.exists())
 
     def test_init_disables_fields(self):
-        form = LessonSessionForm(instance=self.lesson_session, disabled=True)
+        form = LessonSessionForm(
+            instance=self.lesson_session, disabled=True, teacher=self.teacher
+        )
 
         for field in form.fields.values():
             self.assertTrue(field.disabled)
+
+
+class HomeworkFormTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
+    def setUp(self):
+        self.teacher = self.create_teacher()
+        self.school_class = self.create_class()
+        self.student = self.create_student(school_class=self.school_class)
+        self.subject = self.create_subject()
+        self.date = datetime.datetime.today() + datetime.timedelta(days=10)
+
+    def test_is_valid_assigns_the_class_and_the_subject_to_the_instance(self):
+        form = HomeworkForm(
+            subject=self.subject, school_class=self.school_class, teacher=self.teacher
+        )
+
+        form.is_valid()
+
+        self.assertEqual(form.instance.subject, self.subject)
+        self.assertEqual(form.instance.school_class, self.school_class)
+
+    def test_save_creates_a_event_a_gradecategory_statuses_and_files(self):
+        data = {
+            "title": "Title",
+            "description": "Description",
+            "completion_date": self.date,
+            "create_category": True,
+        }
+        files = MultiValueDict()
+        files["attached_files"] = SimpleUploadedFile("file2.txt", b"file_content")
+        form = HomeworkForm(
+            data=data,
+            files=files,
+            subject=self.subject,
+            school_class=self.school_class,
+            teacher=self.teacher,
+        )
+        form.is_valid()
+        form.save()
+
+        self.assertTrue(Homework.objects.exists())
+        self.assertTrue(Event.objects.exists())
+        self.assertTrue(EventStatus.objects.exists())
+        self.assertTrue(AttachedFile.objects.exists())
+        self.assertTrue(GradeCategory.objects.exists())

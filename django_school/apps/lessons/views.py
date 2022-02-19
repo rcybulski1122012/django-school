@@ -1,21 +1,23 @@
 import datetime
-import os
 
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.exceptions import PermissionDenied
-from django.http import Http404, HttpResponse
+from django.contrib.messages.views import SuccessMessageMixin
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.generic import DetailView, ListView
+from django.urls import reverse_lazy
+from django.views.generic import CreateView, DetailView, ListView
 
 from django_school.apps.classes.models import Class
-from django_school.apps.common.utils import RolesRequiredMixin, roles_required
-from django_school.apps.lessons.forms import (AttendanceFormSet,
+from django_school.apps.common.utils import (RolesRequiredMixin,
+                                             SubjectAndSchoolClassRelatedMixin,
+                                             roles_required)
+from django_school.apps.lessons.forms import (AttendanceFormSet, HomeworkForm,
                                               LessonSessionForm)
-from django_school.apps.lessons.models import (AttachedFile, Lesson,
-                                               LessonSession, Subject)
+from django_school.apps.lessons.models import (Homework, Lesson, LessonSession,
+                                               Subject)
 from django_school.apps.users.models import ROLES
 
 User = get_user_model()
@@ -119,6 +121,7 @@ def lesson_session_detail_view(request, session_pk):
         request.FILES or None,
         instance=lesson_session,
         disabled=not request.user.is_teacher,
+        teacher=request.user,
     )
     attendance_formset = AttendanceFormSet(
         request.POST or None, instance=lesson_session
@@ -126,7 +129,7 @@ def lesson_session_detail_view(request, session_pk):
 
     if request.method == "POST" and request.user.is_teacher:
         if lesson_session_form.is_valid() and attendance_formset.is_valid():
-            lesson_session_form.save(request_files=request.FILES)
+            lesson_session_form.save()
             attendance_formset.save()
             messages.success(
                 request, "The lesson session has been updated successfully."
@@ -182,24 +185,6 @@ class ClassSubjectListView(
 
 
 @login_required
-@roles_required(ROLES.TEACHER)
-def attached_file_delete_view(request, pk):
-    attached_file = get_object_or_404(
-        AttachedFile.objects.select_related("lesson_session__lesson__teacher"), pk=pk
-    )
-
-    if attached_file.lesson_session.lesson.teacher != request.user:
-        raise PermissionDenied
-
-    if request.method == "POST":
-        path = attached_file.file.path
-        attached_file.delete()
-        os.remove(path)
-
-    return HttpResponse()
-
-
-@login_required
 def student_attendance_summary_view(request, student_slug):
     subject_name = request.GET.get("subject", None)
     subject = (
@@ -244,3 +229,29 @@ def class_attendance_summary_view(request, class_slug):
     }
 
     return render(request, "lessons/class_attendance.html", ctx)
+
+
+class SetHomeworkView(
+    LoginRequiredMixin,
+    RolesRequiredMixin(ROLES.TEACHER),
+    SubjectAndSchoolClassRelatedMixin,
+    SuccessMessageMixin,
+    CreateView,
+):
+    model = Homework
+    form_class = HomeworkForm
+    template_name = "lessons/set_homework.html"
+    success_message = "The homework has been set successfully"
+    success_url = reverse_lazy("lessons:session_list")
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {
+                "teacher": self.request.user,
+                "school_class": self.school_class,
+                "subject": self.subject,
+            }
+        )
+
+        return kwargs

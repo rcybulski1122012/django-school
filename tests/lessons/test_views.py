@@ -6,8 +6,10 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
+from django_school.apps.events.models import Event, EventStatus
+from django_school.apps.grades.models import GradeCategory
 from django_school.apps.lessons.models import (AttachedFile, Attendance,
-                                               Lesson, LessonSession)
+                                               Homework, Lesson, LessonSession)
 from tests.utils import (ClassesMixin, LessonsMixin, LoginRequiredTestMixin,
                          ResourceViewTestMixin, TeacherViewTestMixin,
                          UsersMixin)
@@ -307,7 +309,7 @@ class LessonSessionDetailViewTestCase(
 
         self.assertEqual(AttachedFile.objects.count(), 2)
         self.assertTrue(
-            path.exists(path.join(self.temp_dir_path, "lesson_files", "file1.txt"))
+            path.exists(path.join(self.temp_dir_path, "attached_files", "file1.txt"))
         )
         rmtree(self.temp_dir_path)
 
@@ -483,55 +485,6 @@ class ClassSubjectListViewTestCase(
         self.assertEqual(response.context["school_class"], self.school_class)
 
 
-@override_settings(MEDIA_ROOT="temp_dir/")
-class AttachedFileDeleteViewTestCase(
-    TeacherViewTestMixin,
-    ResourceViewTestMixin,
-    UsersMixin,
-    ClassesMixin,
-    LessonsMixin,
-    TestCase,
-):
-    path_name = "lessons:attached_file_delete"
-
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_student(school_class=self.school_class)
-        self.subject = self.create_subject()
-        self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
-        self.lesson_session = self.create_lesson_session(self.lesson)
-
-        self.file = self.create_file(self.lesson_session)
-
-    @classmethod
-    def tearDownClass(cls):
-        super().tearDownClass()
-        rmtree("temp_dir/")
-
-    def get_url(self, file_pk=None):
-        file_pk = file_pk or self.file.pk
-
-        return reverse(self.path_name, args=[file_pk])
-
-    def get_nonexistent_resource_url(self):
-        return self.get_url(file_pk=12345)
-
-    def test_deletes_attached_file_instance(self):
-        self.login(self.teacher)
-
-        self.client.post(self.get_url())
-
-        self.assertFalse(AttachedFile.objects.exists())
-
-    def test_deletes_file(self):
-        self.login(self.teacher)
-
-        self.client.post(self.get_url())
-
-        self.assertFalse(path.exists(self.file.file.path))
-
-
 class StudentAttendanceSummaryViewTestCase(
     ResourceViewTestMixin,
     LoginRequiredTestMixin,
@@ -673,3 +626,72 @@ class ClassAttendanceSummaryViewTestCase(
 
         student = response.context["students"][0]
         self.assertEqual(student.total_attendance, 5)
+
+
+class SetHomeworkViewTestCase(
+    TeacherViewTestMixin,
+    ResourceViewTestMixin,
+    UsersMixin,
+    ClassesMixin,
+    LessonsMixin,
+    TestCase,
+):
+    path_name = "lessons:set_homework"
+
+    def setUp(self):
+        self.teacher = self.create_teacher()
+        self.school_class = self.create_class()
+        self.student = self.create_student(school_class=self.school_class)
+        self.subject = self.create_subject()
+        self.lesson = self.create_lesson(
+            self.subject,
+            self.teacher,
+            self.school_class,
+            weekday="fri",
+        )
+        self.date = datetime.datetime.today() + datetime.timedelta(days=10)
+
+    def get_url(self, class_slug=None, subject_slug=None):
+        class_slug = class_slug or self.school_class.slug
+        subject_slug = subject_slug or self.subject.slug
+
+        return reverse(self.path_name, args=[class_slug, subject_slug])
+
+    def get_nonexistent_resource_url(self):
+        return self.get_url(subject_slug="does-not-exist", class_slug="4cm")
+
+    def get_example_form_data(self):
+        return {
+            "title": "Title",
+            "description": "Description",
+            "completion_date": self.date,
+            "create_category": True,
+            "attached_files": SimpleUploadedFile("file2.txt", b"file_content"),
+        }
+
+    def test_creates_homework_and_related_objects(self):
+        self.login(self.teacher)
+
+        self.client.post(self.get_url(), self.get_example_form_data())
+
+        self.assertTrue(Homework.objects.exists())
+        self.assertTrue(Event.objects.exists())
+        self.assertTrue(EventStatus.objects.exists())
+        self.assertTrue(AttachedFile.objects.exists())
+        self.assertTrue(GradeCategory.objects.exists())
+
+    def test_redirects_to_lesson_session_list_after_successful_creation(self):
+        self.login(self.teacher)
+
+        response = self.client.post(self.get_url(), self.get_example_form_data())
+
+        self.assertRedirects(response, reverse("lessons:session_list"))
+
+    def test_renders_success_message_after_successful_creation(self):
+        self.login(self.teacher)
+
+        response = self.client.post(
+            self.get_url(), self.get_example_form_data(), follow=True
+        )
+
+        self.assertContains(response, "The homework has been set successfully")

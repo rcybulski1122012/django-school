@@ -1,7 +1,7 @@
 from django.contrib import admin
 
-from django_school.apps.lessons.models import (AttachedFile, Attendance,
-                                               Lesson, LessonSession, Subject)
+from django_school.apps.lessons.models import (Attendance, Lesson,
+                                               LessonSession, Subject)
 
 
 @admin.register(Subject)
@@ -29,9 +29,4 @@ class LessonSessionAdmin(admin.ModelAdmin):
 
 @admin.register(Attendance)
 class AttendanceAdmin(admin.ModelAdmin):
-    pass
-
-
-@admin.register(AttachedFile)
-class AttachedFileAdmin(admin.ModelAdmin):
     pass

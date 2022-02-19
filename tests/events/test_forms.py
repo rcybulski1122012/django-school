@@ -16,11 +16,6 @@ class EventFormTestCase(UsersMixin, ClassesMixin, LessonsMixin, EventsMixin, Tes
         self.date = datetime.date.today() + datetime.timedelta(days=1)
         self.event = self.create_event(self.teacher, self.school_class, self.date)
 
-    def test_init_sets_given_user(self):
-        form = EventForm(user=self.teacher)
-
-        self.assertEqual(form.user, self.teacher)
-
     def test_classes_queryset(self):
         subject = self.create_subject()
         teacher2 = self.create_teacher(username="teacher2")
@@ -35,7 +30,7 @@ class EventFormTestCase(UsersMixin, ClassesMixin, LessonsMixin, EventsMixin, Tes
             Class.objects.visible_to_user(teacher2),
         )
 
-    def test_is_valid_assign_teacher_to_an_instance(self):
+    def test_is_valid_assign_the_teacher_to_the_instance(self):
         form = EventForm(
             user=self.teacher,
         )

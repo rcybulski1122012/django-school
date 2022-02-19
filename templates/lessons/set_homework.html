@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load crispy_forms_filters %}
+
+{% block title %}
+  Set Homework
+{% endblock %}
+
+{% block content %}
+  <h1>Set Homework</h1>
+  <form method="post" enctype="multipart/form-data">
+    {{ form|crispy }}
+
+    <input type="submit" value="Set" class="btn btn-primary mt-2">
+
+    {% csrf_token %}
+  </form>
+{% endblock %}

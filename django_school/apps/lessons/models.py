@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.contenttypes.fields import GenericRelation
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Prefetch
@@ -7,6 +8,7 @@ from django.urls import reverse
 from django.utils.text import slugify
 
 from django_school.apps.classes.models import Class
+from django_school.apps.common.models import AttachedFile
 
 
 class SubjectQuerySet(models.QuerySet):
@@ -124,6 +126,11 @@ class LessonSession(models.Model):
     attendances = models.ManyToManyField(
         settings.AUTH_USER_MODEL, through="lessons.Attendance"
     )
+    attached_files = GenericRelation(
+        AttachedFile,
+        content_type_field="related_object_content_type",
+        object_id_field="related_object_id",
+    )
 
     objects = LessonSessionQuerySet.as_manager()
 
@@ -135,20 +142,6 @@ class LessonSession(models.Model):
     @property
     def detail_url(self):
         return reverse("lessons:session_detail", args=[self.pk])
-
-
-class AttachedFile(models.Model):
-    file = models.FileField(upload_to="lesson_files/")
-    lesson_session = models.ForeignKey(
-        LessonSession, on_delete=models.CASCADE, related_name="attached_files"
-    )
-
-    def __str__(self):
-        return self.file.name
-
-    @property
-    def delete_url(self):
-        return reverse("lessons:attached_file_delete", args=[self.pk])
 
 
 class Attendance(models.Model):
@@ -171,3 +164,18 @@ class Attendance(models.Model):
 
         if self.student.school_class != self.lesson_session.lesson.school_class:
             raise ValidationError("The student is not in class of the lesson session.")
+
+
+class Homework(models.Model):
+    title = models.CharField(max_length=64)
+    description = models.TextField(max_length=256, blank=True, null=True)
+    created = models.DateTimeField(auto_now_add=True)
+    completion_date = models.DateTimeField()
+    school_class = models.ForeignKey(
+        Class, on_delete=models.CASCADE, related_name="homeworks"
+    )
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    attached_files = GenericRelation(AttachedFile)
+
+    def __str__(self):
+        return f"{self.school_class.number} {self.title}"

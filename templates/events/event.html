@@ -1,5 +1,5 @@
 <div class="text-white p-1 my-1 rounded event
-            {% if not event.status.0.seen  %}
+            {% if not event.status.0.seen and not user.is_teacher %}
               bg-warning
             {% elif event.school_class %}
               bg-primary

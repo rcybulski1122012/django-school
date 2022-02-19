@@ -14,6 +14,7 @@ from django.views.generic import (CreateView, DeleteView, DetailView,
 from django_school.apps.classes.models import Class
 from django_school.apps.common.utils import (
     AjaxRequiredMixin, GetObjectCacheMixin, RolesRequiredMixin,
+    SubjectAndSchoolClassRelatedMixin,
     does_the_teacher_teach_the_subject_to_the_class, roles_required)
 from django_school.apps.grades.forms import (BulkGradeCreationCommonInfoForm,
                                              BulkGradeCreationFormSet,
@@ -23,33 +24,6 @@ from django_school.apps.lessons.models import Subject
 from django_school.apps.users.models import ROLES
 
 User = get_user_model()
-
-
-class SubjectAndSchoolClassRelatedMixin:
-    school_class = None
-    subject = None
-
-    def dispatch(self, request, *args, **kwargs):
-        self.school_class = get_object_or_404(Class, slug=self.kwargs["class_slug"])
-        self.subject = get_object_or_404(Subject, slug=self.kwargs["subject_slug"])
-
-        if not does_the_teacher_teach_the_subject_to_the_class(
-            self.request.user, self.subject, self.school_class
-        ):
-            raise Http404
-
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update(
-            {
-                "school_class": self.school_class,
-                "subject": self.subject,
-            }
-        )
-
-        return context
 
 
 class GradeCreateView(
@@ -278,8 +252,9 @@ def grade_categories_view(request, class_slug, subject_slug):
         raise Http404
 
     if request.method == "POST":
-        form = GradeCategoryForm(request.POST)
-        form.set_subject_and_class(subject, school_class)
+        form = GradeCategoryForm(
+            request.POST, subject=subject, school_class=school_class
+        )
 
         if form.is_valid():
             category = form.save()
@@ -323,7 +298,7 @@ class GradeCategoryFormTemplateView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["form"] = GradeCategoryForm()
+        context["form"] = GradeCategoryForm(subject=None, school_class=None)
 
         return context
 
@@ -373,3 +348,15 @@ class GradeCategoryUpdateView(
 
     def get_success_url(self):
         return self.object.detail_url
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        category = self.get_object()
+        kwargs.update(
+            {
+                "subject": category.subject,
+                "school_class": category.school_class,
+            }
+        )
+
+        return kwargs

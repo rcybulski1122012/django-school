@@ -3,8 +3,8 @@ from django.urls import path
 from django_school.apps.lessons.views import (ClassSubjectListView,
                                               ClassTimetableView,
                                               LessonSessionsListView,
+                                              SetHomeworkView,
                                               TeacherTimetableView,
-                                              attached_file_delete_view,
                                               class_attendance_summary_view,
                                               lesson_session_detail_view,
                                               student_attendance_summary_view,
@@ -40,11 +40,6 @@ urlpatterns = [
         name="class_subject_list",
     ),
     path(
-        "attached_files/<int:pk>/delete/",
-        attached_file_delete_view,
-        name="attached_file_delete",
-    ),
-    path(
         "attendance/student/<slug:student_slug>/",
         student_attendance_summary_view,
         name="student_attendance",
@@ -53,5 +48,10 @@ urlpatterns = [
         "attendance/class/<slug:class_slug>/",
         class_attendance_summary_view,
         name="class_attendance",
+    ),
+    path(
+        "<slug:class_slug>/<slug:subject_slug>/set_homework/",
+        SetHomeworkView.as_view(),
+        name="set_homework",
     ),
 ]

@@ -103,15 +103,16 @@ BulkGradeCreationFormSet = forms.modelformset_factory(
 class GradeCategoryForm(forms.ModelForm):
     class Meta:
         model = GradeCategory
-        fields = ["name", "subject", "school_class"]
-        widgets = {
-            "subject": forms.HiddenInput(),
-            "school_class": forms.HiddenInput(),
-        }
+        fields = ["name"]
 
-    def set_subject_and_class(self, subject, school_class):
-        data = self.data.copy()
-        data["subject"] = subject.pk
-        data["school_class"] = school_class.pk
+    def __init__(self, *args, **kwargs):
+        self.subject = kwargs.pop("subject")
+        self.school_class = kwargs.pop("school_class")
 
-        self.data = data
+        super().__init__(*args, **kwargs)
+
+    def is_valid(self):
+        self.instance.subject = self.subject
+        self.instance.school_class = self.school_class
+
+        return super().is_valid()

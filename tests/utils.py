@@ -153,10 +153,12 @@ class LessonsMixin:
             return Attendance.objects.order_by("-id")[: len(attendances)]
 
     @staticmethod
-    def create_file(lesson_session, name=DEFAULT_FILE_NAME):
+    def create_file(related_object, creator, name=DEFAULT_FILE_NAME):
         file = SimpleUploadedFile(name, b"file_content")
 
-        return AttachedFile.objects.create(lesson_session=lesson_session, file=file)
+        return AttachedFile.objects.create(
+            related_object=related_object, creator=creator, file=file
+        )
 
 
 class GradesMixin:
