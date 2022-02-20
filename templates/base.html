@@ -37,6 +37,7 @@
                 <div class="dropdown-menu" aria-labelledby="teachingDropdown">
                   <a class="dropdown-item" href="{% url "classes:list" %}">Classes</a>
                   <a class="dropdown-item" href="{% url "lessons:session_list" %}">Lesson Sessions</a>
+                  <a class="dropdown-item" href="{% url "lessons:homework_list" %}">Homeworks</a>
                 </div>
               </div>
             {% elif request.user.is_student %}
@@ -45,6 +46,7 @@
               </a>
               <a class="nav-link" href="{{ request.user.attendance_url }}">Attendance</a>
               <a class="nav-link" href="{% url "lessons:session_list" %}">Lesson Sessions</a>
+              <a class="nav-link" href="{% url "lessons:homework_list" %}">Homeworks</a>
             {% elif request.user.is_parent %}
               <a class="nav-link" href="{{ request.user.grades_url }}">
                 Grades {% if unseen_grades_count != 0 %}({{ unseen_grades_count }}){% endif %}

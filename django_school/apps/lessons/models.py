@@ -166,16 +166,29 @@ class Attendance(models.Model):
             raise ValidationError("The student is not in class of the lesson session.")
 
 
+class HomeworkQuerySet(models.QuerySet):
+    def visible_to_user(self, user):
+        if user.is_teacher:
+            return self.filter(teacher=user)
+        elif user.is_student:
+            return self.filter(school_class_id=user.school_class_id)
+        else:
+            return self.none()
+
+
 class Homework(models.Model):
     title = models.CharField(max_length=64)
     description = models.TextField(max_length=256, blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True)
     completion_date = models.DateTimeField()
+    teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     school_class = models.ForeignKey(
         Class, on_delete=models.CASCADE, related_name="homeworks"
     )
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     attached_files = GenericRelation(AttachedFile)
+
+    objects = HomeworkQuerySet.as_manager()
 
     def __str__(self):
         return f"{self.school_class.number} {self.title}"

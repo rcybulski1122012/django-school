@@ -1,8 +1,8 @@
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from django_school.apps.lessons.models import (Attendance, LessonSession,
-                                               Subject)
+from django_school.apps.lessons.models import (Attendance, Homework,
+                                               LessonSession, Subject)
 from tests.utils import ClassesMixin, LessonsMixin, UsersMixin
 
 
@@ -109,3 +109,39 @@ class AttendanceModelTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
 
         with self.assertRaises(ValidationError):
             Attendance(student=student, lesson_session=lesson_session).clean()
+
+
+class HomeworkQuerySetTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
+    def setUp(self):
+        self.teacher = self.create_teacher()
+        self.school_class = self.create_class()
+        self.student = self.create_student(school_class=self.school_class)
+        self.subject = self.create_subject()
+
+    def test_visible_to_user_returns_homeworks_set_if_the_user_is_a_teacher(self):
+        teacher2 = self.create_teacher(username="teacher2")
+        homework = self.create_homework(self.subject, self.teacher, self.school_class)
+        self.create_homework(self.subject, teacher2, self.school_class)
+
+        qs = Homework.objects.visible_to_user(self.teacher)
+
+        self.assertQuerysetEqual(qs, [homework])
+
+    def test_visible_to_user_returns_class_homeworks_if_the_user_is_a_student(self):
+        school_class2 = self.create_class(number="2c")
+        homework = self.create_homework(self.subject, self.teacher, self.school_class)
+        self.create_homework(self.subject, self.teacher, school_class2)
+
+        qs = Homework.objects.visible_to_user(self.student)
+
+        self.assertQuerysetEqual(qs, [homework])
+
+    def test_visible_to_users_returns_empty_qs_if_the_user_is_neither_a_student_nor_a_teacher(
+        self,
+    ):
+        parent = self.create_parent(child=self.student)
+        self.create_homework(self.subject, self.teacher, self.school_class)
+
+        qs = Homework.objects.visible_to_user(parent)
+
+        self.assertQuerysetEqual(qs, Homework.objects.none())

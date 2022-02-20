@@ -1,3 +1,5 @@
+import datetime
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -9,7 +11,8 @@ from django_school.apps.common.models import Address
 from django_school.apps.events.models import Event
 from django_school.apps.grades.models import Grade, GradeCategory
 from django_school.apps.lessons.models import (AttachedFile, Attendance,
-                                               Lesson, LessonSession, Subject)
+                                               Homework, Lesson, LessonSession,
+                                               Subject)
 from django_school.apps.messages.models import Message, MessageStatus
 from django_school.apps.users.models import ROLES
 
@@ -105,6 +108,8 @@ class LessonsMixin:
     DEFAULT_WEEKDAY = ("mon", "Monday")
     DEFAULT_CLASSROOM = 123
     DEFAULT_FILE_NAME = "file.txt"
+    DEFAULT_HOMEWORK_TITLE = "homework"
+    DEFAULT_COMPLETION_DATE = datetime.datetime.today() + datetime.timedelta(days=10)
 
     @staticmethod
     def create_subject(name=DEFAULT_SUBJECT_NAME, **kwargs):
@@ -158,6 +163,24 @@ class LessonsMixin:
 
         return AttachedFile.objects.create(
             related_object=related_object, creator=creator, file=file
+        )
+
+    @staticmethod
+    def create_homework(
+        subject,
+        teacher,
+        school_class,
+        title=DEFAULT_HOMEWORK_TITLE,
+        completion_date=DEFAULT_COMPLETION_DATE,
+        **kwargs,
+    ):
+        return Homework.objects.create(
+            subject=subject,
+            teacher=teacher,
+            school_class=school_class,
+            title=title,
+            completion_date=completion_date,
+            **kwargs,
         )
 
 

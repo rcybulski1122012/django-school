@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}
+  Homework
+{% endblock %}
+
+{% block content %}
+  <h1>Your homeworks</h1>
+
+  {% if homeworks %}
+  <div class="table-responsive">
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Subject</th>
+        {% if request.user.is_teacher %}
+          <th>Class</th>
+        {% endif %}
+        <th>Completion Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for homework in homeworks %}
+        <tr>
+          <td>{{ homework.title }}</td>
+          <td>{{ homework.subject.name }}</td>
+          {% if request.user.is_teacher %}
+            <td>{{ homework.school_class.number }}</td>
+          {% endif %}
+          <td>{{ homework.completion_date|date:"d-m-Y" }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+    {% if request.user.is_teacher %}
+      You haven't set any homeworks yet.
+    {% else %}
+      You don't have any homework.
+    {% endif %}
+  {% endif %}
+
+  {% include "common/paginator.html" %}
+{% endblock %}

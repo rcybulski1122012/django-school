@@ -2,6 +2,7 @@ from django.urls import path
 
 from django_school.apps.lessons.views import (ClassSubjectListView,
                                               ClassTimetableView,
+                                              HomeworkListView,
                                               LessonSessionsListView,
                                               SetHomeworkView,
                                               TeacherTimetableView,
@@ -54,4 +55,5 @@ urlpatterns = [
         SetHomeworkView.as_view(),
         name="set_homework",
     ),
+    path("homeworks/", HomeworkListView.as_view(), name="homework_list"),
 ]

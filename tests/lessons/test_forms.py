@@ -114,7 +114,9 @@ class HomeworkFormTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
         self.subject = self.create_subject()
         self.date = datetime.datetime.today() + datetime.timedelta(days=10)
 
-    def test_is_valid_assigns_the_class_and_the_subject_to_the_instance(self):
+    def test_is_valid_assigns_the_class_the_subject_and_the_teacher_to_the_instance(
+        self,
+    ):
         form = HomeworkForm(
             subject=self.subject, school_class=self.school_class, teacher=self.teacher
         )
@@ -123,6 +125,7 @@ class HomeworkFormTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
 
         self.assertEqual(form.instance.subject, self.subject)
         self.assertEqual(form.instance.school_class, self.school_class)
+        self.assertEqual(form.instance.teacher, self.teacher)
 
     def test_save_creates_a_event_a_gradecategory_statuses_and_files(self):
         data = {

@@ -680,12 +680,12 @@ class SetHomeworkViewTestCase(
         self.assertTrue(AttachedFile.objects.exists())
         self.assertTrue(GradeCategory.objects.exists())
 
-    def test_redirects_to_lesson_session_list_after_successful_creation(self):
+    def test_redirects_to_lesson_homework_list_after_successful_creation(self):
         self.login(self.teacher)
 
         response = self.client.post(self.get_url(), self.get_example_form_data())
 
-        self.assertRedirects(response, reverse("lessons:session_list"))
+        self.assertRedirects(response, reverse("lessons:homework_list"))
 
     def test_renders_success_message_after_successful_creation(self):
         self.login(self.teacher)
@@ -695,3 +695,53 @@ class SetHomeworkViewTestCase(
         )
 
         self.assertContains(response, "The homework has been set successfully")
+
+
+class HomeworkListViewTestCase(
+    LoginRequiredTestMixin, UsersMixin, ClassesMixin, LessonsMixin, TestCase
+):
+    path_name = "lessons:homework_list"
+
+    def setUp(self):
+        self.teacher = self.create_teacher()
+        self.school_class = self.create_class()
+        self.student = self.create_student(school_class=self.school_class)
+        self.subject = self.create_subject()
+        self.homework = self.create_homework(
+            self.subject, self.teacher, self.school_class
+        )
+
+    def get_url(self):
+        return reverse(self.path_name)
+
+    def test_returns_403_if_the_users_is_neither_a_student_nor_a_teacher(self):
+        parent = self.create_parent()
+        self.login(parent)
+
+        response = self.client.get(self.get_url())
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_context_contains_list_of_homeworks(self):
+        self.login(self.teacher)
+
+        response = self.client.get(self.get_url())
+        qs = response.context["homeworks"]
+
+        self.assertQuerysetEqual(qs, [self.homework])
+
+    def test_does_not_render_class_numbers_if_the_user_is_a_student(self):
+        self.login(self.student)
+
+        response = self.client.get(self.get_url())
+
+        self.assertNotContains(response, "Class")
+        self.assertNotContains(response, self.DEFAULT_NUMBER)
+
+    def test_renders_class_numbers_if_the_user_is_a_teacher(self):
+        self.login(self.teacher)
+
+        response = self.client.get(self.get_url())
+
+        self.assertContains(response, "Class")
+        self.assertContains(response, self.DEFAULT_NUMBER)

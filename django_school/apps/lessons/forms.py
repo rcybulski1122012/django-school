@@ -77,7 +77,7 @@ class HomeworkForm(forms.ModelForm):
 
     class Meta:
         model = Homework
-        exclude = ["created", "school_class", "subject"]
+        exclude = ["created", "school_class", "subject", "teacher"]
         widgets = {"completion_date": forms.DateInput(attrs={"type": "date"})}
 
     def __init__(self, *args, **kwargs):
@@ -89,6 +89,7 @@ class HomeworkForm(forms.ModelForm):
     def is_valid(self):
         self.instance.subject = self.subject
         self.instance.school_class = self.school_class
+        self.instance.teacher = self.teacher
 
         return super().is_valid()
 

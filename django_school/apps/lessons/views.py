@@ -242,7 +242,7 @@ class SetHomeworkView(
     form_class = HomeworkForm
     template_name = "lessons/set_homework.html"
     success_message = "The homework has been set successfully"
-    success_url = reverse_lazy("lessons:session_list")
+    success_url = reverse_lazy("lessons:homework_list")
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -255,3 +255,20 @@ class SetHomeworkView(
         )
 
         return kwargs
+
+
+class HomeworkListView(
+    LoginRequiredMixin, RolesRequiredMixin(ROLES.TEACHER, ROLES.STUDENT), ListView
+):
+    model = Homework
+    template_name = "lessons/homework_list.html"
+    context_object_name = "homeworks"
+    paginate_by = 10
+
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .visible_to_user(self.request.user)
+            .order_by("completion_date")
+        )
