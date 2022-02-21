@@ -38,6 +38,7 @@ class CustomUserAdmin(UserAdmin):
                     "address",
                     "school_class",
                     "slug",
+                    "role",
                 )
             },
         ),

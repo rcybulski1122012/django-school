@@ -25,4 +25,10 @@ class ClassDetailView(
     template_name = "classes/class_detail.html"
 
     def get_queryset(self):
-        return super().get_queryset().visible_to_user(self.request.user).with_students()
+        return (
+            super()
+            .get_queryset()
+            .visible_to_user(self.request.user)
+            .with_students()
+            .distinct()
+        )

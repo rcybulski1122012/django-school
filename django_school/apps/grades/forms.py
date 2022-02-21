@@ -64,6 +64,8 @@ class BulkGradeCreationForm(forms.ModelForm):
             "category": forms.HiddenInput(),
             "subject": forms.HiddenInput(),
             "teacher": forms.HiddenInput(),
+            "seen_by_parent": forms.HiddenInput(),
+            "seen_by_student": forms.HiddenInput(),
         }
 
 

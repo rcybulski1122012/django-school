@@ -5,19 +5,21 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
+from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DetailView, ListView
 
 from django_school.apps.classes.models import Class
-from django_school.apps.common.utils import (RolesRequiredMixin,
-                                             SubjectAndSchoolClassRelatedMixin,
-                                             roles_required)
+from django_school.apps.common.utils import (
+    RolesRequiredMixin, SubjectAndSchoolClassRelatedMixin, ajax_required,
+    roles_required)
 from django_school.apps.lessons.forms import (AttendanceFormSet, HomeworkForm,
+                                              HomeworkRealisationForm,
                                               LessonSessionForm)
-from django_school.apps.lessons.models import (Homework, Lesson, LessonSession,
-                                               Subject)
+from django_school.apps.lessons.models import (
+    Homework, Lesson, LessonSession, Subject)
 from django_school.apps.users.models import ROLES
 
 User = get_user_model()
@@ -266,9 +268,81 @@ class HomeworkListView(
     paginate_by = 10
 
     def get_queryset(self):
+        qs = (
+            super()
+            .get_queryset()
+            .visible_to_user(self.request.user)
+            .only_current()
+            .select_related("subject", "school_class")
+            .order_by("completion_date")
+        )
+
+        if self.request.user.is_teacher:
+            return qs.with_realisations_count()
+        else:
+            return qs.with_realisations(self.request.user)
+
+
+class HomeworkDetailView(
+    LoginRequiredMixin,
+    RolesRequiredMixin(ROLES.TEACHER, ROLES.STUDENT),
+    DetailView,
+):
+    model = Homework
+    pk_url_kwarg = "homework_pk"
+    template_name = "lessons/homework_detail.html"
+    context_object_name = "homework"
+
+    def get_queryset(self):
         return (
             super()
             .get_queryset()
             .visible_to_user(self.request.user)
-            .order_by("completion_date")
+            .select_related("subject", "school_class")
+            .prefetch_related("attached_files")
         )
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        if self.request.user.is_student:
+            realisation = (
+                self.object.realisations.filter(student=self.request.user)
+                .prefetch_related("attached_files")
+                .first()
+            )
+            ctx["homework_realisation"] = realisation
+        else:
+            students = User.students.with_homework_realisations(self.object)
+            ctx["students"] = students
+
+        return ctx
+
+
+@login_required
+@roles_required(ROLES.STUDENT)
+@ajax_required()
+def submit_homework_realisation_view(request, homework_pk):
+    homework = get_object_or_404(
+        Homework.objects.visible_to_user(request.user), pk=homework_pk
+    )
+
+    if homework.realisations.filter(student=request.user).exists():
+        raise PermissionDenied()
+
+    form = HomeworkRealisationForm(
+        data=request.POST or None,
+        files=request.FILES or None,
+        student=request.user,
+        homework=homework,
+    )
+
+    if request.method == "POST":
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request, "Your realisation has been submitted successfully"
+            )
+            return redirect(homework.detail_url)
+
+    ctx = {"form": form}
+    return render(request, "lessons/modals/create_homework_realisation.html", ctx)

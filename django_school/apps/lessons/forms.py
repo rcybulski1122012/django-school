@@ -1,9 +1,12 @@
 from django import forms
+from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 from django_school.apps.common.models import AttachedFile
 from django_school.apps.events.models import Event, EventStatus
 from django_school.apps.grades.models import GradeCategory
 from django_school.apps.lessons.models import (Attendance, Homework,
+                                               HomeworkRealisation,
                                                LessonSession)
 
 
@@ -86,6 +89,15 @@ class HomeworkForm(forms.ModelForm):
         self.school_class = kwargs.pop("school_class")
         super().__init__(*args, **kwargs)
 
+    def clean_completion_date(self):
+        completion_date = self.cleaned_data["completion_date"]
+        today = timezone.now()
+
+        if completion_date <= today:
+            raise ValidationError("The completion date must be in the future")
+
+        return completion_date
+
     def is_valid(self):
         self.instance.subject = self.subject
         self.instance.school_class = self.school_class
@@ -120,3 +132,30 @@ class HomeworkForm(forms.ModelForm):
                 )
 
         return homework
+
+
+class HomeworkRealisationForm(forms.Form):
+    attached_files = forms.FileField(
+        required=True,
+        widget=forms.ClearableFileInput(attrs={"multiple": True}),
+    )
+
+    def __init__(self, **kwargs):
+        homework = kwargs.pop("homework")
+        student = kwargs.pop("student")
+        self.instance = HomeworkRealisation(homework=homework, student=student)
+
+        super().__init__(**kwargs)
+
+    def save(self):
+        self.instance.save()
+
+        files = [
+            AttachedFile(
+                file=file, creator=self.instance.student, related_object=self.instance
+            )
+            for file in self.files.getlist("attached_files")
+        ]
+        AttachedFile.objects.bulk_create(files)
+
+        return self.instance

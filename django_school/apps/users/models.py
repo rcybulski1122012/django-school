@@ -1,3 +1,4 @@
+from django.apps import apps
 from django.contrib.auth.models import AbstractUser, UserManager
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -32,32 +33,38 @@ class StudentsQuerySet(models.QuerySet):
         )
 
     def with_attendance(self, **attendance_params):
+        statuses = ["present", "absent", "exempt", "excused"]
+        counters = {
+            f"{status}_hours": Count(
+                "attendance",
+                filter=Q(attendance__status=status, **attendance_params),
+                distinct=True,
+            )
+            for status in statuses
+        }
+
         return self.annotate(
             total_attendance=Count(
                 "attendance",
                 ~Q(attendance__status="none") & Q(**attendance_params),
                 distinct=True,
             ),
-            present_hours=Count(
-                "attendance",
-                filter=Q(attendance__status="present", **attendance_params),
-                distinct=True,
-            ),
-            absent_hours=Count(
-                "attendance",
-                filter=Q(attendance__status="absent", **attendance_params),
-                distinct=True,
-            ),
-            exempt_hours=Count(
-                "attendance",
-                filter=Q(attendance__status="exempt", **attendance_params),
-                distinct=True,
-            ),
-            excused_hours=Count(
-                "attendance",
-                filter=Q(attendance__status="excused", **attendance_params),
-                distinct=True,
-            ),
+            **counters,
+        )
+
+    def with_homework_realisations(self, homework):
+        return (
+            self.filter(school_class_id=homework.school_class_id)
+            .prefetch_related(
+                Prefetch(
+                    "homeworks_realisations",
+                    queryset=apps.get_model("lessons", "HomeworkRealisation")
+                    .objects.filter(homework=homework)
+                    .prefetch_related("attached_files"),
+                    to_attr="realisation",
+                )
+            )
+            .distinct()
         )
 
     def visible_to_user(self, user):

@@ -9,7 +9,7 @@
   <ul id="personal-info">
     <li><strong>Full name</strong>: {{ user.full_name }}</li>
     {% with class=user.school_class %}
-      <li><strong>Class</strong>: <a href="{{ class.get_absolute_url }}">
+      <li><strong>Class</strong>: <a href="{{ class.detail_url }}">
         {{ class.number }}
       </a></li>
       <li><strong>Tutor</strong>: {{ class.tutor.full_name }}</li>

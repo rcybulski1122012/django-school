@@ -11,8 +11,8 @@ from django_school.apps.common.models import Address
 from django_school.apps.events.models import Event
 from django_school.apps.grades.models import Grade, GradeCategory
 from django_school.apps.lessons.models import (AttachedFile, Attendance,
-                                               Homework, Lesson, LessonSession,
-                                               Subject)
+                                               Homework, HomeworkRealisation,
+                                               Lesson, LessonSession, Subject)
 from django_school.apps.messages.models import Message, MessageStatus
 from django_school.apps.users.models import ROLES
 
@@ -181,6 +181,12 @@ class LessonsMixin:
             title=title,
             completion_date=completion_date,
             **kwargs,
+        )
+
+    @staticmethod
+    def create_realisation(homework, student, **kwargs):
+        return HomeworkRealisation.objects.create(
+            homework=homework, student=student, **kwargs
         )
 
 

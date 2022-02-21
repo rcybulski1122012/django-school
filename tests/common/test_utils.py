@@ -4,7 +4,7 @@ from django.test import RequestFactory, TestCase
 from django.views import View
 
 from django_school.apps.common.utils import (
-    AjaxRequiredMixin, GetObjectCacheMixin, RolesRequiredMixin,
+    AjaxRequiredMixin, GetObjectCacheMixin, RolesRequiredMixin, ajax_required,
     does_the_teacher_teach_the_subject_to_the_class, roles_required)
 from django_school.apps.users.models import ROLES
 from tests.utils import ClassesMixin, LessonsMixin, UsersMixin
@@ -146,3 +146,31 @@ class AjaxRequiredMixinTestCase(TestCase):
         view = self.DummyView.as_view()
 
         view(request)
+
+
+class AjaxRequiredDecoratorTestCase(TestCase):
+    @staticmethod
+    @ajax_required()
+    def dummy_view(request):
+        return HttpResponse("OK")
+
+    def test_raises_PermissionDenied_if_request_not_ajax_and_method_not_allowed(self):
+        request = RequestFactory().get("/test")
+
+        with self.assertRaises(PermissionDenied):
+            self.dummy_view(request)
+
+    def test_does_not_raise_if_request_is_ajax(self):
+        request = RequestFactory().get("/test", HTTP_X_REQUESTED_WITH="XMLHttpRequest")
+
+        self.dummy_view(request)
+
+    def test_does_not_raise_if_request_method_in_not_ajax_allowed_methods(self):
+        request = RequestFactory().post("/test")
+
+        self.dummy_view(request)
+
+    def test_does_not_raise_if_request_is_htmx_request(self):
+        request = RequestFactory().get("/test", HTTP_HX_REQUEST="true")
+
+        self.dummy_view(request)

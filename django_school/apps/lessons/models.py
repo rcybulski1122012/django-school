@@ -1,9 +1,11 @@
+import datetime
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Prefetch
+from django.db.models import Count, Prefetch, Q
 from django.urls import reverse
 from django.utils.text import slugify
 
@@ -175,6 +177,26 @@ class HomeworkQuerySet(models.QuerySet):
         else:
             return self.none()
 
+    def with_realisations_count(self):
+        return self.annotate(
+            submitted_count=Count("realisations", distinct=True),
+            total_count=Count("school_class__students"),
+        )
+
+    def with_realisations(self, user):
+        return self.prefetch_related(
+            Prefetch(
+                "realisations",
+                queryset=HomeworkRealisation.objects.filter(student=user),
+                to_attr="realisation",
+            )
+        )
+
+    def only_current(self):
+        # selects homeworks whose completion_date is in the future or up to one week in the past
+        week_earlier = datetime.datetime.today() + datetime.timedelta(days=-8)
+        return self.filter(completion_date__gt=week_earlier)
+
 
 class Homework(models.Model):
     title = models.CharField(max_length=64)
@@ -186,9 +208,41 @@ class Homework(models.Model):
         Class, on_delete=models.CASCADE, related_name="homeworks"
     )
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    attached_files = GenericRelation(AttachedFile)
+    attached_files = GenericRelation(
+        AttachedFile,
+        content_type_field="related_object_content_type",
+        object_id_field="related_object_id",
+    )
 
     objects = HomeworkQuerySet.as_manager()
 
     def __str__(self):
         return f"{self.school_class.number} {self.title}"
+
+    @property
+    def detail_url(self):
+        return reverse("lessons:homework_detail", args=[self.pk])
+
+    @property
+    def submit_realisation_url(self):
+        return reverse("lessons:submit_homework_realisation", args=[self.pk])
+
+
+class HomeworkRealisation(models.Model):
+    submission_date = models.DateTimeField(auto_now_add=True)
+    homework = models.ForeignKey(
+        Homework, on_delete=models.CASCADE, related_name="realisations"
+    )
+    student = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="homeworks_realisations",
+    )
+    attached_files = GenericRelation(
+        AttachedFile,
+        content_type_field="related_object_content_type",
+        object_id_field="related_object_id",
+    )
+
+    def __str__(self):
+        return f"{self.homework.title} - {self.student.full_name}"

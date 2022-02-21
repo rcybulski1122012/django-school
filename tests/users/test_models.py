@@ -237,6 +237,22 @@ class StudentsManagerTestCase(
         self.assertEqual(student.exempt_hours, 1)
         self.assertEqual(student.excused_hours, 1)
 
+    def test_with_homework_realisations_selects_realisations_of_given_homework(self):
+        student2 = self.create_student(
+            username="student2", school_class=self.school_class
+        )
+        homework1 = self.create_homework(self.subject, self.teacher, self.school_class)
+        homework2 = self.create_homework(self.subject, self.teacher, self.school_class)
+        homework1_realisation = self.create_realisation(homework1, self.student)
+        self.create_realisation(homework2, self.student)
+        self.create_realisation(homework1, student2)
+
+        student = User.students.with_homework_realisations(homework1).get(
+            pk=self.student.pk
+        )
+
+        self.assertEqual(student.realisation, [homework1_realisation])
+
 
 class TeachersManagerTestCase(UsersMixin, TestCase):
     def setUp(self):

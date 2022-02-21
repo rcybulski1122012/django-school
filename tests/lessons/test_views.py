@@ -8,8 +8,10 @@ from django.urls import reverse
 
 from django_school.apps.events.models import Event, EventStatus
 from django_school.apps.grades.models import GradeCategory
+from django_school.apps.lessons.forms import HomeworkRealisationForm
 from django_school.apps.lessons.models import (AttachedFile, Attendance,
-                                               Homework, Lesson, LessonSession)
+                                               Homework, HomeworkRealisation,
+                                               Lesson, LessonSession)
 from tests.utils import (ClassesMixin, LessonsMixin, LoginRequiredTestMixin,
                          ResourceViewTestMixin, TeacherViewTestMixin,
                          UsersMixin)
@@ -722,8 +724,10 @@ class HomeworkListViewTestCase(
 
         self.assertEqual(response.status_code, 403)
 
-    def test_context_contains_list_of_homeworks(self):
+    def test_context_contains_list_of_homeworks_visible_to_user(self):
         self.login(self.teacher)
+        teacher2 = self.create_teacher(username="teacher2")
+        self.create_homework(self.subject, teacher2, self.school_class)
 
         response = self.client.get(self.get_url())
         qs = response.context["homeworks"]
@@ -745,3 +749,243 @@ class HomeworkListViewTestCase(
 
         self.assertContains(response, "Class")
         self.assertContains(response, self.DEFAULT_NUMBER)
+
+    def test_renders_status_if_the_user_is_a_student(self):
+        self.login(self.student)
+
+        response = self.client.get(self.get_url())
+        self.assertContains(response, "UNSUBMITTED")
+
+        self.create_realisation(self.homework, self.student)
+        response = self.client.get(self.get_url())
+        self.assertContains(response, "<th>SUBMITTED</th>", html=True)
+        # to make sure that's not UNSUBMITTED
+
+        self.homework.completion_date = (
+            self.DEFAULT_COMPLETION_DATE + datetime.timedelta(days=-15)
+        )
+        self.homework.save()
+        response = self.client.get(self.get_url())
+        self.assertContains(response, "LATE")
+
+    def test_renders_submitted_count_if_the_user_is_a_teacher(self):
+        self.login(self.teacher)
+        self.create_student(username="student2", school_class=self.school_class)
+        self.create_realisation(self.homework, self.student)
+
+        response = self.client.get(self.get_url())
+
+        self.assertContains(response, "1 / 2")
+
+    def test_does_not_render_homeworks_whose_completion_date_is_more_than_one_week_in_the_past(
+        self,
+    ):
+        self.login(self.teacher)
+        completion_date = datetime.datetime.today() + datetime.timedelta(days=-10)
+        self.create_homework(
+            self.subject,
+            self.teacher,
+            self.school_class,
+            completion_date=completion_date,
+        )
+
+        response = self.client.get(self.get_url())
+
+        qs = response.context["homeworks"]
+        self.assertQuerysetEqual(qs, [self.homework])
+
+
+class HomeworkDetailViewTestCase(
+    LoginRequiredTestMixin,
+    ResourceViewTestMixin,
+    UsersMixin,
+    ClassesMixin,
+    LessonsMixin,
+    TestCase,
+):
+    path_name = "lessons:homework_detail"
+
+    def setUp(self):
+        self.teacher = self.create_teacher()
+        self.school_class = self.create_class()
+        self.student = self.create_student(school_class=self.school_class)
+        self.subject = self.create_subject()
+        self.homework = self.create_homework(
+            self.subject, self.teacher, self.school_class
+        )
+
+    def get_url(self, homework_pk=None):
+        homework_pk = homework_pk or self.homework.pk
+
+        return reverse(self.path_name, args=[homework_pk])
+
+    def get_nonexistent_resource_url(self):
+        return self.get_url(homework_pk=12345)
+
+    def test_returns_403_if_the_user_is_neither_a_teacher_nor_a_student(self):
+        parent = self.create_parent(child=self.student)
+        self.login(parent)
+
+        response = self.client.get(self.get_url())
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_returns_404_if_the_homework_is_not_visible_to_the_user(self):
+        student2 = self.create_student(username="student2")
+        self.login(student2)
+
+        response = self.client.get(self.get_url())
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_context_contains_realisation_if_the_user_is_a_student(self):
+        self.login(self.student)
+        realisation = self.create_realisation(self.homework, self.student)
+
+        response = self.client.get(self.get_url())
+
+        self.assertEqual(response.context["homework_realisation"], realisation)
+
+    def test_context_contains_list_of_student_with_prefetched_realisations_if_the_user_is_a_teacher(
+        self,
+    ):
+        self.login(self.teacher)
+        student2 = self.create_student(
+            username="student2", school_class=self.school_class
+        )
+        realisation = self.create_realisation(self.homework, self.student)
+
+        response = self.client.get(self.get_url())
+
+        students = response.context["students"]
+        self.assertQuerysetEqual(students, [self.student, student2], ordered=False)
+        self.assertEqual(students[0].realisation, [realisation])
+
+    def test_renders_link_to_submit_homework_view_if_the_student_has_not_done_it_yet(
+        self,
+    ):
+        self.login(self.student)
+
+        response = self.client.get(self.get_url())
+        self.assertContains(response, self.homework.submit_realisation_url)
+
+        self.create_realisation(self.homework, self.student)
+        response = self.client.get(self.get_url())
+        self.assertNotContains(response, self.homework.submit_realisation_url)
+
+    def test_renders_links_to_submitted_files_if_the_student_has_submitted_realisation(
+        self,
+    ):
+        self.login(self.student)
+        realisation = self.create_realisation(self.homework, self.student)
+        file = self.create_file(realisation, self.student)
+
+        response = self.client.get(self.get_url())
+
+        self.assertContains(response, file.file.url)
+
+    def test_renders_students_realisations_if_the_user_is_a_teacher(self):
+        self.login(self.teacher)
+        realisation = self.create_realisation(self.homework, self.student)
+        file = self.create_file(realisation, self.student)
+
+        response = self.client.get(self.get_url())
+
+        self.assertContains(response, file.file.url)
+        self.assertContains(response, self.student.full_name)
+        self.assertContains(response, "SUBMITTED")
+
+
+class SubmitHomeworkRealisationViewTestCase(
+    LoginRequiredTestMixin,
+    ResourceViewTestMixin,
+    UsersMixin,
+    ClassesMixin,
+    LessonsMixin,
+    TestCase,
+):
+    path_name = "lessons:submit_homework_realisation"
+    ajax_required = True
+
+    # move it to separated mixin
+    def ajax_request(self, path, method="get", **kwargs):
+        return getattr(self.client, method)(
+            path, HTTP_X_REQUESTED_WITH="XMLHttpRequest", **kwargs
+        )
+
+    def setUp(self):
+        self.teacher = self.create_teacher()
+        self.school_class = self.create_class()
+        self.student = self.create_student(school_class=self.school_class)
+        self.subject = self.create_subject()
+        self.homework = self.create_homework(
+            self.subject, self.teacher, self.school_class
+        )
+        self.data = {
+            "attached_files": SimpleUploadedFile("file2.txt", b"file_content"),
+        }
+
+    def get_url(self, homework_pk=None):
+        homework_pk = homework_pk or self.homework.pk
+
+        return reverse(self.path_name, args=[homework_pk])
+
+    def get_nonexistent_resource_url(self):
+        return self.get_url(homework_pk=12345)
+
+    def test_returns_403_if_request_is_neither_ajax_or_htmx(self):
+        self.login(self.student)
+
+        response = self.client.get(self.get_url())
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_returns_403_if_the_user_is_not_a_student(self):
+        self.login(self.teacher)
+
+        response = self.ajax_request(self.get_url())
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_raises_403_if_the_student_already_has_submitted_the_realisation(self):
+        self.login(self.student)
+        self.create_realisation(self.homework, self.student)
+
+        response = self.ajax_request(self.get_url())
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_renders_form_if_request_method_is_GET(self):
+        self.login(self.student)
+
+        response = self.ajax_request(self.get_url())
+
+        self.assertIsInstance(response.context["form"], HomeworkRealisationForm)
+        self.assertContains(response, '<input type="file"')
+
+    def test_creates_homework_realisation_if_request_method_is_POST_and_data_is_valid(
+        self,
+    ):
+        self.login(self.student)
+
+        self.ajax_request(self.get_url(), data=self.data, method="post")
+
+        self.assertTrue(HomeworkRealisation.objects.exists())
+
+    def test_redirects_to_homework_details_after_successful_creation(self):
+        self.login(self.student)
+
+        response = self.ajax_request(self.get_url(), data=self.data, method="post")
+
+        self.assertRedirects(response, self.homework.detail_url)
+
+    def test_renders_successful_message_after_successful_creation(self):
+        self.login(self.student)
+
+        response = self.ajax_request(
+            self.get_url(), data=self.data, method="post", follow=True
+        )
+
+        self.assertContains(
+            response, "Your realisation has been submitted successfully"
+        )

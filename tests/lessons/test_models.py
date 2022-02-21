@@ -1,3 +1,5 @@
+import datetime
+
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
@@ -117,31 +119,77 @@ class HomeworkQuerySetTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase)
         self.school_class = self.create_class()
         self.student = self.create_student(school_class=self.school_class)
         self.subject = self.create_subject()
+        self.homework = self.create_homework(
+            self.subject, self.teacher, self.school_class
+        )
 
     def test_visible_to_user_returns_homeworks_set_if_the_user_is_a_teacher(self):
         teacher2 = self.create_teacher(username="teacher2")
-        homework = self.create_homework(self.subject, self.teacher, self.school_class)
         self.create_homework(self.subject, teacher2, self.school_class)
 
         qs = Homework.objects.visible_to_user(self.teacher)
 
-        self.assertQuerysetEqual(qs, [homework])
+        self.assertQuerysetEqual(qs, [self.homework])
 
     def test_visible_to_user_returns_class_homeworks_if_the_user_is_a_student(self):
         school_class2 = self.create_class(number="2c")
-        homework = self.create_homework(self.subject, self.teacher, self.school_class)
         self.create_homework(self.subject, self.teacher, school_class2)
 
         qs = Homework.objects.visible_to_user(self.student)
 
-        self.assertQuerysetEqual(qs, [homework])
+        self.assertQuerysetEqual(qs, [self.homework])
 
     def test_visible_to_users_returns_empty_qs_if_the_user_is_neither_a_student_nor_a_teacher(
         self,
     ):
         parent = self.create_parent(child=self.student)
-        self.create_homework(self.subject, self.teacher, self.school_class)
 
         qs = Homework.objects.visible_to_user(parent)
 
         self.assertQuerysetEqual(qs, Homework.objects.none())
+
+    def test_with_realisations_count_selects_submitted_count_and_total_count(self):
+        self.create_student(username="student2", school_class=self.school_class)
+        self.create_realisation(self.homework, self.student)
+
+        homework = Homework.objects.with_realisations_count().get()
+
+        self.assertEqual(homework.submitted_count, 1)
+        self.assertEqual(homework.total_count, 2)
+
+    def test_with_realisations(self):
+        student2 = self.create_student(
+            username="student2", school_class=self.school_class
+        )
+        realisation = self.create_realisation(self.homework, self.student)
+        self.create_realisation(self.homework, student2)
+
+        homework = Homework.objects.with_realisations(self.student).get()
+
+        self.assertEqual(homework.realisation, [realisation])
+
+    def test_only_current_select_future_homeworks(self):
+        completion_date = datetime.datetime.today() + datetime.timedelta(days=-100)
+        self.create_homework(
+            self.subject,
+            self.teacher,
+            self.school_class,
+            completion_date=completion_date,
+        )
+
+        qs = Homework.objects.only_current()
+
+        self.assertQuerysetEqual(qs, [self.homework])
+
+    def test_only_current_select_homeworks_up_to_week_in_the_past(self):
+        completion_date = datetime.datetime.today() + datetime.timedelta(days=-7)
+        homework2 = self.create_homework(
+            self.subject,
+            self.teacher,
+            self.school_class,
+            completion_date=completion_date,
+        )
+
+        qs = Homework.objects.only_current()
+
+        self.assertQuerysetEqual(qs, [self.homework, homework2], ordered=False)

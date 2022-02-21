@@ -1,0 +1,12 @@
+{% extends "base_modal.html" %}
+{% load crispy_forms_filters %}
+
+{% block title %}
+  Submit your homework realisation
+{% endblock %}
+
+{% block body %}
+  <p>Are you sure you want to submit you homework? You won't be able to delete or modify the files after doing this.</p>
+  <hr>
+  {{ form|crispy }}
+{% endblock %}

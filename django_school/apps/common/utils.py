@@ -52,19 +52,36 @@ class GetObjectCacheMixin:
         return self.object
 
 
+def _is_htmx_request(request):
+    return request.headers.get("Hx-Request", "") == "true"
+
+
 class AjaxRequiredMixin:
     not_ajax_allowed_methods = ["POST"]
 
     def dispatch(self, *args, **kwargs):
         if self.request.method not in self.not_ajax_allowed_methods and not (
-            self.request.is_ajax() or self.is_htmx_request(self.request)
+            self.request.is_ajax() or _is_htmx_request(self.request)
         ):
             raise PermissionDenied("Only ajax requests are allowed.")
 
         return super().dispatch(*args, **kwargs)
 
-    def is_htmx_request(self, request):
-        return request.headers.get("Hx-Request", "") == "true"
+
+def ajax_required(not_ajax_allowed_methods=["POST"]):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(request, *args, **kwargs):
+            if request.method not in not_ajax_allowed_methods and not (
+                request.is_ajax() or _is_htmx_request(request)
+            ):
+                raise PermissionDenied("Only ajax requests are allowed.")
+
+            return func(request, *args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 class SubjectAndSchoolClassRelatedMixin:

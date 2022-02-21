@@ -21,15 +21,3 @@
     Add new
   </button>
 {% endblock %}
-
-{% block js %}
-  <script>
-      document.addEventListener("htmx:configRequest", e => {
-          e.detail.headers["X-CSRFToken"] = "{{ csrf_token }}"
-      });
-  </script>
-
-  <script src="https://unpkg.com/htmx.org@1.5.0"
-          integrity="sha384-oGA+prIp5Vchu6we2YkI51UtVzN9Jpx2Z7PnR1I78PnZlN8LkrCT4lqqqmDkyrvI"
-          crossorigin="anonymous"></script>
-{% endblock %}

@@ -7,8 +7,10 @@ from django.utils.datastructures import MultiValueDict
 from django_school.apps.events.models import Event, EventStatus
 from django_school.apps.grades.models import GradeCategory
 from django_school.apps.lessons.forms import (AttendanceFormSet, HomeworkForm,
+                                              HomeworkRealisationForm,
                                               LessonSessionForm)
-from django_school.apps.lessons.models import AttachedFile, Homework
+from django_school.apps.lessons.models import (AttachedFile, Homework,
+                                               HomeworkRealisation)
 from tests.utils import ClassesMixin, LessonsMixin, UsersMixin
 
 
@@ -113,6 +115,8 @@ class HomeworkFormTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
         self.student = self.create_student(school_class=self.school_class)
         self.subject = self.create_subject()
         self.date = datetime.datetime.today() + datetime.timedelta(days=10)
+        self.files = MultiValueDict()
+        self.files["attached_files"] = SimpleUploadedFile("file2.txt", b"file_content")
 
     def test_is_valid_assigns_the_class_the_subject_and_the_teacher_to_the_instance(
         self,
@@ -134,11 +138,9 @@ class HomeworkFormTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
             "completion_date": self.date,
             "create_category": True,
         }
-        files = MultiValueDict()
-        files["attached_files"] = SimpleUploadedFile("file2.txt", b"file_content")
         form = HomeworkForm(
             data=data,
-            files=files,
+            files=self.files,
             subject=self.subject,
             school_class=self.school_class,
             teacher=self.teacher,
@@ -151,3 +153,48 @@ class HomeworkFormTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
         self.assertTrue(EventStatus.objects.exists())
         self.assertTrue(AttachedFile.objects.exists())
         self.assertTrue(GradeCategory.objects.exists())
+
+    def test_form_has_error_if_completion_date_is_in_the_past(self):
+        data = {
+            "title": "Title",
+            "description": "Description",
+            "completion_date": self.date + datetime.timedelta(days=-100),
+            "create_category": False,
+        }
+
+        form = HomeworkForm(
+            data=data,
+            files=self.files,
+            subject=self.subject,
+            school_class=self.school_class,
+            teacher=self.teacher,
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertEqual(
+            form.errors["completion_date"],
+            ["The completion date must be in the future"],
+        )
+
+
+class HomeworkRealisationFormTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
+    def setUp(self):
+        self.teacher = self.create_teacher()
+        self.school_class = self.create_class()
+        self.student = self.create_student(school_class=self.school_class)
+        self.subject = self.create_subject()
+        self.homework = self.create_homework(
+            self.subject, self.teacher, self.school_class
+        )
+        self.files = MultiValueDict()
+        self.files["attached_files"] = SimpleUploadedFile("file2.txt", b"file_content")
+
+    def test_save_creates_realisation_and_attached_files(self):
+        form = HomeworkRealisationForm(
+            files=self.files, homework=self.homework, student=self.student
+        )
+
+        self.assertTrue(form.is_valid())
+        form.save()
+        self.assertTrue(HomeworkRealisation.objects.exists())
+        self.assertTrue(AttachedFile.objects.exists())

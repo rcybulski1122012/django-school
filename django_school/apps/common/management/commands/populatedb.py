@@ -143,7 +143,7 @@ class Command(BaseCommand):
         return User.objects.get_or_create(**kwargs)
 
     def create_loggable_teacher(self):
-        self.create_loggable_user(
+        self.teacher, _ = self.create_loggable_user(
             username="teacher",
             password="teacher",
             role=ROLES.TEACHER,
@@ -154,7 +154,7 @@ class Command(BaseCommand):
         )
 
     def create_loggable_student(self):
-        school_class = Class.objects.first()
+        self.school_class = Class.objects.first()
 
         self.create_loggable_user(
             username="student",
@@ -164,7 +164,7 @@ class Command(BaseCommand):
             last_name="Skinner",
             gender="male",
             phone_number="456-123-789",
-            school_class=school_class,
+            school_class=self.school_class,
         )
 
     def create_loggable_parent(self):
@@ -278,6 +278,18 @@ class Command(BaseCommand):
                             school_class=school_class,
                         )
                     )
+
+        # to ensure that the loggable teacher is teaching the loggable student
+        lessons.append(
+            Lesson(
+                time=Lesson.LESSONS_TIMES[0][0],
+                weekday=Lesson.WEEKDAYS[0][0],
+                classroom=1,
+                subject=Subject.objects.first(),
+                teacher=self.teacher,
+                school_class=self.school_class,
+            )
+        )
 
         Lesson.objects.bulk_create(lessons)
 
