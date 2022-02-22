@@ -328,3 +328,10 @@ class ResourceViewTestMixin:
         response = self.client.get(self.get_nonexistent_resource_url(), **params)
 
         self.assertEqual(response.status_code, 404)
+
+
+class AjaxRequiredViewTestMixin:
+    def ajax_request(self, path, method="get", **kwargs):
+        return getattr(self.client, method)(
+            path, HTTP_X_REQUESTED_WITH="XMLHttpRequest", **kwargs
+        )

@@ -242,9 +242,10 @@ class GradeDeleteView(
     LoginRequiredMixin,
     RolesRequiredMixin(ROLES.TEACHER),
     SingleGradeMixin,
+    AjaxRequiredMixin,
     DeleteView,
 ):
-    template_name = "grades/grade_confirm_delete.html"
+    template_name = "grades/modals/grade_delete.html"
     success_message = "The grade has been deleted successfully."
 
     def delete(self, *args, **kwargs):

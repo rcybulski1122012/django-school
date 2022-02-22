@@ -69,30 +69,24 @@
   <script>
       const grades = document.querySelector("#grades");
 
-      function createGrade(studentPk, categoryPk, grade, gradePk, gradeComment, gradeWeight) {
-          const td = grades.querySelector(`.student-${studentPk} .category-${categoryPk}`);
-          const update_url = "{% url "grades:update" grade_pk=12345 %}".replace(/12345/, gradePk.toString());
-          const delete_url = "{% url "grades:delete" grade_pk=12345 %}".replace(/12345/, gradePk.toString());
-
-          td.innerText = grade;
-          td.dataset.bsToggle = "popover";
-          td.dataset.bsContent = `
-            <h3>${gradeComment}</h3>
-            <p>Weight: ${gradeWeight}</p>
-            <a href="${update_url}" class="btn btn-outline-primary">Update</a>
-            <a href="${delete_url}" class="btn btn-outline-danger">Delete</a>
-        `;
-      }
-
       {% for student in students %}
           {% for grade in student.subject_grades %}
-              createGrade({{ grade.student.pk }},
-                  {{ grade.category.pk }},
-                  "{{ grade.get_grade_display }}",
-                  {{ grade.pk }},
-                  "{{ grade.comment }}",
-                  {{ grade.weight }},
-              );
+              {
+                  const td = grades.querySelector(`.student-{{ grade.student.pk }} .category-{{ grade.category.pk }}`);
+                  td.innerText = "{{ grade.get_grade_display }}";
+                  td.dataset.bsToggle="popover";
+                  td.dataset.bsContent = `
+                    <h3>{{ grade.comment }}</h3>
+                    <p>Weight: {{ grade.weight }}</p>
+                    <a href="{{ grade.update_url }}" class="btn btn-outline-primary">Update</a>
+                    <button class="btn btn-outline-danger gradeDeleteButton"
+                       hx-get="{{ grade.delete_url }}"
+                       hx-target="#base-modal .modal-content"
+                       hx-swap="innerHTML"
+                       data-bs-toggle="modal"
+                       data-bs-target="#base-modal">Delete</a>
+                  `;
+              }
           {% endfor %}
       {% endfor %}
 
@@ -105,5 +99,17 @@
               html: true,
           })
       })
+
+      popoverTriggerList.forEach(function (element) {
+           element.addEventListener('shown.bs.popover', function() {
+               htmx.process(document.querySelector(".gradeDeleteButton"));
+           });
+        });
+
+      document.querySelector("#base-modal").addEventListener('show.bs.modal', function (){
+            popoverList.forEach(function (element) {
+                element.hide()
+            });
+        });
   </script>
 {% endblock %}

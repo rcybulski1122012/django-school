@@ -3,9 +3,10 @@ from django.urls import reverse
 
 from django_school.apps.grades.forms import GradeCategoryForm
 from django_school.apps.grades.models import Grade, GradeCategory
-from tests.utils import (ClassesMixin, GradesMixin, LessonsMixin,
-                         LoginRequiredTestMixin, ResourceViewTestMixin,
-                         TeacherViewTestMixin, UsersMixin)
+from tests.utils import (AjaxRequiredViewTestMixin, ClassesMixin, GradesMixin,
+                         LessonsMixin, LoginRequiredTestMixin,
+                         ResourceViewTestMixin, TeacherViewTestMixin,
+                         UsersMixin)
 
 
 class SubjectAndSchoolClassRelatedTestMixin(
@@ -384,7 +385,10 @@ class SingleGradeTestMixin(
         teacher2 = self.create_teacher(username="teacher2")
         self.login(teacher2)
 
-        response = self.client.get(self.get_url())
+        if self.ajax_required:
+            response = self.client.post(self.get_url())
+        else:
+            response = self.client.get(self.get_url())
 
         self.assertEqual(response.status_code, 404)
 
@@ -438,7 +442,10 @@ class GradeUpdateViewTestCase(SingleGradeTestMixin, TestCase):
         self.assertContains(response, self.category.name)
 
 
-class GradeDeleteViewTestCase(SingleGradeTestMixin, TestCase):
+class GradeDeleteViewTestCase(
+    SingleGradeTestMixin, AjaxRequiredViewTestMixin, TestCase
+):
+    ajax_required = True
     path_name = "grades:delete"
 
     def test_deletes_grade(self):
@@ -466,15 +473,6 @@ class GradeDeleteViewTestCase(SingleGradeTestMixin, TestCase):
         response = self.client.post(self.get_url(), follow=True)
 
         self.assertContains(response, "The grade has been deleted successfully.")
-
-    def test_renders_grade_info(self):
-        self.login(self.teacher)
-
-        response = self.client.get(self.get_url())
-
-        self.assertContains(response, self.grade.get_grade_display())
-        self.assertContains(response, self.category.name)
-        self.assertContains(response, self.student.full_name)
 
 
 class GradeCategoryFormViewTestCase(ClassesMixin, LessonsMixin, GradesMixin, TestCase):
@@ -587,21 +585,23 @@ class GradeCategoryDetailViewTestCase(SingleGradeCategoryTestMixin, TestCase):
         self.assertContains(response, self.category.name)
 
 
-class GradeCategoryDeleteViewTestCase(SingleGradeCategoryTestMixin, TestCase):
+class GradeCategoryDeleteViewTestCase(
+    SingleGradeCategoryTestMixin, AjaxRequiredViewTestMixin, TestCase
+):
     path_name = "grades:categories:delete"
     ajax_required = True
 
     def test_deletes_category(self):
         self.login(self.teacher)
 
-        self.client.post(self.get_url())
+        self.ajax_request(self.get_url(), method="post")
 
         self.assertFalse(GradeCategory.objects.exists())
 
     def test_redirects_to_categories_list_after_successful_delete(self):
         self.login(self.teacher)
 
-        response = self.client.post(self.get_url())
+        response = self.ajax_request(self.get_url(), method="post")
 
         expected_url = reverse(
             "grades:categories:create", args=[self.school_class.slug, self.subject.slug]

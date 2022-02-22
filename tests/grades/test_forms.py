@@ -1,10 +1,7 @@
 from django.test import TestCase
 
-from django_school.apps.grades.forms import (
-    BulkGradeCreationFormSet,
-    GradeCategoryForm,
-    GradeForm,
-)
+from django_school.apps.grades.forms import (BulkGradeCreationFormSet,
+                                             GradeCategoryForm, GradeForm)
 from tests.utils import ClassesMixin, GradesMixin, LessonsMixin, UsersMixin
 
 

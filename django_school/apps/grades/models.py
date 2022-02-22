@@ -117,4 +117,4 @@ class Grade(models.Model):
 
     @property
     def delete_url(self):
-        return reverse("grade:delete", args=[self.pk])
+        return reverse("grades:delete", args=[self.pk])

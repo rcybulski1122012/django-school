@@ -12,9 +12,9 @@ from django_school.apps.lessons.forms import HomeworkRealisationForm
 from django_school.apps.lessons.models import (AttachedFile, Attendance,
                                                Homework, HomeworkRealisation,
                                                Lesson, LessonSession)
-from tests.utils import (ClassesMixin, LessonsMixin, LoginRequiredTestMixin,
-                         ResourceViewTestMixin, TeacherViewTestMixin,
-                         UsersMixin)
+from tests.utils import (AjaxRequiredViewTestMixin, ClassesMixin, LessonsMixin,
+                         LoginRequiredTestMixin, ResourceViewTestMixin,
+                         TeacherViewTestMixin, UsersMixin)
 
 
 class TimetableViewMixin(
@@ -900,18 +900,13 @@ class SubmitHomeworkRealisationViewTestCase(
     LoginRequiredTestMixin,
     ResourceViewTestMixin,
     UsersMixin,
+    AjaxRequiredViewTestMixin,
     ClassesMixin,
     LessonsMixin,
     TestCase,
 ):
     path_name = "lessons:submit_homework_realisation"
     ajax_required = True
-
-    # move it to separated mixin
-    def ajax_request(self, path, method="get", **kwargs):
-        return getattr(self.client, method)(
-            path, HTTP_X_REQUESTED_WITH="XMLHttpRequest", **kwargs
-        )
 
     def setUp(self):
         self.teacher = self.create_teacher()
@@ -933,7 +928,7 @@ class SubmitHomeworkRealisationViewTestCase(
     def get_nonexistent_resource_url(self):
         return self.get_url(homework_pk=12345)
 
-    def test_returns_403_if_request_is_neither_ajax_or_htmx(self):
+    def test_returns_403_if_request_is_neither_ajax_nor_htmx(self):
         self.login(self.student)
 
         response = self.client.get(self.get_url())
