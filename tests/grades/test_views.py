@@ -235,25 +235,39 @@ class StudentGradesViewTestCase(
         self.assertTrue(self.grade.seen_by_parent)
 
 
-class CreateGradesInBulkViewTestCase(SubjectAndSchoolClassRelatedTestMixin, TestCase):
+class CreateGradesInBulkViewTestCase(
+    TeacherViewTestMixin,
+    ResourceViewTestMixin,
+    UsersMixin,
+    ClassesMixin,
+    LessonsMixin,
+    GradesMixin,
+    TestCase,
+):
     path_name = "grades:add_in_bulk"
 
-    def get_url(self, class_slug=None, subject_slug=None, category_pk=None):
-        url = super().get_url(class_slug, subject_slug)
+    def setUp(self):
+        self.teacher = self.create_teacher()
+        self.school_class = self.create_class()
+        self.student = self.create_student(school_class=self.school_class)
+        self.subject = self.create_subject()
+        self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
+        self.category = self.create_grade_category(self.subject, self.school_class)
 
-        if category_pk:
-            url += f"?category={category_pk}"
+    def get_url(self, category_pk=None):
+        category_pk = category_pk or self.category.pk
 
-        return url
+        return reverse(self.path_name, args=[category_pk])
 
-    def prepare_form_data(self, students):
+    def get_nonexistent_resource_url(self):
+        return self.get_url(category_pk=12345)
+
+    @staticmethod
+    def get_example_form_data(students):
         students_count = len(students)
         data = {
             "weight": 1,
             "comment": "Math Exam",
-            "subject": self.subject.pk,
-            "category": self.category.pk,
-            "teacher": self.teacher.pk,
             "form-TOTAL_FORMS": students_count,
             "form-INITIAL_FORMS": 0,
         }
@@ -269,9 +283,34 @@ class CreateGradesInBulkViewTestCase(SubjectAndSchoolClassRelatedTestMixin, Test
 
         return data
 
+    def test_returns_404_when_the_class_does_not_learning_the_subject(self):
+        self.login(self.teacher)
+        self.lesson.delete()
+
+        response = self.client.get(self.get_url())
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_returns_404_if_every_student_already_has_a_grade_in_the_category(self):
+        self.login(self.teacher)
+        self.create_grade(self.category, self.subject, self.student, self.teacher)
+
+        response = self.client.get(self.get_url())
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_context_contains_school_class_subject_and_category(self):
+        self.login(self.teacher)
+
+        response = self.client.get(self.get_url())
+
+        self.assertEqual(response.context["school_class"], self.school_class)
+        self.assertEqual(response.context["subject"], self.subject)
+        self.assertEqual(response.context["category"], self.category)
+
     def test_creates_grades(self):
         self.login(self.teacher)
-        data = self.prepare_form_data([self.student])
+        data = self.get_example_form_data([self.student])
 
         self.client.post(self.get_url(), data)
 
@@ -279,7 +318,7 @@ class CreateGradesInBulkViewTestCase(SubjectAndSchoolClassRelatedTestMixin, Test
 
     def test_redirects_to_class_grades_after_successful_create(self):
         self.login(self.teacher)
-        data = self.prepare_form_data([self.student])
+        data = self.get_example_form_data([self.student])
 
         response = self.client.post(self.get_url(), data)
 
@@ -292,29 +331,26 @@ class CreateGradesInBulkViewTestCase(SubjectAndSchoolClassRelatedTestMixin, Test
 
     def test_renders_success_message_after_successful_create(self):
         self.login(self.teacher)
-        data = self.prepare_form_data([self.student])
+        data = self.get_example_form_data([self.student])
 
         response = self.client.post(self.get_url(), data, follow=True)
 
         self.assertContains(response, "The grades have been added successfully.")
 
-    def test_renders_error_when_students_already_have_grade_in_this_category(self):
+    def test_excludes_students_if_they_already_have_a_grade_in_the_category(self):
         self.login(self.teacher)
-        self.create_grade(self.category, self.subject, self.student, self.teacher)
-        data = self.prepare_form_data([self.student])
-
-        response = self.client.post(self.get_url(), data)
-        self.assertContains(
-            response, "The student already has got a grade in this category.", html=True
+        student2 = self.create_student(
+            username="student2",
+            school_class=self.school_class,
+            first_name="Student2",
+            last_name="BulkCreationTestCase",
         )
+        self.create_grade(self.category, self.subject, student2, self.teacher)
 
-    def test_set_category_initial_data_to_form_if_given(self):
-        self.login(self.teacher)
+        response = self.client.get(self.get_url())
 
-        response = self.client.get(self.get_url(category_pk=self.category.pk))
-
-        form = response.context["common_form"]
-        self.assertEqual(form.initial["category"], str(self.category.pk))
+        self.assertNotContains(response, student2.full_name)
+        self.assertContains(response, self.student.full_name)
 
 
 class SingleGradeTestMixin(

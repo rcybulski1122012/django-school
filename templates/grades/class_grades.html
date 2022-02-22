@@ -7,24 +7,28 @@
 
 
 {% block content %}
-  <h1>Class: {{ school_class.number }} | Subject: {{ subject.name }}</h1>
+  <h1>
+    Class: {{ school_class.number }} <span class="mx-4 h1">|</span>
+    Subject: {{ subject.name }} <span class="mx-4 h1">|</span>
+    <a href="{% url "grades:categories:create" school_class.slug subject.slug %}">
+      Categories
+    </a>
+  </h1>
   <div class="table-responsive">
     <table class="table table-bordered table-responsive" id="grades">
       <thead>
       <tr>
         <th>Student</th>
-        <th style="width:10%" >
-          <a href="{% url "grades:categories:create" school_class.slug subject.slug %}" class="text-decoration-none">
-            Add category
-          </a>
-        </th>
+        <th style="width:10%" ></th>
         {% for category in categories %}
           <th>
             {{ category.name }}
-            <a href="{% url "grades:add_in_bulk" school_class.slug subject.slug %}?category={{ category.pk }}"
-               class="badge bg-primary text-white link-unstyled float-end">
-              +
-            </a>
+            {% if category.grades.all|length != students|length %}
+              <a href="{{ category.bulk_grade_creation_url }}"
+                 class="badge bg-primary text-white link-unstyled float-end">
+                +
+              </a>
+            {% endif %}
           </th>
 
         {% endfor %}

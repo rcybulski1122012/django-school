@@ -36,37 +36,17 @@ class GradeForm(forms.ModelForm):
 
 
 class BulkGradeCreationCommonInfoForm(forms.Form):
-    category = forms.ModelChoiceField(queryset=None)
     weight = forms.IntegerField(
         validators=[MinValueValidator(1, "Weight must be a positive number.")],
         required=True,
     )
     comment = forms.CharField(required=False, widget=forms.Textarea())
 
-    def __init__(self, *args, **kwargs):
-        school_class = kwargs.pop("school_class")
-        subject = kwargs.pop("subject")
-        super().__init__(*args, **kwargs)
-
-        self.fields["category"].queryset = GradeCategory.objects.filter(
-            subject=subject, school_class=school_class
-        )
-
 
 class BulkGradeCreationForm(forms.ModelForm):
     class Meta:
         model = Grade
-        fields = "__all__"
-        widgets = {
-            "student": forms.HiddenInput(),
-            "weight": forms.HiddenInput(),
-            "comment": forms.HiddenInput(),
-            "category": forms.HiddenInput(),
-            "subject": forms.HiddenInput(),
-            "teacher": forms.HiddenInput(),
-            "seen_by_parent": forms.HiddenInput(),
-            "seen_by_student": forms.HiddenInput(),
-        }
+        fields = ["grade"]
 
 
 class BaseBulkGradeCreationFormSet(forms.BaseModelFormSet):
@@ -80,18 +60,15 @@ class BaseBulkGradeCreationFormSet(forms.BaseModelFormSet):
 
     def _construct_form(self, i, **kwargs):
         form = super()._construct_form(i, **kwargs)
-        form.fields["student"].initial = self.students[i].pk
+        form.instance.student = self.students[i]
         form.student_label = self.students[i].full_name
 
         return form
 
     def set_common_data(self, common_data):
-        data = self.data.copy()
-        for i in range(self.total_form_count()):
+        for form in self.forms:
             for key, value in common_data.items():
-                data[f"form-{i}-{key}"] = value
-
-        self.data = data
+                setattr(form.instance, key, value)
 
 
 BulkGradeCreationFormSet = forms.modelformset_factory(

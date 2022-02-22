@@ -35,6 +35,10 @@ class GradeCategory(models.Model):
     def delete_url(self):
         return reverse("grades:categories:delete", args=[self.pk])
 
+    @property
+    def bulk_grade_creation_url(self):
+        return reverse("grades:add_in_bulk", args=[self.pk])
+
 
 class Grade(models.Model):
     GRADES = [

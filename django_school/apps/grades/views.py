@@ -63,11 +63,19 @@ class GradeCreateView(
 
 @login_required
 @roles_required(ROLES.TEACHER)
-def create_grades_in_bulk_view(request, class_slug, subject_slug):
-    school_class = get_object_or_404(Class, slug=class_slug)
-    subject = get_object_or_404(Subject, slug=subject_slug)
-    students = User.objects.filter(school_class=school_class)
-    initial = {"category": request.GET.get("category")}
+def create_grades_in_bulk_view(request, category_pk):
+    category = get_object_or_404(
+        GradeCategory.objects.select_related("subject", "school_class"), pk=category_pk
+    )
+    school_class = category.school_class
+    subject = category.subject
+
+    students = User.students.exclude_if_has_grade_in_category(category).filter(
+        school_class=school_class
+    )
+
+    if not students:
+        raise Http404
 
     if not does_the_teacher_teach_the_subject_to_the_class(
         request.user, subject, school_class
@@ -76,9 +84,6 @@ def create_grades_in_bulk_view(request, class_slug, subject_slug):
 
     common_form = BulkGradeCreationCommonInfoForm(
         request.POST or None,
-        subject=subject,
-        school_class=school_class,
-        initial=initial,
     )
     grades_formset = BulkGradeCreationFormSet(
         request.POST or None,
@@ -88,7 +93,13 @@ def create_grades_in_bulk_view(request, class_slug, subject_slug):
     if request.method == "POST":
         if common_form.is_valid():
             common_data = common_form.cleaned_data
-            common_data.update({"subject": subject, "teacher": request.user})
+            common_data.update(
+                {
+                    "subject": subject,
+                    "teacher": request.user,
+                    "category": category,
+                }
+            )
             grades_formset.set_common_data(common_data=common_data)
             if grades_formset.is_valid():
                 grades_formset.save()
@@ -108,6 +119,7 @@ def create_grades_in_bulk_view(request, class_slug, subject_slug):
             "grades_formset": grades_formset,
             "school_class": school_class,
             "subject": subject,
+            "category": category,
         },
     )
 
@@ -126,7 +138,7 @@ class ClassGradesView(
             {
                 "categories": GradeCategory.objects.filter(
                     subject=self.subject, school_class=self.school_class
-                ),
+                ).prefetch_related("grades"),
                 "students": User.students.with_weighted_avg_for_subject(
                     subject=self.subject
                 )

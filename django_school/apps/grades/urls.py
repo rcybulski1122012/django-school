@@ -48,7 +48,7 @@ urlpatterns = [
         name="add",
     ),
     path(
-        "<slug:class_slug>/<slug:subject_slug>/add_in_bulk/",
+        "<int:category_pk>/add_in_bulk/",
         create_grades_in_bulk_view,
         name="add_in_bulk",
     ),

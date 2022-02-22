@@ -253,6 +253,16 @@ class StudentsManagerTestCase(
 
         self.assertEqual(student.realisation, [homework1_realisation])
 
+    def test_exclude_if_has_grade_in_category(self):
+        student2 = self.create_student(
+            username="student2", school_class=self.school_class
+        )
+        self.create_grade(self.grade_category, self.subject, student2, self.teacher)
+
+        qs = User.students.exclude_if_has_grade_in_category(self.grade_category)
+
+        self.assertQuerysetEqual(qs, [self.student])
+
 
 class TeachersManagerTestCase(UsersMixin, TestCase):
     def setUp(self):

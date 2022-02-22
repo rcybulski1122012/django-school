@@ -67,6 +67,11 @@ class StudentsQuerySet(models.QuerySet):
             .distinct()
         )
 
+    def exclude_if_has_grade_in_category(self, category):
+        return self.annotate(
+            has_grade=Count("grades_gotten", filter=Q(grades_gotten__category=category))
+        ).exclude(has_grade=1)
+
     def visible_to_user(self, user):
         if user.is_teacher:
             return self.filter(school_class__lessons__teacher=user).distinct()
