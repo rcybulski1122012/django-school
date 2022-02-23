@@ -45,6 +45,10 @@ class Message(models.Model):
     def detail_url(self):
         return reverse("messages:detail", args=[self.pk])
 
+    @property
+    def reply_url(self):
+        return reverse("messages:send") + f"?reply_to={self.pk}"
+
 
 class MessageStatusManager(models.Manager):
     def create_multiple(self, message, receivers):

@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DetailView, ListView
 
@@ -67,6 +68,25 @@ class MessageCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
         kwargs["sender"] = self.request.user
 
         return kwargs
+
+    # todo test it
+    def get_initial(self):
+        message_pk = self.request.GET.get("reply_to", None)
+        if not message_pk:
+            return
+
+        messages_qs = Message.objects.received(self.request.user)
+        message_to_response = get_object_or_404(messages_qs, pk=message_pk)
+
+        reply_content = "\n".join(
+            [f"> {line}" for line in message_to_response.content.split("\n")]
+        )
+
+        return {
+            "receivers": [message_to_response.sender_id],
+            "topic": f"RE: {message_to_response.topic}",
+            "content": f"\n\n{reply_content}",
+        }
 
 
 class MessageDetailView(LoginRequiredMixin, DetailView):

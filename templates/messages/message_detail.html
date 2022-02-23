@@ -5,6 +5,16 @@
   Message: {{ school_message.topic }}
 {% endblock %}
 
+{% block css %}
+  <style>
+    blockquote {
+        margin: 0;
+        padding-left: 1.4rem;
+        border-left: 4px solid #dadada;
+    }
+  </style>
+{% endblock %}
+
 {% block content %}
   <div class="border rounded p-2">
     <strong>Topic:</strong> {{ school_message.topic }}
@@ -25,5 +35,7 @@
     <hr>
     {{ school_message.content|safe_markdown }}
   </div>
+
+  <a href="{{ school_message.reply_url }}" class="btn btn-primary">Reply</a>
 
 {% endblock %}

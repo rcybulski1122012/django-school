@@ -103,8 +103,12 @@ class MessageCreateViewTestCase(
         cls.sender = cls.create_user(username="sender")
         cls.receiver = cls.create_teacher(username="receiver")
 
-    def get_url(self):
-        return reverse(self.path_name)
+    def get_url(self, reply_to=None):
+        url = reverse(self.path_name)
+
+        if reply_to:
+            return f"{url}?reply_to={reply_to}"
+        return url
 
     def get_permitted_user(self):
         return None
@@ -171,6 +175,17 @@ class MessageCreateViewTestCase(
         classes_qs = response.context["classes"]
         self.assertQuerysetEqual(teachers_qs, [self.receiver])
         self.assertQuerysetEqual(classes_qs, [school_class])
+
+    def test_provides_initials_if_reply_to_value_given(self):
+        self.login(self.receiver)
+        message = self.create_message(self.sender, [self.receiver])
+
+        response = self.client.get(self.get_url(reply_to=message.pk))
+
+        initial = response.context["form"].initial
+        self.assertEqual(initial["topic"], f"RE: {message.topic}")
+        self.assertEqual(initial["receivers"], [self.sender.pk])
+        self.assertEqual(initial["content"], f"\n\n> {message.content}")
 
 
 class MessageDetailViewTestView(
@@ -241,3 +256,10 @@ class MessageDetailViewTestView(
             message=self.message, receiver=self.receiver
         ).get()
         self.assertTrue(status.is_read)
+
+    def test_renders_reply_url(self):
+        self.login(self.receiver)
+
+        response = self.client.get(self.get_url())
+
+        self.assertContains(response, self.message.reply_url)

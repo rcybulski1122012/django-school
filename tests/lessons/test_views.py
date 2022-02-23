@@ -9,21 +9,12 @@ from django.urls import reverse
 from django_school.apps.events.models import Event, EventStatus
 from django_school.apps.grades.models import GradeCategory
 from django_school.apps.lessons.forms import HomeworkRealisationForm
-from django_school.apps.lessons.models import (
-    AttachedFile,
-    Attendance,
-    Homework,
-    HomeworkRealisation,
-    Lesson,
-)
-from tests.utils import (
-    AjaxRequiredTestMixin,
-    ClassesMixin,
-    LessonsMixin,
-    ResourceViewTestMixin,
-    RolesRequiredTestMixin,
-    UsersMixin,
-)
+from django_school.apps.lessons.models import (AttachedFile, Attendance,
+                                               Homework, HomeworkRealisation,
+                                               Lesson)
+from tests.utils import (AjaxRequiredTestMixin, ClassesMixin, LessonsMixin,
+                         ResourceViewTestMixin, RolesRequiredTestMixin,
+                         UsersMixin)
 
 
 class TimetableViewMixin(
