@@ -4,9 +4,10 @@ from django.test import TestCase
 from django.urls import reverse
 
 from django_school.apps.events.models import Event, EventStatus
-from tests.utils import (ClassesMixin, EventsMixin, LessonsMixin,
-                         LoginRequiredTestMixin, ResourceViewTestMixin,
-                         TeacherViewTestMixin, UsersMixin)
+from tests.utils import (AjaxRequiredTestMixin, ClassesMixin, EventsMixin,
+                         LessonsMixin, LoginRequiredTestMixin,
+                         ResourceViewTestMixin, RolesRequiredTestMixin,
+                         UsersMixin)
 
 
 class EventsCalendarViewTestCase(
@@ -14,17 +15,18 @@ class EventsCalendarViewTestCase(
 ):
     path_name = "events:calendar"
 
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_student(school_class=self.school_class)
-        self.current_month_date = datetime.date.today()
-        self.next_month_date = datetime.date.today() + datetime.timedelta(days=30)
-        self.current_month_event = self.create_event(
-            self.teacher, self.school_class, self.current_month_date, "Current month"
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.student = cls.create_student(school_class=cls.school_class)
+        cls.current_month_date = datetime.date.today()
+        cls.next_month_date = datetime.date.today() + datetime.timedelta(days=30)
+        cls.current_month_event = cls.create_event(
+            cls.teacher, cls.school_class, cls.current_month_date, "Current month"
         )
-        self.next_month_event = self.create_event(
-            self.teacher, self.school_class, self.next_month_date, "Next month"
+        cls.next_month_event = cls.create_event(
+            cls.teacher, cls.school_class, cls.next_month_date, "Next month"
         )
 
     def get_url(self, date=None):
@@ -35,6 +37,9 @@ class EventsCalendarViewTestCase(
             result += f"?year={year}&month={month}"
 
         return result
+
+    def get_permitted_user(self):
+        return None
 
     def test_renders_events_for_current_month_by_default(self):
         self.login(self.teacher)
@@ -105,7 +110,7 @@ class EventsCalendarViewTestCase(
 
 
 class EventCreateViewTestCase(
-    TeacherViewTestMixin,
+    RolesRequiredTestMixin,
     UsersMixin,
     ClassesMixin,
     LessonsMixin,
@@ -114,16 +119,23 @@ class EventCreateViewTestCase(
 ):
     path_name = "events:create"
 
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_student(school_class=self.school_class)
-        self.date = datetime.date.today() + datetime.timedelta(days=1)
-        self.subject = self.create_subject()
-        self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.student = cls.create_student(school_class=cls.school_class)
+        cls.date = datetime.date.today() + datetime.timedelta(days=1)
+        cls.subject = cls.create_subject()
+        cls.lesson = cls.create_lesson(cls.subject, cls.teacher, cls.school_class)
 
     def get_url(self):
         return reverse(self.path_name)
+
+    def get_permitted_user(self):
+        return self.teacher
+
+    def get_not_permitted_user(self):
+        return self.student
 
     def get_example_form_data(self):
         return {
@@ -169,7 +181,7 @@ class EventCreateViewTestCase(
 
 
 class EventUpdateViewTestCase(
-    TeacherViewTestMixin,
+    RolesRequiredTestMixin,
     ResourceViewTestMixin,
     UsersMixin,
     ClassesMixin,
@@ -179,14 +191,15 @@ class EventUpdateViewTestCase(
 ):
     path_name = "events:update"
 
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.student = self.create_student()
-        self.school_class = self.create_class()
-        self.date = datetime.date.today() + datetime.timedelta(days=1)
-        self.subject = self.create_subject()
-        self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
-        self.event = self.create_event(self.teacher, self.school_class, self.date)
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.student = cls.create_student()
+        cls.school_class = cls.create_class()
+        cls.date = datetime.date.today() + datetime.timedelta(days=1)
+        cls.subject = cls.create_subject()
+        cls.lesson = cls.create_lesson(cls.subject, cls.teacher, cls.school_class)
+        cls.event = cls.create_event(cls.teacher, cls.school_class, cls.date)
 
     def get_url(self, event_pk=None):
         event_pk = event_pk or self.event.pk
@@ -195,6 +208,12 @@ class EventUpdateViewTestCase(
 
     def get_nonexistent_resource_url(self):
         return reverse(self.path_name, args=[123456])
+
+    def get_permitted_user(self):
+        return self.teacher
+
+    def get_not_permitted_user(self):
+        return self.student
 
     def get_example_form_data(self):
         return {
@@ -242,8 +261,9 @@ class EventUpdateViewTestCase(
 
 
 class EventDeleteViewTestCase(
-    TeacherViewTestMixin,
+    RolesRequiredTestMixin,
     ResourceViewTestMixin,
+    AjaxRequiredTestMixin,
     UsersMixin,
     ClassesMixin,
     EventsMixin,
@@ -252,12 +272,13 @@ class EventDeleteViewTestCase(
     path_name = "events:delete"
     ajax_required = True
 
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.student = self.create_student()
-        self.school_class = self.create_class()
-        self.date = datetime.date.today() + datetime.timedelta(days=1)
-        self.event = self.create_event(self.teacher, self.school_class, self.date)
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.student = cls.create_student()
+        cls.school_class = cls.create_class()
+        cls.date = datetime.date.today() + datetime.timedelta(days=1)
+        cls.event = cls.create_event(cls.teacher, cls.school_class, cls.date)
 
     def get_url(self, event_pk=None):
         event_pk = event_pk or self.event.pk
@@ -266,6 +287,12 @@ class EventDeleteViewTestCase(
 
     def get_nonexistent_resource_url(self):
         return reverse(self.path_name, args=[123456])
+
+    def get_permitted_user(self):
+        return self.teacher
+
+    def get_not_permitted_user(self):
+        return self.student
 
     def test_deletes_event(self):
         self.login(self.teacher)

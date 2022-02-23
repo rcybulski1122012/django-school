@@ -15,18 +15,19 @@ from tests.utils import ClassesMixin, LessonsMixin, UsersMixin
 
 
 class AttendanceFormSetTestCase(ClassesMixin, UsersMixin, LessonsMixin, TestCase):
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.subject = self.create_subject()
-        self.student = self.create_student(
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.subject = cls.create_subject()
+        cls.student = cls.create_student(
             first_name="StudentFirstName",
             last_name="StudentLastName",
-            school_class=self.school_class,
+            school_class=cls.school_class,
         )
-        self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
-        self.lesson_session = self.create_lesson_session(self.lesson)
-        self.attendances = self.create_attendance(self.lesson_session, [self.student])
+        cls.lesson = cls.create_lesson(cls.subject, cls.teacher, cls.school_class)
+        cls.lesson_session = cls.create_lesson_session(cls.lesson)
+        cls.attendances = cls.create_attendance(cls.lesson_session, [cls.student])
 
     def get_example_formset_data(self, topic, status):
         return {
@@ -64,12 +65,13 @@ class AttendanceFormSetTestCase(ClassesMixin, UsersMixin, LessonsMixin, TestCase
 
 
 class LessonSessionFormTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.subject = self.create_subject()
-        self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
-        self.lesson_session = self.create_lesson_session(self.lesson)
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.subject = cls.create_subject()
+        cls.lesson = cls.create_lesson(cls.subject, cls.teacher, cls.school_class)
+        cls.lesson_session = cls.create_lesson_session(cls.lesson)
 
     def test_saves_files_if_valid(self):
         request = RequestFactory().get("/get")
@@ -109,14 +111,15 @@ class LessonSessionFormTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase
 
 
 class HomeworkFormTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_student(school_class=self.school_class)
-        self.subject = self.create_subject()
-        self.date = datetime.datetime.today() + datetime.timedelta(days=10)
-        self.files = MultiValueDict()
-        self.files["attached_files"] = SimpleUploadedFile("file2.txt", b"file_content")
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.student = cls.create_student(school_class=cls.school_class)
+        cls.subject = cls.create_subject()
+        cls.date = datetime.datetime.today() + datetime.timedelta(days=10)
+        cls.files = MultiValueDict()
+        cls.files["attached_files"] = SimpleUploadedFile("file2.txt", b"file_content")
 
     def test_is_valid_assigns_the_class_the_subject_and_the_teacher_to_the_instance(
         self,
@@ -178,16 +181,15 @@ class HomeworkFormTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
 
 
 class HomeworkRealisationFormTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_student(school_class=self.school_class)
-        self.subject = self.create_subject()
-        self.homework = self.create_homework(
-            self.subject, self.teacher, self.school_class
-        )
-        self.files = MultiValueDict()
-        self.files["attached_files"] = SimpleUploadedFile("file2.txt", b"file_content")
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.student = cls.create_student(school_class=cls.school_class)
+        cls.subject = cls.create_subject()
+        cls.homework = cls.create_homework(cls.subject, cls.teacher, cls.school_class)
+        cls.files = MultiValueDict()
+        cls.files["attached_files"] = SimpleUploadedFile("file2.txt", b"file_content")
 
     def test_save_creates_realisation_and_attached_files(self):
         form = HomeworkRealisationForm(

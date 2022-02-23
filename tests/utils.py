@@ -267,71 +267,94 @@ class EventsMixin:
         )
 
 
-class LoginRequiredTestMixin:
+class TestMixin:
     ajax_required = False
 
     def get_url(self):
-        raise NotImplementedError("get_url must be overridden")
+        raise NotImplementedError("get_url method must be implemented")
 
-    def test_redirects_to_login_page_when_user_is_not_logged_in(self):
-        expected_url = f"{settings.LOGIN_URL}?next={self.get_url()}"
+    def get_permitted_user(self):
+        raise NotImplementedError("get_permitted_user must be implemented")
 
-        params = (
-            {"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"} if self.ajax_required else {}
-        )
-        response = self.client.get(self.get_url(), **params)
-
-        self.assertRedirects(response, expected_url)
-
-
-class TeacherViewTestMixin(LoginRequiredTestMixin):
-    ajax_required = False
-
-    def test_returns_403_when_user_is_not_a_teacher(self):
-        self.login(self.student)
-
-        params = (
-            {"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"} if self.ajax_required else {}
-        )
-        response = self.client.get(self.get_url(), **params)
-
-        self.assertEqual(response.status_code, 403)
-
-    def test_returns_200_when_user_is_a_teacher(self):
-        self.login(self.teacher)
-
-        params = (
-            {"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"} if self.ajax_required else {}
-        )
-        response = self.client.get(self.get_url(), **params)
-
-        self.assertEqual(response.status_code, 200)
-
-
-class ResourceViewTestMixin:
-    ajax_required = False
-
-    def get_nonexistent_resource_url(self):
-        raise NotImplementedError("get_nonexistent_resource_url must be overridden")
-
-    def test_returns_404_if_object_does_not_exist(self):
-        mro = super().__self_class__.__mro__
-
-        if TeacherViewTestMixin in mro:
-            self.login(self.teacher)
-        elif LoginRequiredTestMixin in mro:
-            self.login(self.student)
-
-        params = (
-            {"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"} if self.ajax_required else {}
-        )
-        response = self.client.get(self.get_nonexistent_resource_url(), **params)
-
-        self.assertEqual(response.status_code, 404)
-
-
-class AjaxRequiredViewTestMixin:
     def ajax_request(self, path, method="get", **kwargs):
         return getattr(self.client, method)(
             path, HTTP_X_REQUESTED_WITH="XMLHttpRequest", **kwargs
         )
+
+    def _login(self, user):
+        self.client.login(username=user.username, password="password")
+
+    @property
+    def _make_request(self):
+        if self.ajax_required:
+            return self.ajax_request
+        else:
+            return self.client.get
+
+
+class LoginRequiredTestMixin(TestMixin):
+    def test_redirect_to_login_rage_if_user_is_not_logged_in(self):
+        response = self._make_request(self.get_url())
+
+        expected_url = f"{settings.LOGIN_URL}?next={self.get_url()}"
+        self.assertRedirects(response, expected_url)
+
+
+class RolesRequiredTestMixin(LoginRequiredTestMixin):
+    def get_not_permitted_user(self):
+        raise NotImplementedError("get_not_permitted_user must be implemented")
+
+    def test_returns_403_if_the_user_role_is_not_permitted(self):
+        user = self.get_not_permitted_user()
+        self._login(user)
+
+        response = self._make_request(self.get_url())
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_does_not_return_403_if_the_user_role_is_permitted(self):
+        user = self.get_permitted_user()
+        self._login(user)
+
+        response = self._make_request(self.get_url())
+
+        self.assertNotEqual(response.status_code, 403)
+
+
+class ResourceViewTestMixin(TestMixin):
+    def get_nonexistent_resource_url(self):
+        raise NotImplementedError("get_nonexistent_resource_url must be implemented")
+
+    def test_returns_404_if_object_does_not_exist(self):
+        if user := self.get_permitted_user():
+            self._login(user)
+
+        response = self._make_request(self.get_nonexistent_resource_url())
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_does_not_return_404_if_object_exists(self):
+        if user := self.get_permitted_user():
+            self._login(user)
+
+        response = self._make_request(self.get_url())
+
+        self.assertNotEqual(response.status_code, 404)
+
+
+class AjaxRequiredTestMixin(TestMixin):
+    def test_does_not_return_403_if_request_is_ajax(self):
+        if user := self.get_permitted_user():
+            self._login(user)
+
+        response = self.ajax_request(self.get_url())
+
+        self.assertNotEqual(response.status_code, 403)
+
+    def test_returns_403_if_request_is_not_ajax(self):
+        if user := self.get_permitted_user():
+            self._login(user)
+
+        response = self.client.get(self.get_url())
+
+        self.assertEqual(response.status_code, 403)

@@ -3,27 +3,28 @@ from django.urls import reverse
 
 from django_school.apps.grades.forms import GradeCategoryForm
 from django_school.apps.grades.models import Grade, GradeCategory
-from tests.utils import (AjaxRequiredViewTestMixin, ClassesMixin, GradesMixin,
+from tests.utils import (AjaxRequiredTestMixin, ClassesMixin, GradesMixin,
                          LessonsMixin, LoginRequiredTestMixin,
-                         ResourceViewTestMixin, TeacherViewTestMixin,
+                         ResourceViewTestMixin, RolesRequiredTestMixin,
                          UsersMixin)
 
 
 class SubjectAndSchoolClassRelatedTestMixin(
-    TeacherViewTestMixin,
+    RolesRequiredTestMixin,
     ResourceViewTestMixin,
     UsersMixin,
     ClassesMixin,
     LessonsMixin,
     GradesMixin,
 ):
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_student(school_class=self.school_class)
-        self.subject = self.create_subject()
-        self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
-        self.category = self.create_grade_category(self.subject, self.school_class)
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.student = cls.create_student(school_class=cls.school_class)
+        cls.subject = cls.create_subject()
+        cls.lesson = cls.create_lesson(cls.subject, cls.teacher, cls.school_class)
+        cls.category = cls.create_grade_category(cls.subject, cls.school_class)
 
     def get_url(self, class_slug=None, subject_slug=None):
         class_slug = class_slug or self.school_class.slug
@@ -33,6 +34,12 @@ class SubjectAndSchoolClassRelatedTestMixin(
 
     def get_nonexistent_resource_url(self):
         return self.get_url(subject_slug="does-not-exist", class_slug="4cm")
+
+    def get_permitted_user(self):
+        return self.teacher
+
+    def get_not_permitted_user(self):
+        return self.student
 
     def test_returns_404_when_the_teacher_is_not_teaching_the_class(self):
         self.login(self.teacher)
@@ -168,15 +175,16 @@ class StudentGradesViewTestCase(
 ):
     path_name = "grades:student_grades"
 
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_student(school_class=self.school_class)
-        self.subject = self.create_subject()
-        self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
-        self.category = self.create_grade_category(self.subject, self.school_class)
-        self.grade = self.create_grade(
-            self.category, self.subject, self.student, self.teacher
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.student = cls.create_student(school_class=cls.school_class)
+        cls.subject = cls.create_subject()
+        cls.lesson = cls.create_lesson(cls.subject, cls.teacher, cls.school_class)
+        cls.category = cls.create_grade_category(cls.subject, cls.school_class)
+        cls.grade = cls.create_grade(
+            cls.category, cls.subject, cls.student, cls.teacher
         )
 
     def get_url(self, student_slug=None):
@@ -186,6 +194,9 @@ class StudentGradesViewTestCase(
 
     def get_nonexistent_resource_url(self):
         return self.get_url(student_slug="does-not-exist")
+
+    def get_permitted_user(self):
+        return self.student
 
     def test_returns_404_if_user_with_given_slug_is_not_a_student(self):
         self.login(self.teacher)
@@ -237,7 +248,7 @@ class StudentGradesViewTestCase(
 
 
 class CreateGradesInBulkViewTestCase(
-    TeacherViewTestMixin,
+    RolesRequiredTestMixin,
     ResourceViewTestMixin,
     UsersMixin,
     ClassesMixin,
@@ -247,13 +258,14 @@ class CreateGradesInBulkViewTestCase(
 ):
     path_name = "grades:add_in_bulk"
 
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_student(school_class=self.school_class)
-        self.subject = self.create_subject()
-        self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
-        self.category = self.create_grade_category(self.subject, self.school_class)
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.student = cls.create_student(school_class=cls.school_class)
+        cls.subject = cls.create_subject()
+        cls.lesson = cls.create_lesson(cls.subject, cls.teacher, cls.school_class)
+        cls.category = cls.create_grade_category(cls.subject, cls.school_class)
 
     def get_url(self, category_pk=None):
         category_pk = category_pk or self.category.pk
@@ -262,6 +274,12 @@ class CreateGradesInBulkViewTestCase(
 
     def get_nonexistent_resource_url(self):
         return self.get_url(category_pk=12345)
+
+    def get_permitted_user(self):
+        return self.teacher
+
+    def get_not_permitted_user(self):
+        return self.student
 
     @staticmethod
     def get_example_form_data(students):
@@ -355,22 +373,23 @@ class CreateGradesInBulkViewTestCase(
 
 
 class SingleGradeTestMixin(
-    TeacherViewTestMixin,
+    RolesRequiredTestMixin,
     ResourceViewTestMixin,
     UsersMixin,
     ClassesMixin,
     LessonsMixin,
     GradesMixin,
 ):
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_student(school_class=self.school_class)
-        self.subject = self.create_subject()
-        self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
-        self.category = self.create_grade_category(self.subject, self.school_class)
-        self.grade = self.create_grade(
-            self.category, self.subject, self.student, self.teacher
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.student = cls.create_student(school_class=cls.school_class)
+        cls.subject = cls.create_subject()
+        cls.lesson = cls.create_lesson(cls.subject, cls.teacher, cls.school_class)
+        cls.category = cls.create_grade_category(cls.subject, cls.school_class)
+        cls.grade = cls.create_grade(
+            cls.category, cls.subject, cls.student, cls.teacher
         )
 
     def get_url(self, grade_pk=None):
@@ -380,6 +399,12 @@ class SingleGradeTestMixin(
 
     def get_nonexistent_resource_url(self):
         return self.get_url(grade_pk=12345)
+
+    def get_permitted_user(self):
+        return self.teacher
+
+    def get_not_permitted_user(self):
+        return self.student
 
     def test_returns_404_when_user_is_not_the_teacher_who_gave_the_grade(self):
         teacher2 = self.create_teacher(username="teacher2")
@@ -442,11 +467,9 @@ class GradeUpdateViewTestCase(SingleGradeTestMixin, TestCase):
         self.assertContains(response, self.category.name)
 
 
-class GradeDeleteViewTestCase(
-    SingleGradeTestMixin, AjaxRequiredViewTestMixin, TestCase
-):
-    ajax_required = True
+class GradeDeleteViewTestCase(SingleGradeTestMixin, AjaxRequiredTestMixin, TestCase):
     path_name = "grades:delete"
+    ajax_required = True
 
     def test_deletes_grade(self):
         self.login(self.teacher)
@@ -536,20 +559,21 @@ class GradeCategoriesViewTestCase(SubjectAndSchoolClassRelatedTestMixin, TestCas
 
 
 class SingleGradeCategoryTestMixin(
-    TeacherViewTestMixin,
+    RolesRequiredTestMixin,
     ResourceViewTestMixin,
     UsersMixin,
     ClassesMixin,
     LessonsMixin,
     GradesMixin,
 ):
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_student(school_class=self.school_class)
-        self.subject = self.create_subject()
-        self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
-        self.category = self.create_grade_category(self.subject, self.school_class)
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.student = cls.create_student(school_class=cls.school_class)
+        cls.subject = cls.create_subject()
+        cls.lesson = cls.create_lesson(cls.subject, cls.teacher, cls.school_class)
+        cls.category = cls.create_grade_category(cls.subject, cls.school_class)
 
     def get_url(self, pk=None, **kwargs):
         pk = pk or self.category.pk
@@ -558,6 +582,12 @@ class SingleGradeCategoryTestMixin(
 
     def get_nonexistent_resource_url(self):
         return self.get_url(pk=12345)
+
+    def get_permitted_user(self):
+        return self.teacher
+
+    def get_not_permitted_user(self):
+        return self.student
 
     def test_returns_404_when_the_teacher_is_not_teaching_the_subject_to_the_class(
         self,
@@ -586,7 +616,7 @@ class GradeCategoryDetailViewTestCase(SingleGradeCategoryTestMixin, TestCase):
 
 
 class GradeCategoryDeleteViewTestCase(
-    SingleGradeCategoryTestMixin, AjaxRequiredViewTestMixin, TestCase
+    SingleGradeCategoryTestMixin, AjaxRequiredTestMixin, TestCase
 ):
     path_name = "grades:categories:delete"
     ajax_required = True

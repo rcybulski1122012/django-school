@@ -5,11 +5,12 @@ from tests.utils import MessagesMixin, UsersMixin
 
 
 class MessagesQuerySetTestCase(UsersMixin, MessagesMixin, TestCase):
-    def setUp(self):
-        self.sender = self.create_user(username="sender")
-        self.receiver = self.create_user(username="receiver")
+    @classmethod
+    def setUpTestData(cls):
+        cls.sender = cls.create_user(username="sender")
+        cls.receiver = cls.create_user(username="receiver")
 
-        self.message = self.create_message(self.sender, [self.receiver])
+        cls.message = cls.create_message(cls.sender, [cls.receiver])
 
     def test_with_statuses(self):
         message = Message.objects.with_statuses(receiver=self.receiver).get()
@@ -19,12 +20,13 @@ class MessagesQuerySetTestCase(UsersMixin, MessagesMixin, TestCase):
 
 
 class MessageStatusManagerTestCase(UsersMixin, MessagesMixin, TestCase):
-    def setUp(self):
-        self.sender = self.create_user(username="sender")
-        self.receiver = self.create_user(username="receiver")
+    @classmethod
+    def setUpTestData(cls):
+        cls.sender = cls.create_user(username="sender")
+        cls.receiver = cls.create_user(username="receiver")
 
-        self.message = Message.objects.create(
-            topic="topic", content="content", sender=self.sender
+        cls.message = Message.objects.create(
+            topic="topic", content="content", sender=cls.sender
         )
 
     def test_create_multiple(self):

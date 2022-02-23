@@ -6,14 +6,16 @@ from tests.utils import MessagesMixin, UsersMixin
 
 
 class MessageFormTestCase(UsersMixin, MessagesMixin, TestCase):
-    def setUp(self):
-        self.sender = self.create_user(username="sender")
-        self.receiver = self.create_user(username="receiver")
-        self.form = MessageForm(self.get_example_form_data(), sender=self.sender)
+    @classmethod
+    def setUpTestData(cls):
+        cls.sender = cls.create_user(username="sender")
+        cls.receiver = cls.create_user(username="receiver")
+        cls.form = MessageForm(cls.get_example_form_data(), sender=cls.sender)
 
-    def get_example_form_data(self):
+    @classmethod
+    def get_example_form_data(cls):
         return {
-            "receivers": [self.receiver.pk],
+            "receivers": [cls.receiver.pk],
             "topic": "Hi!",
             "content": "???",
         }

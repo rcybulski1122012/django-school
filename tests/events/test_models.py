@@ -8,11 +8,12 @@ from tests.utils import ClassesMixin, EventsMixin, UsersMixin
 
 
 class EventModelTestCase(UsersMixin, ClassesMixin, EventsMixin, TestCase):
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.past_date = datetime.date(2010, 1, 1)
-        self.future_date = datetime.date.today() + datetime.timedelta(days=10)
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.past_date = datetime.date(2010, 1, 1)
+        cls.future_date = datetime.date.today() + datetime.timedelta(days=10)
 
     def test_clean_raises_ValidationError_if_date_is_not_in_the_future(self):
         self.create_event(self.teacher, self.school_class, self.future_date).clean()
@@ -41,11 +42,12 @@ class EventModelTestCase(UsersMixin, ClassesMixin, EventsMixin, TestCase):
 
 
 class EventQuerySetTestCase(UsersMixin, ClassesMixin, EventsMixin, TestCase):
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.date = datetime.date.today() + datetime.timedelta(days=1)
-        self.event = self.create_event(self.teacher, self.school_class, self.date)
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.date = datetime.date.today() + datetime.timedelta(days=1)
+        cls.event = cls.create_event(cls.teacher, cls.school_class, cls.date)
 
     def test_for_year_and_month(self):
         self.create_event(self.teacher, self.school_class, datetime.date(2021, 1, 1))
@@ -97,13 +99,14 @@ class EventQuerySetTestCase(UsersMixin, ClassesMixin, EventsMixin, TestCase):
 
 
 class EventStatusManagerTestCase(UsersMixin, ClassesMixin, EventsMixin, TestCase):
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_student(school_class=self.school_class)
-        self.parent = self.create_parent(child=self.student)
-        self.date = datetime.datetime.today()
-        self.create_teacher(username="teacher2")
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.student = cls.create_student(school_class=cls.school_class)
+        cls.parent = cls.create_parent(child=cls.student)
+        cls.date = datetime.datetime.today()
+        cls.create_teacher(username="teacher2")
 
     def test_create_multiple_creates_statuses_for_every_user_if_school_class_not_given(
         self,

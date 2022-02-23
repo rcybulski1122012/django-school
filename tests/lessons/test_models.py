@@ -21,10 +21,11 @@ class SubjectModelTestCase(LessonsMixin, TestCase):
 
 
 class SubjectQuerySetTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.subject = self.create_subject()
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.subject = cls.create_subject()
 
     def test_with_does_the_teacher_teach_the_subject_to_the_class_when_does_not_teach(
         self,
@@ -45,11 +46,12 @@ class SubjectQuerySetTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
 
 
 class LessonModelTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_student(school_class=self.school_class)
-        self.subject = self.create_subject()
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.student = cls.create_student(school_class=cls.school_class)
+        cls.subject = cls.create_subject()
 
     def test_clean_raises_ValidationError_when_the_teacher_already_have_lesson_in_given_time(
         self,
@@ -65,14 +67,15 @@ class LessonModelTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
 
 
 class LessonSessionQuerySetTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_student(school_class=self.school_class)
-        self.parent = self.create_parent()
-        self.subject = self.create_subject()
-        self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
-        self.lesson_session = self.create_lesson_session(self.lesson)
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.student = cls.create_student(school_class=cls.school_class)
+        cls.parent = cls.create_parent()
+        cls.subject = cls.create_subject()
+        cls.lesson = cls.create_lesson(cls.subject, cls.teacher, cls.school_class)
+        cls.lesson_session = cls.create_lesson_session(cls.lesson)
 
     def test_visible_to_user_returns_none_if_user_is_a_parent(self):
         qs = LessonSession.objects.visible_to_user(self.parent)
@@ -114,14 +117,13 @@ class AttendanceModelTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
 
 
 class HomeworkQuerySetTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_student(school_class=self.school_class)
-        self.subject = self.create_subject()
-        self.homework = self.create_homework(
-            self.subject, self.teacher, self.school_class
-        )
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.student = cls.create_student(school_class=cls.school_class)
+        cls.subject = cls.create_subject()
+        cls.homework = cls.create_homework(cls.subject, cls.teacher, cls.school_class)
 
     def test_visible_to_user_returns_homeworks_set_if_the_user_is_a_teacher(self):
         teacher2 = self.create_teacher(username="teacher2")

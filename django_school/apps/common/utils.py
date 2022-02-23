@@ -57,10 +57,8 @@ def _is_htmx_request(request):
 
 
 class AjaxRequiredMixin:
-    not_ajax_allowed_methods = ["POST"]
-
     def dispatch(self, *args, **kwargs):
-        if self.request.method not in self.not_ajax_allowed_methods and not (
+        if self.request.method != "POST" and not (
             self.request.is_ajax() or _is_htmx_request(self.request)
         ):
             raise PermissionDenied("Only ajax requests are allowed.")
@@ -68,20 +66,17 @@ class AjaxRequiredMixin:
         return super().dispatch(*args, **kwargs)
 
 
-def ajax_required(not_ajax_allowed_methods=["POST"]):
-    def decorator(func):
-        @wraps(func)
-        def wrapper(request, *args, **kwargs):
-            if request.method not in not_ajax_allowed_methods and not (
-                request.is_ajax() or _is_htmx_request(request)
-            ):
-                raise PermissionDenied("Only ajax requests are allowed.")
+def ajax_required(func):
+    @wraps(func)
+    def wrapper(request, *args, **kwargs):
+        if request.method != "POST" and not (
+            request.is_ajax() or _is_htmx_request(request)
+        ):
+            raise PermissionDenied("Only ajax requests are allowed.")
 
-            return func(request, *args, **kwargs)
+        return func(request, *args, **kwargs)
 
-        return wrapper
-
-    return decorator
+    return wrapper
 
 
 class SubjectAndSchoolClassRelatedMixin:

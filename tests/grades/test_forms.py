@@ -6,16 +6,13 @@ from tests.utils import ClassesMixin, GradesMixin, LessonsMixin, UsersMixin
 
 
 class GradeFormTestCase(UsersMixin, ClassesMixin, LessonsMixin, GradesMixin, TestCase):
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_user(
-            username="student", school_class=self.school_class
-        )
-        self.subject = self.create_subject()
-        self.grade_category = self.create_grade_category(
-            self.subject, self.school_class
-        )
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.student = cls.create_user(username="student", school_class=cls.school_class)
+        cls.subject = cls.create_subject()
+        cls.grade_category = cls.create_grade_category(cls.subject, cls.school_class)
 
     def test_student_queryset(self):
         school_class2 = self.create_class(number="2c")
@@ -53,9 +50,10 @@ class GradeFormTestCase(UsersMixin, ClassesMixin, LessonsMixin, GradesMixin, Tes
 
 
 class BulkGradeCreationFormSetTestCase(UsersMixin, TestCase):
-    def setUp(self):
-        self.students = [self.create_user(username=f"username{i}") for i in range(5)]
-        self.formset = BulkGradeCreationFormSet(students=self.students)
+    @classmethod
+    def setUpTestData(cls):
+        cls.students = [cls.create_user(username=f"username{i}") for i in range(5)]
+        cls.formset = BulkGradeCreationFormSet(students=cls.students)
 
     def test_queryset_is_empty(self):
         self.assertQuerysetEqual(self.formset.queryset, [])
@@ -87,9 +85,10 @@ class BulkGradeCreationFormSetTestCase(UsersMixin, TestCase):
 
 
 class GradeCategoryFormTestCase(ClassesMixin, LessonsMixin, TestCase):
-    def setUp(self):
-        self.subject = self.create_subject()
-        self.school_class = self.create_class()
+    @classmethod
+    def setUpTestData(cls):
+        cls.subject = cls.create_subject()
+        cls.school_class = cls.create_class()
 
     def test_is_valid_assign_the_teacher_to_the_instance(self):
         form = GradeCategoryForm(subject=self.subject, school_class=self.school_class)

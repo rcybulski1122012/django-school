@@ -9,12 +9,13 @@ from tests.utils import EventsMixin, UsersMixin
 
 
 class UnseenEventsCountTestCase(UsersMixin, EventsMixin, TestCase):
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.teacher2 = self.create_teacher(username="teacher2")
-        self.date = datetime.datetime.today()
-        self.event = self.create_event(self.teacher, None, self.date)
-        EventStatus.objects.create_multiple(self.event)
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.teacher2 = cls.create_teacher(username="teacher2")
+        cls.date = datetime.datetime.today()
+        cls.event = cls.create_event(cls.teacher, None, cls.date)
+        EventStatus.objects.create_multiple(cls.event)
 
     def test_returns_empty_dict_if_user_is_not_authenticated(self):
         request = RequestFactory().get("/test")

@@ -142,7 +142,6 @@ class AjaxRequiredMixinTestCase(TestCase):
 
     def test_does_not_raise_if_request_is_htmx_request(self):
         request = RequestFactory().get("/test", HTTP_HX_REQUEST="true")
-        print(request.headers)
         view = self.DummyView.as_view()
 
         view(request)
@@ -150,7 +149,7 @@ class AjaxRequiredMixinTestCase(TestCase):
 
 class AjaxRequiredDecoratorTestCase(TestCase):
     @staticmethod
-    @ajax_required()
+    @ajax_required
     def dummy_view(request):
         return HttpResponse("OK")
 

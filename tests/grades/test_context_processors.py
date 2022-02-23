@@ -8,16 +8,17 @@ from tests.utils import ClassesMixin, GradesMixin, LessonsMixin, UsersMixin
 class UnseenGradesCountTestCase(
     UsersMixin, ClassesMixin, LessonsMixin, GradesMixin, TestCase
 ):
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_student(school_class=self.school_class)
-        self.parent = self.create_parent(child=self.student)
-        self.subject = self.create_subject()
-        self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
-        self.category = self.create_grade_category(self.subject, self.school_class)
-        self.grade = self.create_grade(
-            self.category, self.subject, self.student, self.teacher
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.student = cls.create_student(school_class=cls.school_class)
+        cls.parent = cls.create_parent(child=cls.student)
+        cls.subject = cls.create_subject()
+        cls.lesson = cls.create_lesson(cls.subject, cls.teacher, cls.school_class)
+        cls.category = cls.create_grade_category(cls.subject, cls.school_class)
+        cls.grade = cls.create_grade(
+            cls.category, cls.subject, cls.student, cls.teacher
         )
 
     def test_returns_empty_dict_if_the_user_is_not_authenticated_or_if_is_a_teacher(

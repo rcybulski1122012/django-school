@@ -1,29 +1,35 @@
 from django.test import TestCase
 from django.urls import reverse
 
-from tests.utils import (
-    ClassesMixin,
-    ResourceViewTestMixin,
-    TeacherViewTestMixin,
-    UsersMixin,
-    LessonsMixin,
-)
+from tests.utils import (ClassesMixin, LessonsMixin, ResourceViewTestMixin,
+                         RolesRequiredTestMixin, UsersMixin)
 
 
 class ClassesListViewTestCase(
-    TeacherViewTestMixin, UsersMixin, ClassesMixin, LessonsMixin, TestCase
+    RolesRequiredTestMixin,
+    UsersMixin,
+    ClassesMixin,
+    LessonsMixin,
+    TestCase,
 ):
     path_name = "classes:list"
 
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_student()
-        self.subject = self.create_subject()
-        self.create_lesson(self.subject, self.teacher, self.school_class)
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.student = cls.create_student()
+        cls.subject = cls.create_subject()
+        cls.create_lesson(cls.subject, cls.teacher, cls.school_class)
 
     def get_url(self):
         return reverse(self.path_name)
+
+    def get_permitted_user(self):
+        return self.teacher
+
+    def get_not_permitted_user(self):
+        return self.student
 
     def test_selects_classes_taught_by_the_teacher(self):
         school_class2 = self.create_class(number="2c")
@@ -65,7 +71,7 @@ class ClassesListViewTestCase(
 
 
 class ClassDetailViewTestCase(
-    TeacherViewTestMixin,
+    RolesRequiredTestMixin,
     ResourceViewTestMixin,
     UsersMixin,
     ClassesMixin,
@@ -74,19 +80,18 @@ class ClassDetailViewTestCase(
 ):
     path_name = "classes:detail"
 
-    def setUp(self):
-        self.teacher = self.create_teacher(
-            first_name="TestClass", last_name="TestTutor"
-        )
-        self.school_class = self.create_class(tutor=self.teacher)
-        self.student = self.create_student(
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher(first_name="TestClass", last_name="TestTutor")
+        cls.school_class = cls.create_class(tutor=cls.teacher)
+        cls.student = cls.create_student(
             username="TestStudent123",
             first_name="Student",
             last_name="ForTesting",
-            school_class=self.school_class,
+            school_class=cls.school_class,
         )
-        self.subject = self.create_subject()
-        self.create_lesson(self.subject, self.teacher, self.school_class)
+        cls.subject = cls.create_subject()
+        cls.create_lesson(cls.subject, cls.teacher, cls.school_class)
 
     def get_url(self, class_slug=None):
         class_slug = class_slug or self.school_class.slug
@@ -95,6 +100,12 @@ class ClassDetailViewTestCase(
 
     def get_nonexistent_resource_url(self):
         return self.get_url(class_slug="slug")
+
+    def get_permitted_user(self):
+        return self.teacher
+
+    def get_not_permitted_user(self):
+        return self.student
 
     def test_return_404_if_the_teacher_does_not_teach_the_class(self):
         school_class2 = self.create_class(number="2c")

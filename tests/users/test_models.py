@@ -98,14 +98,13 @@ class UserModelTestCase(UsersMixin, ClassesMixin, TestCase):
 class StudentsManagerTestCase(
     UsersMixin, ClassesMixin, LessonsMixin, GradesMixin, TestCase
 ):
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_student(school_class=self.school_class)
-        self.subject = self.create_subject()
-        self.grade_category = self.create_grade_category(
-            self.subject, self.school_class
-        )
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.student = cls.create_student(school_class=cls.school_class)
+        cls.subject = cls.create_subject()
+        cls.grade_category = cls.create_grade_category(cls.subject, cls.school_class)
 
     def test_selects_only_students(self):
         students = User.students.all()
@@ -265,9 +264,10 @@ class StudentsManagerTestCase(
 
 
 class TeachersManagerTestCase(UsersMixin, TestCase):
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.student = self.create_student()
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.student = cls.create_student()
 
     def test_selects_only_teachers(self):
         teachers = User.teachers.all()

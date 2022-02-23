@@ -12,14 +12,14 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView, DetailView, ListView
 
 from django_school.apps.classes.models import Class
-from django_school.apps.common.utils import (
-    RolesRequiredMixin, SubjectAndSchoolClassRelatedMixin, ajax_required,
-    roles_required)
+from django_school.apps.common.utils import (RolesRequiredMixin,
+                                             SubjectAndSchoolClassRelatedMixin,
+                                             ajax_required, roles_required)
 from django_school.apps.lessons.forms import (AttendanceFormSet, HomeworkForm,
                                               HomeworkRealisationForm,
                                               LessonSessionForm)
-from django_school.apps.lessons.models import (
-    Homework, Lesson, LessonSession, Subject)
+from django_school.apps.lessons.models import (Homework, Lesson, LessonSession,
+                                               Subject)
 from django_school.apps.users.models import ROLES
 
 User = get_user_model()
@@ -320,7 +320,7 @@ class HomeworkDetailView(
 
 @login_required
 @roles_required(ROLES.STUDENT)
-@ajax_required()
+@ajax_required
 def submit_homework_realisation_view(request, homework_pk):
     homework = get_object_or_404(
         Homework.objects.visible_to_user(request.user), pk=homework_pk

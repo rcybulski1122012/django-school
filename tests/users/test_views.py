@@ -1,18 +1,13 @@
 from django.test import TestCase
 from django.urls import reverse
 
-from tests.utils import (
-    ClassesMixin,
-    CommonMixin,
-    LoginRequiredTestMixin,
-    ResourceViewTestMixin,
-    TeacherViewTestMixin,
-    UsersMixin,
-)
+from tests.utils import (ClassesMixin, CommonMixin, LoginRequiredTestMixin,
+                         ResourceViewTestMixin, RolesRequiredTestMixin,
+                         UsersMixin)
 
 
 class StudentDetailViewTestCase(
-    TeacherViewTestMixin,
+    RolesRequiredTestMixin,
     ResourceViewTestMixin,
     UsersMixin,
     ClassesMixin,
@@ -21,16 +16,17 @@ class StudentDetailViewTestCase(
 ):
     path_name = "users:detail"
 
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class(tutor=self.teacher)
-        self.address = self.create_address()
-        self.student = self.create_user(
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class(tutor=cls.teacher)
+        cls.address = cls.create_address()
+        cls.student = cls.create_user(
             username="Student",
-            school_class=self.school_class,
+            school_class=cls.school_class,
             phone_number="TestNumber",
             email="TestEmailAddr@gmail.com",
-            address=self.address,
+            address=cls.address,
             first_name="TestFirst",
             last_name="TestLast",
         )
@@ -43,12 +39,18 @@ class StudentDetailViewTestCase(
     def get_nonexistent_resource_url(self):
         return self.get_url(user_slug="does-not-exist")
 
+    def get_permitted_user(self):
+        return self.teacher
+
+    def get_not_permitted_user(self):
+        return self.student
+
     def test_returns_404_if_user_is_a_teacher(self):
         self.login(self.teacher)
 
         response = self.client.get(self.get_url(self.teacher.slug))
 
-        self.assertEquals(response.status_code, 404)
+        self.assertEqual(response.status_code, 404)
 
     def test_context_contains_user(self):
         self.login(self.teacher)
@@ -69,68 +71,22 @@ class StudentDetailViewTestCase(
         self.assertContains(response, str(self.address))
 
 
-class ProfileViewTestCase(LoginRequiredTestMixin, UsersMixin, CommonMixin, TestCase):
-    path_name = "users:profile"
-
-    def setUp(self):
-        self.address = self.create_address()
-        self.student = self.create_user(address=self.address)
-
-    def get_url(self):
-        return reverse(self.path_name)
-
-    def test_context_contains_user_info_and_address_form(self):
-        self.login(self.student)
-
-        response = self.client.get(self.get_url())
-
-        self.assertIn("user_info_form", response.context)
-        self.assertIn("address_form", response.context)
-
-    def test_updates_profile_and_displays_success_message_when_data_is_correct(self):
-        self.login(self.student)
-        user_data = {
-            "phone_number": "333-444-555",
-            "email": "new@email.com",
-        }
-        address_data = {
-            "street": "new-street",
-            "building_number": "5",
-            "apartment_number": "10",
-            "city": "new-city",
-            "zip_code": "new-code",
-            "country": "new-country",
-        }
-        response = self.client.post(
-            self.get_url(), {**user_data, **address_data}, follow=True
-        )
-        self.student.refresh_from_db()
-        self.address.refresh_from_db()
-
-        self.assertTrue(user_data.items() <= self.student.__dict__.items())
-        self.assertTrue(address_data.items() <= self.address.__dict__.items())
-        self.assertContains(
-            response, "The profile information has been updated successfully."
-        )
-
-    def test_renders_error_message_when_data_is_incorrect(self):
-        self.login(self.student)
-
-        response = self.client.post(self.get_url(), {"incorrect": "data"})
-
-        self.assertContains(response, "This field is required")
-
-
-class PasswordChangeWithMessageViewTestCase(UsersMixin, TestCase):
+class PasswordChangeWithMessageViewTestCase(
+    LoginRequiredTestMixin, UsersMixin, TestCase
+):
     path_name = "users:password_change"
 
-    def setUp(self):
-        self.user = self.create_user()
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = cls.create_user()
 
     def get_url(self):
         return reverse(self.path_name)
 
-    def test_redirects_to_profile(self):
+    def get_permitted_user(self):
+        return None
+
+    def test_redirects_to_index(self):
         self.login(self.user)
         data = {
             "old_password": self.DEFAULT_PASSWORD,
@@ -140,7 +96,7 @@ class PasswordChangeWithMessageViewTestCase(UsersMixin, TestCase):
 
         response = self.client.post(self.get_url(), data)
 
-        self.assertRedirects(response, reverse("users:profile"))
+        self.assertRedirects(response, reverse("index"))
 
     def test_displays_success_message(self):
         self.login(self.user)

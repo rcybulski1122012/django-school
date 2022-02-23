@@ -8,11 +8,12 @@ from tests.utils import MessagesMixin, UsersMixin
 
 
 class UnreadMessagesCountTestCase(UsersMixin, MessagesMixin, TestCase):
-    def setUp(self):
-        self.sender = self.create_teacher()
-        self.receiver = self.create_student()
+    @classmethod
+    def setUpTestData(cls):
+        cls.sender = cls.create_teacher()
+        cls.receiver = cls.create_student()
         for _ in range(5):
-            self.create_message(self.sender, [self.receiver])
+            cls.create_message(cls.sender, [cls.receiver])
 
     def test_returns_empty_dict_if_user_is_not_authenticated(self):
         request = RequestFactory().get("/test")

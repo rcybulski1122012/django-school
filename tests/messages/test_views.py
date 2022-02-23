@@ -7,15 +7,19 @@ from tests.utils import (ClassesMixin, LoginRequiredTestMixin, MessagesMixin,
 
 
 class MessagesListViewTestMixin(LoginRequiredTestMixin, UsersMixin, MessagesMixin):
-    def setUp(self):
-        self.user1 = self.create_user(username="user1")
-        self.user2 = self.create_user(username="user2")
+    @classmethod
+    def setUpTestData(cls):
+        cls.user1 = cls.create_user(username="user1")
+        cls.user2 = cls.create_user(username="user2")
 
-        self.message1 = self.create_message(self.user1, [self.user2])
-        self.message2 = self.create_message(self.user2, [self.user1])
+        cls.message1 = cls.create_message(cls.user1, [cls.user2])
+        cls.message2 = cls.create_message(cls.user2, [cls.user1])
 
     def get_url(self):
         return reverse(self.path_name)
+
+    def get_permitted_user(self):
+        return None
 
     def test_renders_appropriate_message_when_there_are_no_messages(self):
         self.login(self.user1)
@@ -94,12 +98,16 @@ class MessageCreateViewTestCase(
 ):
     path_name = "messages:send"
 
-    def setUp(self):
-        self.sender = self.create_user(username="sender")
-        self.receiver = self.create_teacher(username="receiver")
+    @classmethod
+    def setUpTestData(cls):
+        cls.sender = cls.create_user(username="sender")
+        cls.receiver = cls.create_teacher(username="receiver")
 
     def get_url(self):
         return reverse(self.path_name)
+
+    def get_permitted_user(self):
+        return None
 
     def get_example_form_data(self):
         return {
@@ -170,17 +178,21 @@ class MessageDetailViewTestView(
 ):
     path_name = "messages:detail"
 
-    def setUp(self):
-        self.sender = self.create_user(username="sender")
-        self.receiver = self.create_user(username="receiver")
-        self.user = self.create_user()
+    @classmethod
+    def setUpTestData(cls):
+        cls.sender = cls.create_user(username="sender")
+        cls.receiver = cls.create_user(username="receiver")
+        cls.user = cls.create_user()
 
-        self.message = self.create_message(self.sender, [self.receiver])
+        cls.message = cls.create_message(cls.sender, [cls.receiver])
 
     def get_url(self, message_pk=None, **kwargs):
         message_pk = message_pk or self.message.pk
 
         return reverse(self.path_name, args=[message_pk])
+
+    def get_permitted_user(self):
+        return None
 
     def test_returns_404_when_user_is_not_a_sender_or_a_receiver_of_the_message(self):
         self.login(self.user)

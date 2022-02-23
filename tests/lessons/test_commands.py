@@ -9,12 +9,13 @@ from tests.utils import ClassesMixin, LessonsMixin, UsersMixin
 
 
 class GenerateLessonSessionTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
-    def setUp(self):
-        self.subject = self.create_subject()
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_user(
-            username="Student123", school_class=self.school_class
+    @classmethod
+    def setUpTestData(cls):
+        cls.subject = cls.create_subject()
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.student = cls.create_user(
+            username="Student123", school_class=cls.school_class
         )
 
     def test_creates_lesson_sessions_and_attendances_for_today(self):

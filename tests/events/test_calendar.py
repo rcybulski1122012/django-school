@@ -8,11 +8,12 @@ from tests.utils import ClassesMixin, EventsMixin, UsersMixin
 
 
 class EventCalendarTestCase(UsersMixin, ClassesMixin, EventsMixin, TestCase):
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.date = datetime.date.today() + datetime.timedelta(days=1)
-        self.event = self.create_event(self.teacher, self.school_class, self.date)
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.date = datetime.date.today() + datetime.timedelta(days=1)
+        cls.event = cls.create_event(cls.teacher, cls.school_class, cls.date)
 
     def test_init_creates_date_event_dict(self):
         calendar = EventCalendar([self.event])

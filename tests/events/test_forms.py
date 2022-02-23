@@ -9,12 +9,13 @@ from tests.utils import ClassesMixin, EventsMixin, LessonsMixin, UsersMixin
 
 
 class EventFormTestCase(UsersMixin, ClassesMixin, LessonsMixin, EventsMixin, TestCase):
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_student(school_class=self.school_class)
-        self.date = datetime.date.today() + datetime.timedelta(days=1)
-        self.event = self.create_event(self.teacher, self.school_class, self.date)
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.student = cls.create_student(school_class=cls.school_class)
+        cls.date = datetime.date.today() + datetime.timedelta(days=1)
+        cls.event = cls.create_event(cls.teacher, cls.school_class, cls.date)
 
     def test_classes_queryset(self):
         subject = self.create_subject()

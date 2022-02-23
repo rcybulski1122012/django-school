@@ -9,12 +9,21 @@ from django.urls import reverse
 from django_school.apps.events.models import Event, EventStatus
 from django_school.apps.grades.models import GradeCategory
 from django_school.apps.lessons.forms import HomeworkRealisationForm
-from django_school.apps.lessons.models import (AttachedFile, Attendance,
-                                               Homework, HomeworkRealisation,
-                                               Lesson, LessonSession)
-from tests.utils import (AjaxRequiredViewTestMixin, ClassesMixin, LessonsMixin,
-                         LoginRequiredTestMixin, ResourceViewTestMixin,
-                         TeacherViewTestMixin, UsersMixin)
+from django_school.apps.lessons.models import (
+    AttachedFile,
+    Attendance,
+    Homework,
+    HomeworkRealisation,
+    Lesson,
+)
+from tests.utils import (
+    AjaxRequiredTestMixin,
+    ClassesMixin,
+    LessonsMixin,
+    ResourceViewTestMixin,
+    RolesRequiredTestMixin,
+    UsersMixin,
+)
 
 
 class TimetableViewMixin(
@@ -23,12 +32,16 @@ class TimetableViewMixin(
     ClassesMixin,
     LessonsMixin,
 ):
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_student(school_class=self.school_class)
-        self.subject = self.create_subject()
-        self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.student = cls.create_student(school_class=cls.school_class)
+        cls.subject = cls.create_subject()
+        cls.lesson = cls.create_lesson(cls.subject, cls.teacher, cls.school_class)
+
+    def get_permitted_user(self):
+        return None
 
     def test_context_contains_weekdays_and_lessons_times(self):
         response = self.client.get(self.get_url())
@@ -84,12 +97,18 @@ class TeacherTimetableViewTestCase(TimetableViewMixin, TestCase):
 
 
 class TimetablesListViewTestCase(UsersMixin, ClassesMixin, TestCase):
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
+    path_name = "lessons:timetables_list"
+
+    @classmethod
+    def setUp(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+
+    def get_url(self):
+        return reverse(self.path_name)
 
     def test_context_contains_lists_of_classes_and_teachers(self):
-        response = self.client.get(reverse("lessons:timetables_list"))
+        response = self.client.get(self.get_url())
 
         self.assertQuerysetEqual(
             response.context["school_classes"], [self.school_class]
@@ -97,7 +116,7 @@ class TimetablesListViewTestCase(UsersMixin, ClassesMixin, TestCase):
         self.assertQuerysetEqual(response.context["teachers"], [self.teacher])
 
     def test_renders_links_to_timetables(self):
-        response = self.client.get(reverse("lessons:timetables_list"))
+        response = self.client.get(self.get_url())
 
         self.assertContains(
             response, reverse("lessons:class_timetable", args=[self.school_class.slug])
@@ -108,7 +127,7 @@ class TimetablesListViewTestCase(UsersMixin, ClassesMixin, TestCase):
 
 
 class LessonSessionsListViewTestCase(
-    LoginRequiredTestMixin,
+    RolesRequiredTestMixin,
     UsersMixin,
     ClassesMixin,
     LessonsMixin,
@@ -116,23 +135,30 @@ class LessonSessionsListViewTestCase(
 ):
     path_name = "lessons:session_list"
 
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_student(school_class=self.school_class)
-        self.subject = self.create_subject()
-        self.lesson = self.create_lesson(
-            self.subject,
-            self.teacher,
-            self.school_class,
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.student = cls.create_student(school_class=cls.school_class)
+        cls.subject = cls.create_subject()
+        cls.lesson = cls.create_lesson(
+            cls.subject,
+            cls.teacher,
+            cls.school_class,
             weekday="fri",
         )
 
-    def get_url(self, **kwargs):
+    def get_url(self, date=None):
         url = reverse(self.path_name)
-        if date := kwargs.get("date"):
+        if date:
             return f"{url}?date={date}"
         return url
+
+    def get_permitted_user(self):
+        return self.teacher
+
+    def get_not_permitted_user(self):
+        return self.create_parent()
 
     def test_selects_only_lesson_sessions_of_currently_logged_teacher(self):
         self.login(self.teacher)
@@ -196,7 +222,6 @@ class LessonSessionsListViewTestCase(
     def test_renders_links_to_lesson_session_detail_view(self):
         self.login(self.teacher)
         session = self.create_lesson_session(self.lesson)
-        print(LessonSession.objects.all())
 
         response = self.client.get(self.get_url())
 
@@ -215,6 +240,8 @@ class LessonSessionsListViewTestCase(
 
 
 class LessonSessionDetailViewTestCase(
+    RolesRequiredTestMixin,
+    ResourceViewTestMixin,
     UsersMixin,
     ClassesMixin,
     LessonsMixin,
@@ -223,17 +250,18 @@ class LessonSessionDetailViewTestCase(
     path_name = "lessons:session_detail"
     temp_dir_path = "temp_dir/"
 
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_student(
-            school_class=self.school_class,
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.student = cls.create_student(
+            school_class=cls.school_class,
             first_name="StudentFirstName",
             last_name="StudentLastName",
         )
-        self.subject = self.create_subject()
-        self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
-        self.lesson_session = self.create_lesson_session(self.lesson)
+        cls.subject = cls.create_subject()
+        cls.lesson = cls.create_lesson(cls.subject, cls.teacher, cls.school_class)
+        cls.lesson_session = cls.create_lesson_session(cls.lesson)
 
     def get_url(self, lesson_session_pk=None):
         lesson_session_pk = lesson_session_pk or self.lesson_session.pk
@@ -243,8 +271,14 @@ class LessonSessionDetailViewTestCase(
     def get_nonexistent_resource_url(self):
         return self.get_url(lesson_session_pk=1234)
 
+    def get_permitted_user(self):
+        return self.teacher
+
+    def get_not_permitted_user(self):
+        return self.create_parent()
+
     @staticmethod
-    def prepare_form_data(lesson_session, attendances, topic, statuses):
+    def get_example_form_data(lesson_session, attendances, topic, statuses):
         statuses_count = len(statuses)
         data = {
             "topic": topic,
@@ -284,7 +318,7 @@ class LessonSessionDetailViewTestCase(
         self.login(self.teacher)
         attendances = self.create_attendance(self.lesson_session, [self.student])
         expected_statuses = ["absent"]
-        data = self.prepare_form_data(
+        data = self.get_example_form_data(
             self.lesson_session, attendances, "New topic", expected_statuses
         )
 
@@ -298,7 +332,7 @@ class LessonSessionDetailViewTestCase(
     def test_updates_files(self):
         self.login(self.teacher)
         attendances = self.create_attendance(self.lesson_session, [self.student])
-        data = self.prepare_form_data(
+        data = self.get_example_form_data(
             self.lesson_session, attendances, "New topic", ["absent"]
         )
         files = [
@@ -319,7 +353,7 @@ class LessonSessionDetailViewTestCase(
         self.login(self.teacher)
         attendances = self.create_attendance(self.lesson_session, [self.student])
 
-        data = self.prepare_form_data(
+        data = self.get_example_form_data(
             self.lesson_session, attendances, "New Topic", ["absent"]
         )
 
@@ -330,7 +364,7 @@ class LessonSessionDetailViewTestCase(
     def test_renders_success_message_after_successful_update(self):
         self.login(self.teacher)
         attendances = self.create_attendance(self.lesson_session, [self.student])
-        data = self.prepare_form_data(
+        data = self.get_example_form_data(
             self.lesson_session, attendances, "New Topic", ["absent"]
         )
 
@@ -387,7 +421,7 @@ class LessonSessionDetailViewTestCase(
         self.login(self.student)
         attendances = self.create_attendance(self.lesson_session, [self.student])
         expected_statuses = ["absent"]
-        data = self.prepare_form_data(
+        data = self.get_example_form_data(
             self.lesson_session, attendances, "New topic", expected_statuses
         )
 
@@ -401,7 +435,7 @@ class LessonSessionDetailViewTestCase(
 
 
 class ClassSubjectListViewTestCase(
-    TeacherViewTestMixin,
+    RolesRequiredTestMixin,
     ResourceViewTestMixin,
     UsersMixin,
     ClassesMixin,
@@ -410,11 +444,12 @@ class ClassSubjectListViewTestCase(
 ):
     path_name = "lessons:class_subject_list"
 
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_student(school_class=self.school_class)
-        self.subject = self.create_subject()
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.student = cls.create_student(school_class=cls.school_class)
+        cls.subject = cls.create_subject()
 
     def get_url(self, class_slug=None):
         class_slug = class_slug or self.school_class.slug
@@ -422,7 +457,13 @@ class ClassSubjectListViewTestCase(
         return reverse(self.path_name, args=[class_slug])
 
     def get_nonexistent_resource_url(self):
-        return self.get_url("123g")
+        return self.get_url("does-not-exist")
+
+    def get_permitted_user(self):
+        return self.teacher
+
+    def get_not_permitted_user(self):
+        return self.student
 
     def test_renders_subject_names(self):
         self.create_lesson(self.subject, self.teacher, self.school_class)
@@ -479,7 +520,7 @@ class ClassSubjectListViewTestCase(
             ),
         )
 
-    def test_context_contain_school_class(self):
+    def test_context_contains_school_class(self):
         self.login(self.teacher)
 
         response = self.client.get(self.get_url())
@@ -489,7 +530,6 @@ class ClassSubjectListViewTestCase(
 
 class StudentAttendanceSummaryViewTestCase(
     ResourceViewTestMixin,
-    LoginRequiredTestMixin,
     UsersMixin,
     ClassesMixin,
     LessonsMixin,
@@ -497,23 +537,24 @@ class StudentAttendanceSummaryViewTestCase(
 ):
     path_name = "lessons:student_attendance"
 
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_student(school_class=self.school_class)
-        self.subject = self.create_subject()
-        self.lesson = self.create_lesson(
-            self.subject,
-            self.teacher,
-            self.school_class,
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.student = cls.create_student(school_class=cls.school_class)
+        cls.subject = cls.create_subject()
+        cls.lesson = cls.create_lesson(
+            cls.subject,
+            cls.teacher,
+            cls.school_class,
             weekday="fri",
         )
-        self.lesson_session = self.create_lesson_session(
-            self.lesson, datetime.datetime.today()
+        cls.lesson_session = cls.create_lesson_session(
+            cls.lesson, datetime.datetime.today()
         )
 
         for i in range(5):
-            self.create_attendance(self.lesson_session, [self.student], status="absent")
+            cls.create_attendance(cls.lesson_session, [cls.student], status="absent")
 
     def get_url(self, student_slug=None, subject_name=None):
         student_slug = student_slug or self.student.slug
@@ -526,6 +567,9 @@ class StudentAttendanceSummaryViewTestCase(
 
     def get_nonexistent_resource_url(self):
         return self.get_url(student_slug="does-not-exist")
+
+    def get_permitted_user(self):
+        return self.student
 
     def test_returns_404_if_student_is_not_visible_to_user(self):
         teacher2 = self.create_teacher(username="teacher2")
@@ -573,7 +617,7 @@ class StudentAttendanceSummaryViewTestCase(
 
 
 class ClassAttendanceSummaryViewTestCase(
-    TeacherViewTestMixin,
+    RolesRequiredTestMixin,
     ResourceViewTestMixin,
     UsersMixin,
     ClassesMixin,
@@ -582,27 +626,28 @@ class ClassAttendanceSummaryViewTestCase(
 ):
     path_name = "lessons:class_attendance"
 
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_student(school_class=self.school_class)
-        self.student2 = self.create_student(
-            username="student2", school_class=self.school_class
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.student = cls.create_student(school_class=cls.school_class)
+        cls.student2 = cls.create_student(
+            username="student2", school_class=cls.school_class
         )
-        self.subject = self.create_subject()
-        self.lesson = self.create_lesson(
-            self.subject,
-            self.teacher,
-            self.school_class,
+        cls.subject = cls.create_subject()
+        cls.lesson = cls.create_lesson(
+            cls.subject,
+            cls.teacher,
+            cls.school_class,
             weekday="fri",
         )
-        self.lesson_session = self.create_lesson_session(
-            self.lesson, datetime.datetime.today()
+        cls.lesson_session = cls.create_lesson_session(
+            cls.lesson, datetime.datetime.today()
         )
 
         for i in range(5):
-            self.create_attendance(
-                self.lesson_session, [self.student, self.student2], status="absent"
+            cls.create_attendance(
+                cls.lesson_session, [cls.student, cls.student2], status="absent"
             )
 
     def get_url(self, class_slug=None):
@@ -612,6 +657,12 @@ class ClassAttendanceSummaryViewTestCase(
 
     def get_nonexistent_resource_url(self):
         return self.get_url(class_slug="does-not-exist")
+
+    def get_permitted_user(self):
+        return self.teacher
+
+    def get_not_permitted_user(self):
+        return self.student
 
     def test_returns_404_if_the_teacher_does_not_teach_the_class(self):
         teacher2 = self.create_teacher(username="teacher2")
@@ -631,7 +682,7 @@ class ClassAttendanceSummaryViewTestCase(
 
 
 class SetHomeworkViewTestCase(
-    TeacherViewTestMixin,
+    RolesRequiredTestMixin,
     ResourceViewTestMixin,
     UsersMixin,
     ClassesMixin,
@@ -640,18 +691,19 @@ class SetHomeworkViewTestCase(
 ):
     path_name = "lessons:set_homework"
 
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_student(school_class=self.school_class)
-        self.subject = self.create_subject()
-        self.lesson = self.create_lesson(
-            self.subject,
-            self.teacher,
-            self.school_class,
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.student = cls.create_student(school_class=cls.school_class)
+        cls.subject = cls.create_subject()
+        cls.lesson = cls.create_lesson(
+            cls.subject,
+            cls.teacher,
+            cls.school_class,
             weekday="fri",
         )
-        self.date = datetime.datetime.today() + datetime.timedelta(days=10)
+        cls.date = datetime.datetime.today() + datetime.timedelta(days=10)
 
     def get_url(self, class_slug=None, subject_slug=None):
         class_slug = class_slug or self.school_class.slug
@@ -661,6 +713,12 @@ class SetHomeworkViewTestCase(
 
     def get_nonexistent_resource_url(self):
         return self.get_url(subject_slug="does-not-exist", class_slug="4cm")
+
+    def get_permitted_user(self):
+        return self.teacher
+
+    def get_not_permitted_user(self):
+        return self.student
 
     def get_example_form_data(self):
         return {
@@ -700,29 +758,26 @@ class SetHomeworkViewTestCase(
 
 
 class HomeworkListViewTestCase(
-    LoginRequiredTestMixin, UsersMixin, ClassesMixin, LessonsMixin, TestCase
+    RolesRequiredTestMixin, UsersMixin, ClassesMixin, LessonsMixin, TestCase
 ):
     path_name = "lessons:homework_list"
 
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_student(school_class=self.school_class)
-        self.subject = self.create_subject()
-        self.homework = self.create_homework(
-            self.subject, self.teacher, self.school_class
-        )
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.student = cls.create_student(school_class=cls.school_class)
+        cls.subject = cls.create_subject()
+        cls.homework = cls.create_homework(cls.subject, cls.teacher, cls.school_class)
 
     def get_url(self):
         return reverse(self.path_name)
 
-    def test_returns_403_if_the_users_is_neither_a_student_nor_a_teacher(self):
-        parent = self.create_parent()
-        self.login(parent)
+    def get_permitted_user(self):
+        return self.teacher
 
-        response = self.client.get(self.get_url())
-
-        self.assertEqual(response.status_code, 403)
+    def get_not_permitted_user(self):
+        return self.create_parent()
 
     def test_context_contains_list_of_homeworks_visible_to_user(self):
         self.login(self.teacher)
@@ -796,7 +851,7 @@ class HomeworkListViewTestCase(
 
 
 class HomeworkDetailViewTestCase(
-    LoginRequiredTestMixin,
+    RolesRequiredTestMixin,
     ResourceViewTestMixin,
     UsersMixin,
     ClassesMixin,
@@ -805,14 +860,13 @@ class HomeworkDetailViewTestCase(
 ):
     path_name = "lessons:homework_detail"
 
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_student(school_class=self.school_class)
-        self.subject = self.create_subject()
-        self.homework = self.create_homework(
-            self.subject, self.teacher, self.school_class
-        )
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.student = cls.create_student(school_class=cls.school_class)
+        cls.subject = cls.create_subject()
+        cls.homework = cls.create_homework(cls.subject, cls.teacher, cls.school_class)
 
     def get_url(self, homework_pk=None):
         homework_pk = homework_pk or self.homework.pk
@@ -822,13 +876,11 @@ class HomeworkDetailViewTestCase(
     def get_nonexistent_resource_url(self):
         return self.get_url(homework_pk=12345)
 
-    def test_returns_403_if_the_user_is_neither_a_teacher_nor_a_student(self):
-        parent = self.create_parent(child=self.student)
-        self.login(parent)
+    def get_permitted_user(self):
+        return self.teacher
 
-        response = self.client.get(self.get_url())
-
-        self.assertEqual(response.status_code, 403)
+    def get_not_permitted_user(self):
+        return self.create_parent()
 
     def test_returns_404_if_the_homework_is_not_visible_to_the_user(self):
         student2 = self.create_student(username="student2")
@@ -897,10 +949,10 @@ class HomeworkDetailViewTestCase(
 
 
 class SubmitHomeworkRealisationViewTestCase(
-    LoginRequiredTestMixin,
+    RolesRequiredTestMixin,
     ResourceViewTestMixin,
+    AjaxRequiredTestMixin,
     UsersMixin,
-    AjaxRequiredViewTestMixin,
     ClassesMixin,
     LessonsMixin,
     TestCase,
@@ -908,15 +960,14 @@ class SubmitHomeworkRealisationViewTestCase(
     path_name = "lessons:submit_homework_realisation"
     ajax_required = True
 
-    def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_student(school_class=self.school_class)
-        self.subject = self.create_subject()
-        self.homework = self.create_homework(
-            self.subject, self.teacher, self.school_class
-        )
-        self.data = {
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.student = cls.create_student(school_class=cls.school_class)
+        cls.subject = cls.create_subject()
+        cls.homework = cls.create_homework(cls.subject, cls.teacher, cls.school_class)
+        cls.data = {
             "attached_files": SimpleUploadedFile("file2.txt", b"file_content"),
         }
 
@@ -928,19 +979,11 @@ class SubmitHomeworkRealisationViewTestCase(
     def get_nonexistent_resource_url(self):
         return self.get_url(homework_pk=12345)
 
-    def test_returns_403_if_request_is_neither_ajax_nor_htmx(self):
-        self.login(self.student)
+    def get_permitted_user(self):
+        return self.student
 
-        response = self.client.get(self.get_url())
-
-        self.assertEqual(response.status_code, 403)
-
-    def test_returns_403_if_the_user_is_not_a_student(self):
-        self.login(self.teacher)
-
-        response = self.ajax_request(self.get_url())
-
-        self.assertEqual(response.status_code, 403)
+    def get_not_permitted_user(self):
+        return self.teacher
 
     def test_raises_403_if_the_student_already_has_submitted_the_realisation(self):
         self.login(self.student)

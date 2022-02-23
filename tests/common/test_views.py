@@ -5,29 +5,34 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from django_school.apps.common.models import AttachedFile
-from tests.utils import (ClassesMixin, LessonsMixin, ResourceViewTestMixin,
-                         TeacherViewTestMixin, UsersMixin)
+from tests.utils import (AjaxRequiredTestMixin, ClassesMixin, LessonsMixin,
+                         ResourceViewTestMixin, RolesRequiredTestMixin,
+                         UsersMixin)
 
 
 @override_settings(MEDIA_ROOT="temp_dir/")
 class AttachedFileDeleteViewTestCase(
-    TeacherViewTestMixin,
+    RolesRequiredTestMixin,
     ResourceViewTestMixin,
+    AjaxRequiredTestMixin,
     UsersMixin,
     ClassesMixin,
     LessonsMixin,
     TestCase,
 ):
     path_name = "attached_file_delete"
+    ajax_required = True
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.student = cls.create_student(school_class=cls.school_class)
+        cls.subject = cls.create_subject()
+        cls.lesson = cls.create_lesson(cls.subject, cls.teacher, cls.school_class)
+        cls.lesson_session = cls.create_lesson_session(cls.lesson)
 
     def setUp(self):
-        self.teacher = self.create_teacher()
-        self.school_class = self.create_class()
-        self.student = self.create_student(school_class=self.school_class)
-        self.subject = self.create_subject()
-        self.lesson = self.create_lesson(self.subject, self.teacher, self.school_class)
-        self.lesson_session = self.create_lesson_session(self.lesson)
-
         self.file = self.create_file(
             related_object=self.lesson_session, creator=self.teacher
         )
@@ -45,6 +50,26 @@ class AttachedFileDeleteViewTestCase(
     def get_nonexistent_resource_url(self):
         return self.get_url(file_pk=12345)
 
+    def get_permitted_user(self):
+        return self.teacher
+
+    def get_not_permitted_user(self):
+        return self.student
+
+    def test_returns_403_if_the_user_is_not_a_creator_of_the_file(self):
+        self.login(self.student)
+
+        response = self.client.post(self.get_url())
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_return_404_if_the_file_does_not_exist(self):
+        self.login(self.teacher)
+
+        response = self.client.post(self.get_url(file_pk=12345))
+
+        self.assertEqual(response.status_code, 404)
+
     def test_deletes_attached_file_instance(self):
         self.login(self.teacher)
 
@@ -58,10 +83,3 @@ class AttachedFileDeleteViewTestCase(
         self.client.post(self.get_url())
 
         self.assertFalse(path.exists(self.file.file.path))
-
-    def test_returns_403_if_the_user_is_not_a_creator_of_the_file(self):
-        self.login(self.student)
-
-        response = self.client.post(self.get_url())
-
-        self.assertEqual(response.status_code, 403)
