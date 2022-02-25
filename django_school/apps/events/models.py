@@ -44,7 +44,6 @@ class Event(models.Model):
     description = models.TextField(max_length=256, blank=True, null=True)
     date = models.DateField()
     created = models.DateTimeField(auto_now_add=True)
-
     teacher = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

@@ -90,15 +90,15 @@
           {% endfor %}
       {% endfor %}
 
-      bootstrap.Tooltip.Default.allowList.h1 = ["*"]
-      const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+      bootstrap.Tooltip.Default.allowList.h1 = ["*"];
+      const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
       const popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
           return new bootstrap.Popover(popoverTriggerEl, {
               container: "body",
               sanitize: false,
               html: true,
-          })
-      })
+          });
+      });
 
       popoverTriggerList.forEach(function (element) {
            element.addEventListener('shown.bs.popover', function() {
@@ -108,7 +108,7 @@
 
       document.querySelector("#base-modal").addEventListener('show.bs.modal', function (){
             popoverList.forEach(function (element) {
-                element.hide()
+                element.hide();
             });
         });
   </script>

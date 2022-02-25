@@ -338,7 +338,7 @@ class GradeCategoryDeleteView(
     template_name = "grades/modals/grade_category_delete.html"
 
     def get_success_url(self):
-        category = self.get_object()
+        category = self.object
         redirect_url = reverse(
             "grades:categories:create",
             args=[category.school_class.slug, category.subject.slug],
@@ -350,6 +350,7 @@ class GradeCategoryDeleteView(
 class GradeCategoryUpdateView(
     LoginRequiredMixin,
     RolesRequiredMixin(ROLES.TEACHER),
+    GetObjectCacheMixin,
     GradeCategoryAccessMixin,
     UpdateView,
 ):

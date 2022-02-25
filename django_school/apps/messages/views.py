@@ -7,6 +7,7 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView, DetailView, ListView
 
 from django_school.apps.classes.models import Class
+from django_school.apps.common.utils import GetObjectCacheMixin
 from django_school.apps.messages.forms import MessageForm
 from django_school.apps.messages.models import Message
 
@@ -88,7 +89,7 @@ class MessageCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
         return context
 
 
-class MessageDetailView(LoginRequiredMixin, DetailView):
+class MessageDetailView(LoginRequiredMixin, GetObjectCacheMixin, DetailView):
     model = Message
     pk_url_kwarg = "message_pk"
     template_name = "messages/message_detail.html"

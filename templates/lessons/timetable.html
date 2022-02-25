@@ -32,10 +32,10 @@
 
     {% for lesson in lessons %}
         {
-            let cell = timetable.querySelector("#{{ lesson.weekday }}{{ lesson.time }}")
-            cell.querySelector(".lesson").innerText = "{{ lesson.subject.name }}"
-            cell.querySelector(".teacher").innerText = "{{ lesson.teacher.full_name }} |"
-            cell.querySelector(".classroom").innerText = "{{ lesson.classroom }}"
+            let cell = timetable.querySelector("#{{ lesson.weekday }}{{ lesson.time }}");
+            cell.querySelector(".lesson").innerText = "{{ lesson.subject.name }}";
+            cell.querySelector(".teacher").innerText = "{{ lesson.teacher.full_name }} |";
+            cell.querySelector(".classroom").innerText = "{{ lesson.classroom }}";
         }
     {% endfor %}
 </script>

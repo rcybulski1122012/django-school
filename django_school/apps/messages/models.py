@@ -27,11 +27,9 @@ class MessagesQuerySet(models.QuerySet):
 class Message(models.Model):
     topic = models.CharField(max_length=64)
     content = MartorField()
-
     sender = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="messages_sent"
     )
-
     receivers = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         through="MessageStatus",
@@ -65,7 +63,6 @@ class MessageStatus(models.Model):
         Message, on_delete=models.CASCADE, related_name="statuses"
     )
     receiver = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-
     is_read = models.BooleanField(default=False)
 
     objects = MessageStatusManager()

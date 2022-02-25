@@ -60,18 +60,18 @@
         <strong>Weight:</strong> {{ grade.weight }}<br>
         <strong>Comment:</strong> {{ grade.comment|default:"-" }}<br>
         <strong>Added:</strong> {{ grade.created|date:"d-m-Y" }}
-        `
+        `;
         element.innerHTML = "{{ grade.get_grade_display }}";
         document.querySelector("#{{ grade.subject.slug }}-grades").appendChild(element);
     }
   {% endfor %}
 
   {% for subject in subjects %}
-      document.querySelector("#{{ subject.slug }}-average").innerHTML = {{ averages|get_item:subject.name|floatformat:"2" }}
+      document.querySelector("#{{ subject.slug }}-average").innerHTML = {{ averages|get_item:subject.name|floatformat:"2" }};
   {% endfor %}
 
 
-  const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+  const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
   const popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
     return new bootstrap.Popover(popoverTriggerEl, {
         container: "body",

@@ -149,9 +149,11 @@ class LessonsMixin:
         return lesson_session
 
     @staticmethod
-    def create_attendance(lesson_session, students, status="none"):
+    def create_attendance(lesson_session, students, status="none", **kwargs):
         attendances = [
-            Attendance(lesson_session=lesson_session, student=student, status=status)
+            Attendance(
+                lesson_session=lesson_session, student=student, status=status, **kwargs
+            )
             for student in students
         ]
 
@@ -160,11 +162,11 @@ class LessonsMixin:
             return Attendance.objects.order_by("-id")[: len(attendances)]
 
     @staticmethod
-    def create_file(related_object, creator, name=DEFAULT_FILE_NAME):
+    def create_file(related_object, creator, name=DEFAULT_FILE_NAME, **kwargs):
         file = SimpleUploadedFile(name, b"file_content")
 
         return AttachedFile.objects.create(
-            related_object=related_object, creator=creator, file=file
+            related_object=related_object, creator=creator, file=file, **kwargs
         )
 
     @staticmethod

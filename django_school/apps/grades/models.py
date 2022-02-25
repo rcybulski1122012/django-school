@@ -9,7 +9,6 @@ from django_school.apps.lessons.models import Lesson, Subject
 
 class GradeCategory(models.Model):
     name = models.CharField(max_length=64)
-
     subject = models.ForeignKey(
         Subject, on_delete=models.CASCADE, related_name="grades_categories"
     )
@@ -66,7 +65,6 @@ class Grade(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     seen_by_student = models.BooleanField(default=False)
     seen_by_parent = models.BooleanField(default=False)
-
     category = models.ForeignKey(
         GradeCategory, on_delete=models.CASCADE, related_name="grades"
     )

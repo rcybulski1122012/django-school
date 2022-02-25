@@ -30,10 +30,10 @@
 {% block js %}
   <script>
       let dateInput = document.querySelector("#date_to");
-      dateInput.addEventListener("change", () => {
+      dateInput.addEventListener("change", function (){
           let date = dateInput.value;
           let url = `${location.protocol}//${location.host}${location.pathname}?date=${date}`
           location.replace(url);
-      })
+      });
   </script>
 {% endblock %}

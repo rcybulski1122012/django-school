@@ -41,17 +41,17 @@
 
 {% block js %}
   <script>
-      const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+      const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
       const popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
           return new bootstrap.Popover(popoverTriggerEl, {
               container: "body",
               sanitize: false,
               html: true,
-          })
+          });
       });
 
       popoverTriggerList.forEach(function (element) {
-         element.addEventListener('shown.bs.popover', function() {
+         element.addEventListener('shown.bs.popover', function () {
              htmx.process(document.querySelector(".eventDeleteButton"));
          });
       });

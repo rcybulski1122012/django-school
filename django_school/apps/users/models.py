@@ -120,7 +120,6 @@ class User(AbstractUser):
     gender = models.CharField(
         max_length=16, choices=GENDER_CHOICES, null=True, blank=True
     )
-
     address = models.OneToOneField(Address, models.SET_NULL, null=True, blank=True)
     school_class = models.ForeignKey(
         Class, models.SET_NULL, null=True, blank=True, related_name="students"

@@ -101,21 +101,21 @@
 
       for (const element of collapse_elements) {
           element.addEventListener("show.bs.collapse", e => {
-              element.previousElementSibling.querySelector(".arrow").style.transform = "rotate(180deg)"
-          })
+              element.previousElementSibling.querySelector(".arrow").style.transform = "rotate(180deg)";
+          });
 
           element.addEventListener("hide.bs.collapse", e => {
-              element.previousElementSibling.querySelector(".arrow").style.transform = "rotate(0deg)"
-          })
+              element.previousElementSibling.querySelector(".arrow").style.transform = "rotate(0deg)";
+          });
       }
 
-      const selectAllButton = document.querySelector("#select-all-btn")
-      const receiversCheckboxes = document.querySelectorAll(`input[type="checkbox"]`)
-      selectAllButton.addEventListener("click", e => {
-          e.preventDefault()
+      const selectAllButton = document.querySelector("#select-all-btn");
+      const receiversCheckboxes = document.querySelectorAll(`input[type="checkbox"]`);
+      selectAllButton.addEventListener("click", function (e){
+          e.preventDefault();
           for (const checkbox of receiversCheckboxes)
-              checkbox.checked = true
-          e.target.innerHTML = "Selected"
+              checkbox.checked = true;
+          e.target.innerHTML = "Selected";
       })
   </script>
 

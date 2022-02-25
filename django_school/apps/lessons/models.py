@@ -121,7 +121,6 @@ class LessonSessionQuerySet(models.QuerySet):
 class LessonSession(models.Model):
     topic = models.CharField(max_length=128, blank=True, null=True)
     date = models.DateField(null=True)
-
     lesson = models.ForeignKey(
         Lesson, on_delete=models.CASCADE, related_name="sessions"
     )
