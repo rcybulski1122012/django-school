@@ -81,9 +81,9 @@ class EventCreateView(
 ):
     model = Event
     form_class = EventForm
-    template_name = "events/event_form.html"
-    success_message = "The event has been created successfully"
     success_url = reverse_lazy("events:calendar")
+    success_message = "The event has been created successfully"
+    template_name = "events/event_form.html"
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -99,11 +99,11 @@ class EventUpdateView(
 ):
     model = Event
     form_class = EventForm
-    template_name = "events/event_update.html"
     pk_url_kwarg = "event_pk"
-    context_object_name = "event"
-    success_message = "The event has been updated successfully"
     success_url = reverse_lazy("events:calendar")
+    success_message = "The event has been updated successfully"
+    template_name = "events/event_update.html"
+    context_object_name = "event"
 
     def get_queryset(self):
         return super().get_queryset().filter(teacher=self.request.user)
@@ -121,11 +121,11 @@ class EventDeleteView(
     DeleteView,
 ):
     model = Event
-    template_name = "events/modals/event_delete.html"
     pk_url_kwarg = "event_pk"
-    context_object_name = "event"
-    success_message = "The event has been deleted successfully."
     success_url = reverse_lazy("events:calendar")
+    success_message = "The event has been deleted successfully."
+    template_name = "events/modals/event_delete.html"
+    context_object_name = "event"
 
     def get_queryset(self):
         return super().get_queryset().filter(teacher=self.request.user)

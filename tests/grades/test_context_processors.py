@@ -21,7 +21,7 @@ class UnseenGradesCountTestCase(
             cls.category, cls.subject, cls.student, cls.teacher
         )
 
-    def test_returns_empty_dict_if_the_user_is_not_authenticated_or_if_is_a_teacher(
+    def test_returns_empty_dict_if_user_is_not_authenticated_or_if_is_teacher(
         self,
     ):
         request = RequestFactory().get("/test")

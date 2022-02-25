@@ -45,7 +45,7 @@ class AttendanceFormSetTestCase(ClassesMixin, UsersMixin, LessonsMixin, TestCase
 
         self.assertTrue(formset.is_valid())
 
-    def test_renders_only_as_many_attendances_form_as_attencances_instances(self):
+    def test_renders_only_as_many_attendances_form_as_attendance_instances(self):
         students = [
             self.create_user(username=f"username{i}", school_class=self.school_class)
             for i in range(5)
@@ -92,16 +92,7 @@ class LessonSessionFormTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase
         form.save()
         self.assertTrue(AttachedFile.objects.exists())
 
-    def test_does_not_save_any_files_if_not_attached(self):
-        form = LessonSessionForm(
-            {"topic": "new topic"}, instance=self.lesson_session, teacher=self.teacher
-        )
-
-        self.assertTrue(form.is_valid())
-        form.save()
-        self.assertFalse(AttachedFile.objects.exists())
-
-    def test_init_disables_fields(self):
+    def test_init_disables_fields_if_disabled_is_True(self):
         form = LessonSessionForm(
             instance=self.lesson_session, disabled=True, teacher=self.teacher
         )
@@ -121,7 +112,7 @@ class HomeworkFormTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
         cls.files = MultiValueDict()
         cls.files["attached_files"] = SimpleUploadedFile("file2.txt", b"file_content")
 
-    def test_is_valid_assigns_the_class_the_subject_and_the_teacher_to_the_instance(
+    def test_is_valid_assigns_class_subject_and_teacher_to_instance(
         self,
     ):
         form = HomeworkForm(
@@ -134,7 +125,7 @@ class HomeworkFormTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
         self.assertEqual(form.instance.school_class, self.school_class)
         self.assertEqual(form.instance.teacher, self.teacher)
 
-    def test_save_creates_a_event_a_gradecategory_statuses_and_files(self):
+    def test_save_creates_event_gradecategory_statuses_and_files(self):
         data = {
             "title": "Title",
             "description": "Description",
@@ -157,7 +148,7 @@ class HomeworkFormTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
         self.assertTrue(AttachedFile.objects.exists())
         self.assertTrue(GradeCategory.objects.exists())
 
-    def test_form_has_error_if_completion_date_is_in_the_past(self):
+    def test_form_has_error_if_completion_date_is_in_past(self):
         data = {
             "title": "Title",
             "description": "Description",

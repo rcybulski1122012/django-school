@@ -21,18 +21,18 @@ class StudentDetailView(
     context_object_name = "user"
 
     def dispatch(self, request, *args, **kwargs):
-        if self.is_requested_user_a_teacher():
+        if self.is_requested_user_role_is_teacher():
             raise Http404()
 
         return super().dispatch(request, *args, **kwargs)
 
-    def is_requested_user_a_teacher(self):
+    def get_queryset(self):
+        return super().get_queryset().select_related("address", "school_class__tutor")
+
+    def is_requested_user_role_is_teacher(self):
         return User.objects.filter(
             slug=self.kwargs[self.slug_url_kwarg], role=ROLES.TEACHER
         ).exists()
-
-    def get_queryset(self):
-        return super().get_queryset().select_related("address", "school_class__tutor")
 
 
 class PasswordChangeWithMessageView(SuccessMessageMixin, PasswordChangeView):

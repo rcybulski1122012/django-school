@@ -56,14 +56,14 @@ class AttachedFileDeleteViewTestCase(
     def get_not_permitted_user(self):
         return self.student
 
-    def test_returns_403_if_the_user_is_not_a_creator_of_the_file(self):
+    def test_returns_403_if_user_is_not_creator_of_file(self):
         self.login(self.student)
 
         response = self.client.post(self.get_url())
 
         self.assertEqual(response.status_code, 403)
 
-    def test_return_404_if_the_file_does_not_exist(self):
+    def test_returns_404_if_file_does_not_exist(self):
         self.login(self.teacher)
 
         response = self.client.post(self.get_url(file_pk=12345))

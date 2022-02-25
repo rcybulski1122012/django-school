@@ -4,19 +4,19 @@ from django_school.apps.lessons.views import (ClassSubjectListView,
                                               ClassTimetableView,
                                               HomeworkDetailView,
                                               HomeworkListView,
-                                              LessonSessionsListView,
+                                              LessonSessionListView,
                                               SetHomeworkView,
                                               TeacherTimetableView,
                                               class_attendance_summary_view,
                                               lesson_session_detail_view,
                                               student_attendance_summary_view,
                                               submit_homework_realisation_view,
-                                              timetables_list_view)
+                                              timetable_list_view)
 
 app_name = "lessons"
 
 urlpatterns = [
-    path("timetables/", timetables_list_view, name="timetables_list"),
+    path("timetables/", timetable_list_view, name="timetables_list"),
     path(
         "class_timetable/<slug:class_slug>/",
         ClassTimetableView.as_view(),
@@ -29,7 +29,7 @@ urlpatterns = [
     ),
     path(
         "sessions/",
-        LessonSessionsListView.as_view(),
+        LessonSessionListView.as_view(),
         name="session_list",
     ),
     path(

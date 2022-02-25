@@ -1,6 +1,7 @@
+import datetime
+
 from django import forms
 from django.core.exceptions import ValidationError
-from django.utils import timezone
 
 from django_school.apps.common.models import AttachedFile
 from django_school.apps.events.models import Event, EventStatus
@@ -91,7 +92,7 @@ class HomeworkForm(forms.ModelForm):
 
     def clean_completion_date(self):
         completion_date = self.cleaned_data["completion_date"]
-        today = timezone.now()
+        today = datetime.datetime.today().date()
 
         if completion_date <= today:
             raise ValidationError("The completion date must be in the future")

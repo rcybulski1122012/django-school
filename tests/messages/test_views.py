@@ -6,7 +6,7 @@ from tests.utils import (ClassesMixin, LoginRequiredTestMixin, MessagesMixin,
                          UsersMixin)
 
 
-class MessagesListViewTestMixin(LoginRequiredTestMixin, UsersMixin, MessagesMixin):
+class MessageListViewTestMixin(LoginRequiredTestMixin, UsersMixin, MessagesMixin):
     @classmethod
     def setUpTestData(cls):
         cls.user1 = cls.create_user(username="user1")
@@ -21,7 +21,7 @@ class MessagesListViewTestMixin(LoginRequiredTestMixin, UsersMixin, MessagesMixi
     def get_permitted_user(self):
         return None
 
-    def test_renders_appropriate_message_when_there_are_no_messages(self):
+    def test_renders_appropriate_message_if_there_are_no_messages(self):
         self.login(self.user1)
         self.message1.delete()
         self.message2.delete()
@@ -49,7 +49,7 @@ class MessagesListViewTestMixin(LoginRequiredTestMixin, UsersMixin, MessagesMixi
         self.assertContains(response, '<ul class="pagination">')
 
 
-class ReceivedMessagesListViewTestCase(MessagesListViewTestMixin, TestCase):
+class ReceivedMessageListViewTestCase(MessageListViewTestMixin, TestCase):
     path_name = "messages:received"
 
     def test_context_contains_received_messages(self):
@@ -81,7 +81,7 @@ class ReceivedMessagesListViewTestCase(MessagesListViewTestMixin, TestCase):
         self.assertNotContains(response, "message-unread")
 
 
-class SentMessagesListViewTestCase(MessagesListViewTestMixin, TestCase):
+class SentMessageListViewTestCase(MessageListViewTestMixin, TestCase):
     path_name = "messages:sent"
 
     def test_context_contains_received_messages(self):
@@ -144,7 +144,7 @@ class MessageCreateViewTestCase(
 
         self.assertContains(response, "The message has been sent successfully")
 
-    def test_renders_error_when_any_receivers_are_not_chosen(self):
+    def test_renders_error_if_any_receivers_are_not_chosen(self):
         self.login(self.sender)
         data = {
             "receivers": [],
@@ -176,7 +176,7 @@ class MessageCreateViewTestCase(
         self.assertQuerysetEqual(teachers_qs, [self.receiver])
         self.assertQuerysetEqual(classes_qs, [school_class])
 
-    def test_provides_initials_if_reply_to_value_given(self):
+    def test_provides_initials_if_reply_to_given(self):
         self.login(self.receiver)
         message = self.create_message(self.sender, [self.receiver])
 
@@ -209,14 +209,14 @@ class MessageDetailViewTestView(
     def get_permitted_user(self):
         return None
 
-    def test_returns_404_when_user_is_not_a_sender_or_a_receiver_of_the_message(self):
+    def test_returns_404_if_user_is_not_sender_or_receiver_of_message(self):
         self.login(self.user)
 
         response = self.client.get(self.get_url())
 
         self.assertEqual(response.status_code, 404)
 
-    def test_returns_200_when_user_is_a_sender_or_a_receiver_of_the_message(self):
+    def test_returns_200_if_user_is_sender_or_receiver_of_message(self):
         self.login(self.sender)
 
         response = self.client.get(self.get_url())

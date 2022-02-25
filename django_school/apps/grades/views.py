@@ -29,19 +29,14 @@ User = get_user_model()
 class GradeCreateView(
     LoginRequiredMixin,
     RolesRequiredMixin(ROLES.TEACHER),
-    SubjectAndSchoolClassRelatedMixin,
     SuccessMessageMixin,
+    SubjectAndSchoolClassRelatedMixin,
     CreateView,
 ):
     model = Grade
     form_class = GradeForm
-    template_name = "grades/grade_form.html"
     success_message = "The grade has been added successfully."
-
-    def get_initial(self):
-        return {
-            "student": self.request.GET.get("student"),
-        }
+    template_name = "grades/grade_form.html"
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -54,6 +49,11 @@ class GradeCreateView(
         )
         return kwargs
 
+    def get_initial(self):
+        return {
+            "student": self.request.GET.get("student"),
+        }
+
     def get_success_url(self):
         return reverse(
             "grades:class_grades",
@@ -63,7 +63,7 @@ class GradeCreateView(
 
 @login_required
 @roles_required(ROLES.TEACHER)
-def create_grades_in_bulk_view(request, category_pk):
+def grade_bulk_create_view(request, category_pk):
     category = get_object_or_404(
         GradeCategory.objects.select_related("subject", "school_class"), pk=category_pk
     )
@@ -113,7 +113,7 @@ def create_grades_in_bulk_view(request, category_pk):
 
     return render(
         request,
-        "grades/create_grades_in_bulk.html",
+        "grades/grade_bulk_create.html",
         {
             "common_form": common_form,
             "grades_formset": grades_formset,
@@ -150,11 +150,16 @@ class ClassGradesView(
         return context
 
 
-class StudentGradesView(LoginRequiredMixin, GetObjectCacheMixin, DetailView):
+class StudentGradesView(LoginRequiredMixin, DetailView):
     model = User
     slug_url_kwarg = "student_slug"
     template_name = "grades/student_grades.html"
     context_object_name = "student"
+
+    def get_queryset(self):
+        return User.students.visible_to_user(self.request.user).prefetch_related(
+            "grades_gotten__subject", "grades_gotten__category"
+        )
 
     def get(self, *args, **kwargs):
         # in template unseen grades are rendered in a different way
@@ -169,15 +174,9 @@ class StudentGradesView(LoginRequiredMixin, GetObjectCacheMixin, DetailView):
 
         return result
 
-    def get_queryset(self):
-        return User.students.visible_to_user(self.request.user).prefetch_related(
-            "grades_gotten__subject", "grades_gotten__category"
-        )
-
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data()
-        student = self.get_object()
-        grades = student.grades_gotten.all()
+        grades = self.object.grades_gotten.all()
         ctx["subjects"] = self._get_list_of_subjects(grades)
         ctx["averages"] = self._get_dict_of_averages(grades)
 
@@ -211,12 +210,6 @@ class SingleGradeMixin:
     pk_url_kwarg = "grade_pk"
     context_object_name = "grade"
 
-    def get_success_url(self):
-        return reverse(
-            "grades:class_grades",
-            args=[self.object.student.school_class.slug, self.object.subject.slug],
-        )
-
     def get_queryset(self):
         return (
             super()
@@ -225,28 +218,34 @@ class SingleGradeMixin:
             .select_related("category", "subject", "student__school_class", "teacher")
         )
 
+    def get_success_url(self):
+        return reverse(
+            "grades:class_grades",
+            args=[self.object.student.school_class.slug, self.object.subject.slug],
+        )
+
 
 class GradeUpdateView(
     LoginRequiredMixin,
     RolesRequiredMixin(ROLES.TEACHER),
-    SingleGradeMixin,
     SuccessMessageMixin,
+    SingleGradeMixin,
     UpdateView,
 ):
     fields = ["grade", "weight", "comment"]
-    template_name = "grades/grade_update.html"
     success_message = "The grade has been updated successfully."
+    template_name = "grades/grade_update.html"
 
 
 class GradeDeleteView(
     LoginRequiredMixin,
     RolesRequiredMixin(ROLES.TEACHER),
-    SingleGradeMixin,
     AjaxRequiredMixin,
+    SingleGradeMixin,
     DeleteView,
 ):
-    template_name = "grades/modals/grade_delete.html"
     success_message = "The grade has been deleted successfully."
+    template_name = "grades/modals/grade_delete.html"
 
     def delete(self, *args, **kwargs):
         messages.success(self.request, self.success_message)
@@ -282,7 +281,7 @@ def grade_categories_view(request, class_slug, subject_slug):
     )
     return render(
         request,
-        "grades/gradecategory_list.html",
+        "grades/grade_category_list.html",
         {
             "categories": categories,
             "school_class": school_class,
@@ -292,6 +291,9 @@ def grade_categories_view(request, class_slug, subject_slug):
 
 
 class GradeCategoryAccessMixin:
+    def get_queryset(self):
+        return super().get_queryset().select_related("school_class", "subject")
+
     def get_object(self, queryset=None):
         category = super().get_object(queryset)
 
@@ -301,9 +303,6 @@ class GradeCategoryAccessMixin:
             raise Http404
 
         return category
-
-    def get_queryset(self):
-        return super().get_queryset().select_related("school_class", "subject")
 
 
 class GradeCategoryFormTemplateView(TemplateView):
@@ -330,13 +329,13 @@ class GradeCategoryDetailView(
 class GradeCategoryDeleteView(
     LoginRequiredMixin,
     RolesRequiredMixin(ROLES.TEACHER),
-    GradeCategoryAccessMixin,
-    GetObjectCacheMixin,
     AjaxRequiredMixin,
+    GetObjectCacheMixin,
+    GradeCategoryAccessMixin,
     DeleteView,
 ):
     model = GradeCategory
-    template_name = "grades/modals/category_delete.html"
+    template_name = "grades/modals/grade_category_delete.html"
 
     def get_success_url(self):
         category = self.get_object()
@@ -359,9 +358,6 @@ class GradeCategoryUpdateView(
     template_name = "grades/partials/grade_category_form.html"
     context_object_name = "category"
 
-    def get_success_url(self):
-        return self.object.detail_url
-
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         category = self.get_object()
@@ -373,3 +369,6 @@ class GradeCategoryUpdateView(
         )
 
         return kwargs
+
+    def get_success_url(self):
+        return self.object.detail_url

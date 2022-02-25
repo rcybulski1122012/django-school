@@ -18,7 +18,7 @@ class UserModelTestCase(UsersMixin, ClassesMixin, TestCase):
 
         self.assertEqual(user.full_name, "FirstName LastName")
 
-    def test_save_slugify_if_slug_not_given(self):
+    def test_save_slugifies_if_slug_not_given(self):
         user = User.objects.create(first_name="FirstName", last_name="LastName")
 
         self.assertEqual(user.slug, "firstname-lastname")
@@ -58,7 +58,7 @@ class UserModelTestCase(UsersMixin, ClassesMixin, TestCase):
 
         self.assertTrue(user.is_parent)
 
-    def test_clean_raises_ValidationError_if_user_is_not_a_student_and_has_class_assigned(
+    def test_clean_raises_ValidationError_if_user_is_not_student_and_has_class_assigned(
         self,
     ):
         school_class = self.create_class()
@@ -71,7 +71,7 @@ class UserModelTestCase(UsersMixin, ClassesMixin, TestCase):
         with self.assertRaises(ValidationError):
             user.clean()
 
-    def test_clean_raises_ValidationError_if_user_is_not_a_parent_and_has_child_assigned(
+    def test_clean_raises_ValidationError_if_user_is_not_parent_and_has_child_assigned(
         self,
     ):
         student = self.create_student()
@@ -84,7 +84,7 @@ class UserModelTestCase(UsersMixin, ClassesMixin, TestCase):
         with self.assertRaises(ValidationError):
             user.clean()
 
-    def test_clean_raises_ValidationError_if_child_is_not_a_student(self):
+    def test_clean_raises_ValidationError_if_child_is_not_student(self):
         parent = self.create_parent()
         teacher = self.create_teacher()
         parent.clean()
@@ -160,7 +160,7 @@ class StudentsManagerTestCase(
 
         self.assertAlmostEqual(w_avg, 3.833333333333333)
 
-    def test_with_weighted_avg_for_subject_when_no_grades(self):
+    def test_with_weighted_avg_for_subject_if_no_grades(self):
         user = User.students.with_weighted_avg_for_subject(self.subject).get(
             pk=self.student.pk
         )
@@ -200,7 +200,7 @@ class StudentsManagerTestCase(
         with self.assertNumQueries(2):
             _ = User.students.with_subject_grades(self.subject).get().subject_grades
 
-    def test_visible_to_user_selects_taught_students_if_the_user_is_a_teacher(self):
+    def test_visible_to_user_selects_taught_students_if_user_is_teacher(self):
         school_class2 = self.create_class(number="2c")
         self.create_student(username="student2", school_class=school_class2)
         teacher2 = self.create_teacher(username="teacher2")
@@ -210,13 +210,13 @@ class StudentsManagerTestCase(
         queryset = User.students.visible_to_user(self.teacher)
         self.assertQuerysetEqual(queryset, [self.student])
 
-    def test_visible_to_user_selects_the_user_if_the_user_is_a_student(self):
+    def test_visible_to_user_selects_user_if_user_is_student(self):
         self.create_student(username="student2")
         queryset = User.students.visible_to_user(self.student)
 
         self.assertQuerysetEqual(queryset, [self.student])
 
-    def test_visible_to_user_selects_the_child_if_the_user_is_a_parent(self):
+    def test_visible_to_user_selects_child_if_user_is_parent(self):
         parent = self.create_parent(child=self.student)
         queryset = User.students.visible_to_user(parent)
 

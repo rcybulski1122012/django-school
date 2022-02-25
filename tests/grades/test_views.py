@@ -41,7 +41,7 @@ class SubjectAndSchoolClassRelatedTestMixin(
     def get_not_permitted_user(self):
         return self.student
 
-    def test_returns_404_when_the_teacher_is_not_teaching_the_class(self):
+    def test_returns_404_if_teacher_is_not_teaching_class(self):
         self.login(self.teacher)
         school_class2 = self.create_class(number="2c")
 
@@ -49,7 +49,7 @@ class SubjectAndSchoolClassRelatedTestMixin(
 
         self.assertEqual(response.status_code, 404)
 
-    def test_returns_404_when_the_class_does_not_learning_the_subject(self):
+    def test_returns_404_if_class_does_not_learning_subject(self):
         self.login(self.teacher)
         self.lesson.delete()
 
@@ -107,7 +107,7 @@ class GradeCreateViewTestCase(SubjectAndSchoolClassRelatedTestMixin, TestCase):
 
         self.assertContains(response, "The grade has been added successfully.")
 
-    def test_renders_error_after_adding_a_grade_which_already_exist(self):
+    def test_renders_error_after_adding_grade_which_already_exist(self):
         self.login(self.teacher)
         self.create_grade(self.category, self.subject, self.student, self.teacher)
         data = self.get_example_form_data()
@@ -118,7 +118,7 @@ class GradeCreateViewTestCase(SubjectAndSchoolClassRelatedTestMixin, TestCase):
             response, "The student already has got a grade in this category.", html=True
         )
 
-    def test_set_student_initial_data_to_form_if_given(self):
+    def test_sets_student_initial_data_to_form_if_given(self):
         self.login(self.teacher)
         url = f"{self.get_url()}?student={self.student.pk}"
 
@@ -198,7 +198,7 @@ class StudentGradesViewTestCase(
     def get_permitted_user(self):
         return self.student
 
-    def test_returns_404_if_user_with_given_slug_is_not_a_student(self):
+    def test_returns_404_if_user_with_given_slug_is_not_student(self):
         self.login(self.teacher)
 
         response = self.client.get(self.get_url(student_slug=self.teacher.slug))
@@ -227,7 +227,7 @@ class StudentGradesViewTestCase(
         self.assertEqual(subjects, [self.subject])
         self.assertEqual(averages, {self.DEFAULT_SUBJECT_NAME: 3.00})
 
-    def test_sets_grades_seen_by_student_attr_to_True_if_the_user_is_a_student(self):
+    def test_sets_grades_seen_by_student_attr_to_True_if_user_is_student(self):
         self.assertFalse(self.grade.seen_by_student)
         self.login(self.student)
 
@@ -236,7 +236,7 @@ class StudentGradesViewTestCase(
 
         self.assertTrue(self.grade.seen_by_student)
 
-    def test_sets_grades_seen_by_parent_attr_to_True_if_the_user_is_a_parent(self):
+    def test_sets_grades_seen_by_parent_attr_to_True_if_user_is_parent(self):
         parent = self.create_parent(child=self.student)
         self.assertFalse(self.grade.seen_by_parent)
         self.login(parent)
@@ -247,7 +247,7 @@ class StudentGradesViewTestCase(
         self.assertTrue(self.grade.seen_by_parent)
 
 
-class CreateGradesInBulkViewTestCase(
+class GradeBulkCreateViewTestCase(
     RolesRequiredTestMixin,
     ResourceViewTestMixin,
     UsersMixin,
@@ -302,7 +302,7 @@ class CreateGradesInBulkViewTestCase(
 
         return data
 
-    def test_returns_404_when_the_class_does_not_learning_the_subject(self):
+    def test_returns_404_if_class_does_not_learning_subject(self):
         self.login(self.teacher)
         self.lesson.delete()
 
@@ -310,7 +310,7 @@ class CreateGradesInBulkViewTestCase(
 
         self.assertEqual(response.status_code, 404)
 
-    def test_returns_404_if_every_student_already_has_a_grade_in_the_category(self):
+    def test_returns_404_if_every_student_already_has_grade_in_category(self):
         self.login(self.teacher)
         self.create_grade(self.category, self.subject, self.student, self.teacher)
 
@@ -356,7 +356,7 @@ class CreateGradesInBulkViewTestCase(
 
         self.assertContains(response, "The grades have been added successfully.")
 
-    def test_excludes_students_if_they_already_have_a_grade_in_the_category(self):
+    def test_excludes_students_if_they_already_have_grade_in_category(self):
         self.login(self.teacher)
         student2 = self.create_student(
             username="student2",
@@ -406,7 +406,7 @@ class SingleGradeTestMixin(
     def get_not_permitted_user(self):
         return self.student
 
-    def test_returns_404_when_user_is_not_the_teacher_who_gave_the_grade(self):
+    def test_returns_404_if_user_is_not_teacher_who_gave_grade(self):
         teacher2 = self.create_teacher(username="teacher2")
         self.login(teacher2)
 
@@ -509,7 +509,7 @@ class GradeCategoryFormViewTestCase(ClassesMixin, LessonsMixin, GradesMixin, Tes
 class GradeCategoriesViewTestCase(SubjectAndSchoolClassRelatedTestMixin, TestCase):
     path_name = "grades:categories:create"
 
-    def test_returns_404_when_the_teacher_is_not_teaching_the_subject_to_the_class(
+    def test_returns_404_if_teacher_is_not_teaching_subject_to_class(
         self,
     ):
         teacher2 = self.create_teacher(username="teacher2")
@@ -589,7 +589,7 @@ class SingleGradeCategoryTestMixin(
     def get_not_permitted_user(self):
         return self.student
 
-    def test_returns_404_when_the_teacher_is_not_teaching_the_subject_to_the_class(
+    def test_returns_404_if_teacher_is_not_teaching_subject_to_class(
         self,
     ):
         teacher2 = self.create_teacher(username="teacher2")
@@ -606,7 +606,7 @@ class SingleGradeCategoryTestMixin(
 class GradeCategoryDetailViewTestCase(SingleGradeCategoryTestMixin, TestCase):
     path_name = "grades:categories:detail"
 
-    def test_renders_name_of_the_category(self):
+    def test_renders_name_of_category(self):
         self.login(self.teacher)
 
         response = self.client.get(self.get_url())

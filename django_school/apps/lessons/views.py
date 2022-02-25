@@ -37,8 +37,8 @@ class TimetableContextMixin:
 class ClassTimetableView(TimetableContextMixin, DetailView):
     model = Class
     slug_url_kwarg = "class_slug"
-    context_object_name = "school_class"
     template_name = "lessons/class_timetable.html"
+    context_object_name = "school_class"
 
     def get_queryset(self):
         return (
@@ -51,8 +51,11 @@ class ClassTimetableView(TimetableContextMixin, DetailView):
 class TeacherTimetableView(TimetableContextMixin, DetailView):
     model = User
     slug_url_kwarg = "teacher_slug"
-    context_object_name = "teacher"
     template_name = "lessons/teacher_timetable.html"
+    context_object_name = "teacher"
+
+    def get_queryset(self):
+        return self.model.objects.select_related("address", "teacher_class")
 
     def get_object(self, queryset=None):
         user = super().get_object()
@@ -62,11 +65,8 @@ class TeacherTimetableView(TimetableContextMixin, DetailView):
 
         return user
 
-    def get_queryset(self):
-        return self.model.objects.select_related("address", "teacher_class")
 
-
-def timetables_list_view(request):
+def timetable_list_view(request):
     teachers = User.teachers.order_by("first_name")
     school_classes = Class.objects.order_by("number")
 
@@ -77,7 +77,7 @@ def timetables_list_view(request):
     )
 
 
-class LessonSessionsListView(
+class LessonSessionListView(
     LoginRequiredMixin, RolesRequiredMixin(ROLES.TEACHER, ROLES.STUDENT), ListView
 ):
     model = LessonSession
@@ -236,15 +236,15 @@ def class_attendance_summary_view(request, class_slug):
 class SetHomeworkView(
     LoginRequiredMixin,
     RolesRequiredMixin(ROLES.TEACHER),
-    SubjectAndSchoolClassRelatedMixin,
     SuccessMessageMixin,
+    SubjectAndSchoolClassRelatedMixin,
     CreateView,
 ):
     model = Homework
     form_class = HomeworkForm
-    template_name = "lessons/set_homework.html"
-    success_message = "The homework has been set successfully"
     success_url = reverse_lazy("lessons:homework_list")
+    success_message = "The homework has been set successfully"
+    template_name = "lessons/homework_set.html"
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -263,9 +263,9 @@ class HomeworkListView(
     LoginRequiredMixin, RolesRequiredMixin(ROLES.TEACHER, ROLES.STUDENT), ListView
 ):
     model = Homework
+    paginate_by = 10
     template_name = "lessons/homework_list.html"
     context_object_name = "homeworks"
-    paginate_by = 10
 
     def get_queryset(self):
         qs = (
@@ -345,4 +345,4 @@ def submit_homework_realisation_view(request, homework_pk):
             return redirect(homework.detail_url)
 
     ctx = {"form": form}
-    return render(request, "lessons/modals/create_homework_realisation.html", ctx)
+    return render(request, "lessons/modals/homework_realisation_create.html", ctx)

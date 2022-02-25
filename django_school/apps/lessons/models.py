@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Count, Prefetch, Q
+from django.db.models import Count, Prefetch
 from django.urls import reverse
 from django.utils.text import slugify
 
@@ -202,7 +202,7 @@ class Homework(models.Model):
     title = models.CharField(max_length=64)
     description = models.TextField(max_length=256, blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True)
-    completion_date = models.DateTimeField()
+    completion_date = models.DateField()
     teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     school_class = models.ForeignKey(
         Class, on_delete=models.CASCADE, related_name="homeworks"

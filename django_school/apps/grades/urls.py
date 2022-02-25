@@ -8,7 +8,7 @@ from django_school.apps.grades.views import (ClassGradesView,
                                              GradeCreateView, GradeDeleteView,
                                              GradeUpdateView,
                                              StudentGradesView,
-                                             create_grades_in_bulk_view,
+                                             grade_bulk_create_view,
                                              grade_categories_view)
 
 app_name = "grades"
@@ -49,7 +49,7 @@ urlpatterns = [
     ),
     path(
         "<int:category_pk>/add_in_bulk/",
-        create_grades_in_bulk_view,
+        grade_bulk_create_view,
         name="add_in_bulk",
     ),
     path("update/<int:grade_pk>/", GradeUpdateView.as_view(), name="update"),

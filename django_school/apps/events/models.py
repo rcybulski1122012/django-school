@@ -21,9 +21,11 @@ class EventQuerySet(models.QuerySet):
         if user.is_teacher:
             return self.filter(global_events | Q(teacher=user))
         elif user.is_student:
-            return self.filter(global_events | Q(school_class=user.school_class))
+            return self.filter(global_events | Q(school_class_id=user.school_class_id))
         elif user.is_parent:
-            return self.filter(global_events | Q(school_class=user.child.school_class))
+            return self.filter(
+                global_events | Q(school_class_id=user.child.school_class_id)
+            )
 
     def with_statuses(self, user):
         qs = self.prefetch_related(
@@ -85,8 +87,8 @@ class EventStatusManager(models.Manager):
     def create_multiple(self, event):
         users_qs = (
             User.objects.filter(
-                Q(school_class=event.school_class)
-                | Q(child__school_class=event.school_class)
+                Q(school_class_id=event.school_class_id)
+                | Q(child__school_class_id=event.school_class_id)
             )
             if event.school_class
             else User.objects.exclude(pk=event.teacher_id)

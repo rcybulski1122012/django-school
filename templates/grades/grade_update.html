@@ -6,8 +6,7 @@
 {% endblock %}
 
 {% block content %}
-  <h1>
-    Update Grade | Student: {{ grade.student.full_name }} | Category: {{ grade.category.name }}</h1>
+  <h1>Update Grade | Student: {{ grade.student.full_name }} | Category: {{ grade.category.name }}</h1>
   <form method="POST">
     {{ form|crispy }}
 

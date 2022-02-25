@@ -6,7 +6,7 @@ from tests.utils import ClassesMixin, LessonsMixin, UsersMixin
 
 
 class ClassModelTestCase(UsersMixin, ClassesMixin, TestCase):
-    def test_save_slugify_if_slug_not_given(self):
+    def test_save_slugifies_if_slug_not_given(self):
         school_class = self.create_class(number="4 cm")
 
         self.assertEqual(school_class.slug, "4-cm")
@@ -16,7 +16,7 @@ class ClassModelTestCase(UsersMixin, ClassesMixin, TestCase):
 
         self.assertEqual(school_class.slug, "cm4")
 
-    def test_clean_raises_ValidationError_when_tutor_is_not_a_teacher(
+    def test_clean_raises_ValidationError_if_tutor_is_not_teacher(
         self,
     ):
         student = self.create_student()
@@ -25,7 +25,7 @@ class ClassModelTestCase(UsersMixin, ClassesMixin, TestCase):
 
 
 class ClassQuerySetTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
-    def test_visible_to_user_selects_user_class_if_student(self):
+    def test_visible_to_user_selects_user_class_if_user_is_student(self):
         school_class = self.create_class()
         self.create_class(number="2c")
         student = self.create_student(school_class=school_class)
@@ -33,7 +33,9 @@ class ClassQuerySetTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
         queryset = Class.objects.visible_to_user(student)
         self.assertQuerysetEqual(queryset, [school_class])
 
-    def test_visible_to_user_select_classes_which_are_taught_by_teacher(self):
+    def test_visible_to_user_selects_classes_which_are_taught_by_teacher_if_user_is_teacher(
+        self,
+    ):
         teacher = self.create_teacher()
         school_class = self.create_class()
         self.create_class(number="2c")
@@ -43,7 +45,7 @@ class ClassQuerySetTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
         queryset = Class.objects.visible_to_user(teacher)
         self.assertQuerysetEqual(queryset, [school_class])
 
-    def test_visible_to_user_select_the_class_of_the_child(self):
+    def test_visible_to_user_selects_child_class_if_user_is_parent(self):
         school_class = self.create_class()
         self.create_class(number="2c")
         student = self.create_student(school_class=school_class)

@@ -147,8 +147,8 @@ class Command(BaseCommand):
             username="teacher",
             password="teacher",
             role=ROLES.TEACHER,
-            first_name="Lane",
-            last_name="Erickson",
+            first_name="Teacher",
+            last_name="Loggable",
             gender="female",
             phone_number="123-456-789",
         )
@@ -160,12 +160,23 @@ class Command(BaseCommand):
             username="student",
             password="student",
             role=ROLES.STUDENT,
-            first_name="Clifford",
-            last_name="Skinner",
+            first_name="Student",
+            last_name="Loggable",
             gender="male",
             phone_number="456-123-789",
             school_class=self.school_class,
         )
+
+        subject = Subject.objects.create(name="History", slug="history")
+        lesson = Lesson.objects.create(
+            subject=subject,
+            teacher=self.teacher,
+            school_class=self.school_class,
+            time=Lesson.LESSONS_TIMES[0][0],
+            weekday=Lesson.WEEKDAYS[0][0],
+            classroom=1,
+        )
+        self.create_lesson_sessions_and_attendances([lesson])
 
     def create_loggable_parent(self):
         child = User.students.get(username="student")
@@ -174,8 +185,8 @@ class Command(BaseCommand):
             username="parent",
             password="parent",
             role=ROLES.PARENT,
-            first_name="Nelson",
-            last_name="Gill",
+            first_name="Parent",
+            last_name="Loggable",
             gender="male",
             phone_number="789-456-123",
             child=child,

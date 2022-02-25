@@ -134,13 +134,13 @@ class AjaxRequiredMixinTestCase(TestCase):
 
         view(request)
 
-    def test_does_not_raise_if_request_method_in_not_ajax_allowed_methods(self):
+    def test_does_not_raise_if_request_method_in_not_ajax_but_in_allowed_methods(self):
         request = RequestFactory().post("/test")
         view = self.DummyView.as_view()
 
         view(request)
 
-    def test_does_not_raise_if_request_is_htmx_request(self):
+    def test_does_not_raise_if_request_is_htmx(self):
         request = RequestFactory().get("/test", HTTP_HX_REQUEST="true")
         view = self.DummyView.as_view()
 
@@ -164,12 +164,12 @@ class AjaxRequiredDecoratorTestCase(TestCase):
 
         self.dummy_view(request)
 
-    def test_does_not_raise_if_request_method_in_not_ajax_allowed_methods(self):
+    def test_does_not_raise_if_request_method_in_not_ajax_but_in_allowed_methods(self):
         request = RequestFactory().post("/test")
 
         self.dummy_view(request)
 
-    def test_does_not_raise_if_request_is_htmx_request(self):
+    def test_does_not_raise_if_request_is_htmx(self):
         request = RequestFactory().get("/test", HTTP_HX_REQUEST="true")
 
         self.dummy_view(request)

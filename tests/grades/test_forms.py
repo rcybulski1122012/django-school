@@ -38,7 +38,7 @@ class GradeFormTestCase(UsersMixin, ClassesMixin, LessonsMixin, GradesMixin, Tes
         categories_qs = form.fields["category"].queryset
         self.assertQuerysetEqual(categories_qs, [self.grade_category])
 
-    def test_is_valid_assigns_the_teacher_and_the_subject_to_the_instance(self):
+    def test_is_valid_assigns_teacher_and_subject_to_instance(self):
         form = GradeForm(
             school_class=self.school_class, subject=self.subject, teacher=self.teacher
         )
@@ -90,7 +90,7 @@ class GradeCategoryFormTestCase(ClassesMixin, LessonsMixin, TestCase):
         cls.subject = cls.create_subject()
         cls.school_class = cls.create_class()
 
-    def test_is_valid_assign_the_teacher_to_the_instance(self):
+    def test_is_valid_assigns_teacher_to_instance(self):
         form = GradeCategoryForm(subject=self.subject, school_class=self.school_class)
 
         form.is_valid()

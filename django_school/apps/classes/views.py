@@ -6,11 +6,11 @@ from django_school.apps.common.utils import RolesRequiredMixin
 from django_school.apps.users.models import ROLES
 
 
-class ClassesListView(LoginRequiredMixin, RolesRequiredMixin(ROLES.TEACHER), ListView):
+class ClassListView(LoginRequiredMixin, RolesRequiredMixin(ROLES.TEACHER), ListView):
     model = Class
     ordering = ["number"]
-    context_object_name = "school_classes"
     template_name = "classes/class_list.html"
+    context_object_name = "school_classes"
 
     def get_queryset(self):
         return super().get_queryset().visible_to_user(self.request.user)
@@ -21,8 +21,8 @@ class ClassDetailView(
 ):
     model = Class
     slug_url_kwarg = "class_slug"
-    context_object_name = "school_class"
     template_name = "classes/class_detail.html"
+    context_object_name = "school_class"
 
     def get_queryset(self):
         return (

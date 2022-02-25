@@ -45,7 +45,7 @@ class StudentDetailViewTestCase(
     def get_not_permitted_user(self):
         return self.student
 
-    def test_returns_404_if_user_is_a_teacher(self):
+    def test_returns_404_if_user_is_teacher(self):
         self.login(self.teacher)
 
         response = self.client.get(self.get_url(self.teacher.slug))

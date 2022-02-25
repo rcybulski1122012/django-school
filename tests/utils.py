@@ -109,7 +109,9 @@ class LessonsMixin:
     DEFAULT_CLASSROOM = 123
     DEFAULT_FILE_NAME = "file.txt"
     DEFAULT_HOMEWORK_TITLE = "homework"
-    DEFAULT_COMPLETION_DATE = datetime.datetime.today() + datetime.timedelta(days=10)
+    DEFAULT_COMPLETION_DATE = (
+        datetime.datetime.today() + datetime.timedelta(days=10)
+    ).date()
 
     @staticmethod
     def create_subject(name=DEFAULT_SUBJECT_NAME, **kwargs):
@@ -304,7 +306,7 @@ class RolesRequiredTestMixin(LoginRequiredTestMixin):
     def get_not_permitted_user(self):
         raise NotImplementedError("get_not_permitted_user must be implemented")
 
-    def test_returns_403_if_the_user_role_is_not_permitted(self):
+    def test_returns_403_if_user_role_is_not_permitted(self):
         user = self.get_not_permitted_user()
         self._login(user)
 
@@ -312,7 +314,7 @@ class RolesRequiredTestMixin(LoginRequiredTestMixin):
 
         self.assertEqual(response.status_code, 403)
 
-    def test_does_not_return_403_if_the_user_role_is_permitted(self):
+    def test_does_not_return_403_if_user_role_is_permitted(self):
         user = self.get_permitted_user()
         self._login(user)
 

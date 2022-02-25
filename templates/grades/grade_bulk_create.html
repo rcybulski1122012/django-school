@@ -6,7 +6,8 @@
 {% endblock %}
 
 {% block content %}
-  <h2>Add grades in bulk | Class: {{ school_class.number }} | Subject: {{ subject.name }} | Category: {{ category.name }}</h2>
+  <h1>Add grades in bulk</h1>
+  <h3>Class: {{ school_class.number }} | Subject: {{ subject.name }} | Category: {{ category.name }}</h3>
 
   <form method="POST">
     {{ grades_formset.management_form }}

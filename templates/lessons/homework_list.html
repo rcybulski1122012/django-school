@@ -40,7 +40,7 @@
             {% else %}
               {% with realisation=homework.realisation.0 %}
                 {% if realisation %}
-                    {% if realisation.submission_date > homework.completion_date %}
+                    {% if realisation.submission_date.date > homework.completion_date %}
                       LATE
                     {% else %}
                       SUBMITTED

@@ -2,14 +2,14 @@ from django.urls import path
 
 from django_school.apps.messages.views import (MessageCreateView,
                                                MessageDetailView,
-                                               ReceivedMessagesListView,
-                                               SentMessagesListView)
+                                               ReceivedMessageListView,
+                                               SentMessageListView)
 
 app_name = "messages"
 
 urlpatterns = [
-    path("received/", ReceivedMessagesListView.as_view(), name="received"),
-    path("sent/", SentMessagesListView.as_view(), name="sent"),
+    path("received/", ReceivedMessageListView.as_view(), name="received"),
+    path("sent/", SentMessageListView.as_view(), name="sent"),
     path("send/", MessageCreateView.as_view(), name="send"),
     path("<int:message_pk>/", MessageDetailView.as_view(), name="detail"),
 ]

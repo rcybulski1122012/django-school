@@ -23,7 +23,7 @@ class MessageFormTestCase(UsersMixin, MessagesMixin, TestCase):
     def test_assigns_sender_to_form(self):
         self.assertEqual(self.form.sender, self.sender)
 
-    def test_save_create_statuses_if_commit_equals_True(self):
+    def test_save_creates_statuses_if_commit_equals_True(self):
         self.form.save(commit=True)
 
         self.assertTrue(MessageStatus.objects.exists())

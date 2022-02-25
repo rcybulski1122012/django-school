@@ -6,9 +6,9 @@
 
 {% block content %}
   <h1>Class: {{ school_class.number }}</h1>
-  <h2>Tutor: {{ school_class.tutor.full_name }}</h2>
+  <h3>Tutor: {{ school_class.tutor.full_name }}</h3>
 
-  <h2>Students:</h2>
+  <h3>Students:</h3>
   <ul class="list-group">
     {% for student in school_class.students.all %}
       <li class="list-group-item">

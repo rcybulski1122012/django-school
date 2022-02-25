@@ -24,7 +24,7 @@ class GradeModelTestCase(UsersMixin, ClassesMixin, LessonsMixin, GradesMixin, Te
                 self.category, self.subject, self.student, self.teacher
             ).clean()
 
-    def test_clean_raises_ValidationError_if_teacher_is_not_a_teacher(self):
+    def test_clean_raises_ValidationError_if_teacher_is_not_teacher(self):
         student2 = self.create_student(username="student2")
 
         with self.assertRaises(ValidationError):
@@ -32,7 +32,7 @@ class GradeModelTestCase(UsersMixin, ClassesMixin, LessonsMixin, GradesMixin, Te
                 self.category, self.subject, self.student, student2
             ).clean()
 
-    def test_clean_raises_ValidationError_if_student_is_a_teacher(self):
+    def test_clean_raises_ValidationError_if_student_is_teacher(self):
         teacher2 = self.create_teacher(username="teacher2")
 
         with self.assertRaises(ValidationError):
@@ -40,14 +40,14 @@ class GradeModelTestCase(UsersMixin, ClassesMixin, LessonsMixin, GradesMixin, Te
                 self.category, self.subject, teacher2, self.teacher
             ).clean()
 
-    def test_clean_raises_ValidationError_if_student_is_not_learning_the_subject(self):
+    def test_clean_raises_ValidationError_if_student_is_not_learning_subject(self):
         subject2 = self.create_subject(name="subject2")
         category2 = self.create_grade_category(subject2, self.school_class)
 
         with self.assertRaises(ValidationError):
             self.create_grade(category2, subject2, self.student, self.teacher).clean()
 
-    def test_clean_raises_ValidationError_if_category_is_not_a_category_of_the_subject(
+    def test_clean_raises_ValidationError_if_category_is_not_category_of_subject(
         self,
     ):
         subject2 = self.create_subject(name="subject2")

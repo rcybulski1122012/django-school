@@ -76,7 +76,7 @@ class TeacherTimetableViewTestCase(TimetableViewMixin, TestCase):
     def get_nonexistent_resource_url(self):
         return self.get_url(teacher_slug="does-not-exist")
 
-    def test_returns_404_when_user_is_not_a_teacher(self):
+    def test_returns_404_if_user_is_not_teacher(self):
         response = self.client.get(self.get_url(teacher_slug=self.student.slug))
 
         self.assertEqual(response.status_code, 404)
@@ -87,7 +87,7 @@ class TeacherTimetableViewTestCase(TimetableViewMixin, TestCase):
         self.assertEqual(response.context["teacher"], self.teacher)
 
 
-class TimetablesListViewTestCase(UsersMixin, ClassesMixin, TestCase):
+class TimetableListViewTestCase(UsersMixin, ClassesMixin, TestCase):
     path_name = "lessons:timetables_list"
 
     @classmethod
@@ -117,7 +117,7 @@ class TimetablesListViewTestCase(UsersMixin, ClassesMixin, TestCase):
         )
 
 
-class LessonSessionsListViewTestCase(
+class LessonSessionListViewTestCase(
     RolesRequiredTestMixin,
     UsersMixin,
     ClassesMixin,
@@ -173,7 +173,7 @@ class LessonSessionsListViewTestCase(
 
         self.assertQuerysetEqual(response.context["lesson_sessions"], [session1])
 
-    def test_select_today_lesson_sessions_by_default(self):
+    def test_selects_today_lesson_sessions_by_default(self):
         self.login(self.teacher)
         lesson2 = self.create_lesson(
             self.subject, self.teacher, self.school_class, weekday="mon"
@@ -185,7 +185,7 @@ class LessonSessionsListViewTestCase(
 
         self.assertQuerysetEqual(response.context["lesson_sessions"], [session1])
 
-    def test_select_lessons_in_given_date(self):
+    def test_selects_lessons_in_given_date(self):
         self.login(self.teacher)
         lesson2 = self.create_lesson(self.subject, self.teacher, self.school_class)
         self.create_lesson_session(self.lesson)
@@ -195,7 +195,7 @@ class LessonSessionsListViewTestCase(
 
         self.assertQuerysetEqual(response.context["lesson_sessions"], [session2])
 
-    def test_context_contain_lesson_session_list(self):
+    def test_context_contains_lesson_session_list(self):
         self.login(self.teacher)
         session = self.create_lesson_session(self.lesson, datetime.date(2015, 2, 2))
 
@@ -220,7 +220,7 @@ class LessonSessionsListViewTestCase(
             response, reverse("lessons:session_detail", args=[session.pk])
         )
 
-    def test_renders_appropriate_message_when_there_are_no_lessons_in_given_date(
+    def test_renders_appropriate_message_if_there_are_no_lessons_in_given_date(
         self,
     ):
         self.login(self.teacher)
@@ -297,7 +297,7 @@ class LessonSessionDetailViewTestCase(
 
     # teacher cases
 
-    def test_returns_404_when_user_is_not_a_teacher_of_desired_lesson_session(self):
+    def test_returns_404_if_user_is_not_teacher_of_desired_lesson_session(self):
         teacher2 = self.create_teacher(username="teacher2")
         self.login(teacher2)
 
@@ -365,7 +365,7 @@ class LessonSessionDetailViewTestCase(
             response, "The lesson session has been updated successfully."
         )
 
-    def test_context_contain_form_and_formset_if_user_is_a_teacher(self):
+    def test_context_contains_form_and_formset_if_user_is_teacher(self):
         self.login(self.teacher)
 
         response = self.client.get(self.get_url())
@@ -373,7 +373,7 @@ class LessonSessionDetailViewTestCase(
         self.assertIn("lesson_session_form", response.context)
         self.assertIn("attendance_formset", response.context)
 
-    def test_renders_students_full_names_as_labels_if_user_is_a_teacher(self):
+    def test_renders_students_full_names_as_labels_if_user_is_teacher(self):
         self.login(self.teacher)
         self.create_attendance(self.lesson_session, [self.student])
 
@@ -383,7 +383,7 @@ class LessonSessionDetailViewTestCase(
 
     # student cases
 
-    def test_renders_disabled_form_is_user_is_student_and_does_not_render_grades_url(
+    def test_renders_disabled_form_and_does_not_render_grades_url_is_user_is_student(
         self,
     ):
         self.login(self.student)
@@ -397,7 +397,7 @@ class LessonSessionDetailViewTestCase(
         )
         self.assertNotContains(response, grades_url)
 
-    def test_context_contains_attendance_status_and_view_renders_it_if_user_is_a_student(
+    def test_context_contains_attendance_status_and_view_renders_it_if_user_is_student(
         self,
     ):
         self.login(self.student)
@@ -408,7 +408,7 @@ class LessonSessionDetailViewTestCase(
 
         self.assertEqual(response.context["attendance_status"], status)
 
-    def test_post_request_does_not_affect_is_user_is_a_student(self):
+    def test_post_request_has_no_influence_if_user_is_student(self):
         self.login(self.student)
         attendances = self.create_attendance(self.lesson_session, [self.student])
         expected_statuses = ["absent"]
@@ -464,7 +464,7 @@ class ClassSubjectListViewTestCase(
 
         self.assertContains(response, self.subject.name)
 
-    def test_renders_links_to_grades_and_grades_categories_if_the_user_teaches_the_subject_to_the_class(
+    def test_renders_links_to_grades_and_grades_categories_if_user_teaches_subject_to_class(
         self,
     ):
         self.create_lesson(self.subject, self.teacher, self.school_class)
@@ -490,7 +490,7 @@ class ClassSubjectListViewTestCase(
             ),
         )
 
-    def test_does_not_render_links_if_the_user_does_not_teach_the_subject_to_the_class(
+    def test_does_not_render_links_if_user_does_not_teach_subject_to_class(
         self,
     ):
         self.login(self.teacher)
@@ -655,7 +655,7 @@ class ClassAttendanceSummaryViewTestCase(
     def get_not_permitted_user(self):
         return self.student
 
-    def test_returns_404_if_the_teacher_does_not_teach_the_class(self):
+    def test_returns_404_if_teacher_does_not_teach_class(self):
         teacher2 = self.create_teacher(username="teacher2")
         self.login(teacher2)
 
@@ -694,7 +694,7 @@ class SetHomeworkViewTestCase(
             cls.school_class,
             weekday="fri",
         )
-        cls.date = datetime.datetime.today() + datetime.timedelta(days=10)
+        cls.date = (datetime.datetime.today() + datetime.timedelta(days=10)).date()
 
     def get_url(self, class_slug=None, subject_slug=None):
         class_slug = class_slug or self.school_class.slug
@@ -780,7 +780,7 @@ class HomeworkListViewTestCase(
 
         self.assertQuerysetEqual(qs, [self.homework])
 
-    def test_does_not_render_class_numbers_if_the_user_is_a_student(self):
+    def test_does_not_render_class_numbers_if_user_is_student(self):
         self.login(self.student)
 
         response = self.client.get(self.get_url())
@@ -788,7 +788,7 @@ class HomeworkListViewTestCase(
         self.assertNotContains(response, "Class")
         self.assertNotContains(response, self.DEFAULT_NUMBER)
 
-    def test_renders_class_numbers_if_the_user_is_a_teacher(self):
+    def test_renders_class_numbers_if_user_is_teacher(self):
         self.login(self.teacher)
 
         response = self.client.get(self.get_url())
@@ -796,7 +796,7 @@ class HomeworkListViewTestCase(
         self.assertContains(response, "Class")
         self.assertContains(response, self.DEFAULT_NUMBER)
 
-    def test_renders_status_if_the_user_is_a_student(self):
+    def test_renders_status_if_user_is_student(self):
         self.login(self.student)
 
         response = self.client.get(self.get_url())
@@ -810,11 +810,12 @@ class HomeworkListViewTestCase(
         self.homework.completion_date = (
             self.DEFAULT_COMPLETION_DATE + datetime.timedelta(days=-15)
         )
+
         self.homework.save()
         response = self.client.get(self.get_url())
         self.assertContains(response, "LATE")
 
-    def test_renders_submitted_count_if_the_user_is_a_teacher(self):
+    def test_renders_submitted_count_if_user_is_teacher(self):
         self.login(self.teacher)
         self.create_student(username="student2", school_class=self.school_class)
         self.create_realisation(self.homework, self.student)
@@ -823,7 +824,7 @@ class HomeworkListViewTestCase(
 
         self.assertContains(response, "1 / 2")
 
-    def test_does_not_render_homeworks_whose_completion_date_is_more_than_one_week_in_the_past(
+    def test_does_not_render_homeworks_whose_completion_date_is_more_than_one_week_in_past(
         self,
     ):
         self.login(self.teacher)
@@ -873,7 +874,7 @@ class HomeworkDetailViewTestCase(
     def get_not_permitted_user(self):
         return self.create_parent()
 
-    def test_returns_404_if_the_homework_is_not_visible_to_the_user(self):
+    def test_returns_404_if_homework_is_not_visible_to_user(self):
         student2 = self.create_student(username="student2")
         self.login(student2)
 
@@ -881,7 +882,7 @@ class HomeworkDetailViewTestCase(
 
         self.assertEqual(response.status_code, 404)
 
-    def test_context_contains_realisation_if_the_user_is_a_student(self):
+    def test_context_contains_realisation_if_user_is_student(self):
         self.login(self.student)
         realisation = self.create_realisation(self.homework, self.student)
 
@@ -889,7 +890,7 @@ class HomeworkDetailViewTestCase(
 
         self.assertEqual(response.context["homework_realisation"], realisation)
 
-    def test_context_contains_list_of_student_with_prefetched_realisations_if_the_user_is_a_teacher(
+    def test_context_contains_list_of_student_with_prefetched_realisations_if_user_is_teacher(
         self,
     ):
         self.login(self.teacher)
@@ -904,7 +905,7 @@ class HomeworkDetailViewTestCase(
         self.assertQuerysetEqual(students, [self.student, student2], ordered=False)
         self.assertEqual(students[0].realisation, [realisation])
 
-    def test_renders_link_to_submit_homework_view_if_the_student_has_not_done_it_yet(
+    def test_renders_link_to_submit_homework_view_if_student_has_not_done_it_yet(
         self,
     ):
         self.login(self.student)
@@ -916,7 +917,7 @@ class HomeworkDetailViewTestCase(
         response = self.client.get(self.get_url())
         self.assertNotContains(response, self.homework.submit_realisation_url)
 
-    def test_renders_links_to_submitted_files_if_the_student_has_submitted_realisation(
+    def test_renders_links_to_submitted_files_if_student_has_submitted_realisation(
         self,
     ):
         self.login(self.student)
@@ -927,7 +928,7 @@ class HomeworkDetailViewTestCase(
 
         self.assertContains(response, file.file.url)
 
-    def test_renders_students_realisations_if_the_user_is_a_teacher(self):
+    def test_renders_students_realisations_if_user_is_teacher(self):
         self.login(self.teacher)
         realisation = self.create_realisation(self.homework, self.student)
         file = self.create_file(realisation, self.student)
@@ -976,7 +977,7 @@ class SubmitHomeworkRealisationViewTestCase(
     def get_not_permitted_user(self):
         return self.teacher
 
-    def test_raises_403_if_the_student_already_has_submitted_the_realisation(self):
+    def test_raises_403_if_student_already_has_submitted_realisation(self):
         self.login(self.student)
         self.create_realisation(self.homework, self.student)
 

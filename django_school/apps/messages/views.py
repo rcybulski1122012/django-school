@@ -13,7 +13,7 @@ from django_school.apps.messages.models import Message
 User = get_user_model()
 
 
-class MessagesListView(LoginRequiredMixin, ListView):
+class MessageListView(LoginRequiredMixin, ListView):
     model = Message
     ordering = ["-created"]
     paginate_by = 10
@@ -23,7 +23,7 @@ class MessagesListView(LoginRequiredMixin, ListView):
         return super().get_queryset().select_related("sender")
 
 
-class ReceivedMessagesListView(MessagesListView):
+class ReceivedMessageListView(MessageListView):
     template_name = "messages/received_list.html"
 
     def get_queryset(self):
@@ -35,7 +35,7 @@ class ReceivedMessagesListView(MessagesListView):
         )
 
 
-class SentMessagesListView(MessagesListView):
+class SentMessageListView(MessageListView):
     template_name = "messages/sent_list.html"
 
     def get_queryset(self):
@@ -45,23 +45,9 @@ class SentMessagesListView(MessagesListView):
 class MessageCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     model = Message
     form_class = MessageForm
-    template_name = "messages/message_form.html"
     success_url = reverse_lazy("messages:sent")
     success_message = "The message has been sent successfully"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        teachers = User.teachers.all()
-        classes = Class.objects.prefetch_related("students__parent")
-
-        context.update(
-            {
-                "teachers": teachers,
-                "classes": classes,
-            }
-        )
-
-        return context
+    template_name = "messages/message_form.html"
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -69,7 +55,6 @@ class MessageCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
 
         return kwargs
 
-    # todo test it
     def get_initial(self):
         message_pk = self.request.GET.get("reply_to", None)
         if not message_pk:
@@ -87,6 +72,20 @@ class MessageCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
             "topic": f"RE: {message_to_response.topic}",
             "content": f"\n\n{reply_content}",
         }
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        teachers = User.teachers.all()
+        classes = Class.objects.prefetch_related("students__parent")
+
+        context.update(
+            {
+                "teachers": teachers,
+                "classes": classes,
+            }
+        )
+
+        return context
 
 
 class MessageDetailView(LoginRequiredMixin, DetailView):

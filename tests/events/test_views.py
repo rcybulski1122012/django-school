@@ -41,6 +41,14 @@ class EventsCalendarViewTestCase(
     def get_permitted_user(self):
         return None
 
+    def test_context_contains_year_and_month(self):
+        self.login(self.teacher)
+
+        response = self.client.get(self.get_url(date=self.current_month_date))
+
+        self.assertEqual(response.context["year"], self.current_month_date.year)
+        self.assertEqual(response.context["month"], self.current_month_date.month)
+
     def test_renders_events_for_current_month_by_default(self):
         self.login(self.teacher)
         response = self.client.get(self.get_url())
@@ -76,15 +84,7 @@ class EventsCalendarViewTestCase(
             self.get_url(date=self.current_month_date + datetime.timedelta(days=-30)),
         )
 
-    def test_context_contains_year_and_month(self):
-        self.login(self.teacher)
-
-        response = self.client.get(self.get_url(date=self.current_month_date))
-
-        self.assertEqual(response.context["year"], self.current_month_date.year)
-        self.assertEqual(response.context["month"], self.current_month_date.month)
-
-    def test_renders_events_created_by_user_if_he_is_a_teacher(self):
+    def test_renders_events_created_by_user_if_user_is_teacher(self):
         teacher2 = self.create_teacher(username="teacher2")
         teacher2_event = self.create_event(
             teacher2, self.school_class, self.current_month_date, "teacher2 event"
@@ -96,7 +96,7 @@ class EventsCalendarViewTestCase(
         self.assertContains(response, self.current_month_event.title)
         self.assertNotContains(response, teacher2_event.title)
 
-    def test_renders_class_events_if_user_is_a_student(self):
+    def test_renders_class_events_if_user_is_student(self):
         school_class2 = self.create_class(number="2b")
         school_class2_event = self.create_event(
             self.teacher, school_class2, self.current_month_date, "school_class 2 event"
@@ -170,7 +170,7 @@ class EventCreateViewTestCase(
 
         self.assertContains(response, "The event has been created successfully")
 
-    def test_renders_error_message_if_date_is_in_the_past(self):
+    def test_renders_error_message_if_date_is_in_past(self):
         self.login(self.teacher)
         data = self.get_example_form_data()
         data["date"] = "2010-01-01"
@@ -251,7 +251,7 @@ class EventUpdateViewTestCase(
 
         self.assertContains(response, "The event has been updated successfully")
 
-    def test_returns_404_when_user_is_not_creator(self):
+    def test_returns_404_if_user_is_not_creator(self):
         teacher2 = self.create_teacher(username="teacher2")
         self.login(teacher2)
 
@@ -315,7 +315,7 @@ class EventDeleteViewTestCase(
 
         self.assertContains(response, "The event has been deleted successfully.")
 
-    def test_returns_404_when_user_is_not_creator(self):
+    def test_returns_404_if_user_is_not_creator(self):
         teacher2 = self.create_teacher(username="teacher2")
         self.login(teacher2)
 

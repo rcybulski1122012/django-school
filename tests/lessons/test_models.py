@@ -9,7 +9,7 @@ from tests.utils import ClassesMixin, LessonsMixin, UsersMixin
 
 
 class SubjectModelTestCase(LessonsMixin, TestCase):
-    def test_save_slugify_if_slug_not_given(self):
+    def test_save_slugifies_if_slug_not_given(self):
         subject = self.create_subject(name="Computer Science")
 
         self.assertEqual(subject.slug, "computer-science")
@@ -27,7 +27,7 @@ class SubjectQuerySetTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
         cls.school_class = cls.create_class()
         cls.subject = cls.create_subject()
 
-    def test_with_does_the_teacher_teach_the_subject_to_the_class_when_does_not_teach(
+    def test_with_does_the_teacher_teach_the_subject_to_the_class_if_user_does_not_teach(
         self,
     ):
         subject = Subject.objects.with_does_the_teacher_teach_the_subject_to_the_class(
@@ -36,7 +36,7 @@ class SubjectQuerySetTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
 
         self.assertFalse(subject.does_the_teacher_teach_the_subject_to_the_class)
 
-    def test_with_does_the_teacher_teach_the_subject_to_the_class_when_teaches(self):
+    def test_with_does_the_teacher_teach_the_subject_to_the_class_if_user_teaches(self):
         self.create_lesson(self.subject, self.teacher, self.school_class)
         subject = Subject.objects.with_does_the_teacher_teach_the_subject_to_the_class(
             self.teacher, self.school_class
@@ -53,7 +53,7 @@ class LessonModelTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
         cls.student = cls.create_student(school_class=cls.school_class)
         cls.subject = cls.create_subject()
 
-    def test_clean_raises_ValidationError_when_the_teacher_already_have_lesson_in_given_time(
+    def test_clean_raises_ValidationError_if_teacher_already_have_lesson_in_given_time(
         self,
     ):
         self.create_lesson(self.subject, self.teacher, self.school_class)
@@ -61,7 +61,7 @@ class LessonModelTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
         with self.assertRaises(ValidationError):
             self.create_lesson(self.subject, self.teacher, self.school_class).clean()
 
-    def test_clean_raises_ValidationError_if_teacher_is_not_a_teacher(self):
+    def test_clean_raises_ValidationError_if_teacher_is_not_teacher(self):
         with self.assertRaises(ValidationError):
             self.create_lesson(self.subject, self.student, self.school_class).clean()
 
@@ -77,12 +77,12 @@ class LessonSessionQuerySetTestCase(UsersMixin, ClassesMixin, LessonsMixin, Test
         cls.lesson = cls.create_lesson(cls.subject, cls.teacher, cls.school_class)
         cls.lesson_session = cls.create_lesson_session(cls.lesson)
 
-    def test_visible_to_user_returns_none_if_user_is_a_parent(self):
+    def test_visible_to_user_returns_none_if_user_is_parent(self):
         qs = LessonSession.objects.visible_to_user(self.parent)
 
         self.assertQuerysetEqual(qs, LessonSession.objects.none())
 
-    def test_visible_to_user_returns_teacher_lessons_if_user_is_a_teacher(self):
+    def test_visible_to_user_returns_teacher_lessons_if_user_is_teacher(self):
         teacher2 = self.create_teacher(username="teacher2")
         lesson2 = self.create_lesson(self.subject, teacher2, self.school_class)
         self.create_lesson_session(lesson2)
@@ -91,7 +91,7 @@ class LessonSessionQuerySetTestCase(UsersMixin, ClassesMixin, LessonsMixin, Test
 
         self.assertQuerysetEqual(qs, [self.lesson_session])
 
-    def test_visible_to_user_returns_class_lessons_if_user_is_a_student(self):
+    def test_visible_to_user_returns_class_lessons_if_user_is_student(self):
         school_class2 = self.create_class(number="2c")
         lesson2 = self.create_lesson(self.subject, self.teacher, school_class2)
         self.create_lesson_session(lesson2)
@@ -125,7 +125,7 @@ class HomeworkQuerySetTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase)
         cls.subject = cls.create_subject()
         cls.homework = cls.create_homework(cls.subject, cls.teacher, cls.school_class)
 
-    def test_visible_to_user_returns_homeworks_set_if_the_user_is_a_teacher(self):
+    def test_visible_to_user_returns_homeworks_set_if_user_is_teacher(self):
         teacher2 = self.create_teacher(username="teacher2")
         self.create_homework(self.subject, teacher2, self.school_class)
 
@@ -133,7 +133,7 @@ class HomeworkQuerySetTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase)
 
         self.assertQuerysetEqual(qs, [self.homework])
 
-    def test_visible_to_user_returns_class_homeworks_if_the_user_is_a_student(self):
+    def test_visible_to_user_returns_class_homeworks_if_user_is_student(self):
         school_class2 = self.create_class(number="2c")
         self.create_homework(self.subject, self.teacher, school_class2)
 
@@ -141,7 +141,7 @@ class HomeworkQuerySetTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase)
 
         self.assertQuerysetEqual(qs, [self.homework])
 
-    def test_visible_to_users_returns_empty_qs_if_the_user_is_neither_a_student_nor_a_teacher(
+    def test_visible_to_user_returns_empty_qs_if_user_is_neither_student_nor_teacher(
         self,
     ):
         parent = self.create_parent(child=self.student)
@@ -183,7 +183,7 @@ class HomeworkQuerySetTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase)
 
         self.assertQuerysetEqual(qs, [self.homework])
 
-    def test_only_current_select_homeworks_up_to_week_in_the_past(self):
+    def test_only_current_select_homeworks_up_to_week_in_past(self):
         completion_date = datetime.datetime.today() + datetime.timedelta(days=-7)
         homework2 = self.create_homework(
             self.subject,

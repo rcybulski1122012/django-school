@@ -5,7 +5,7 @@ from tests.utils import (ClassesMixin, LessonsMixin, ResourceViewTestMixin,
                          RolesRequiredTestMixin, UsersMixin)
 
 
-class ClassesListViewTestCase(
+class ClassListViewTestCase(
     RolesRequiredTestMixin,
     UsersMixin,
     ClassesMixin,
@@ -31,7 +31,7 @@ class ClassesListViewTestCase(
     def get_not_permitted_user(self):
         return self.student
 
-    def test_selects_classes_taught_by_the_teacher(self):
+    def test_selects_classes_taught_by_teacher(self):
         school_class2 = self.create_class(number="2c")
         self.login(self.teacher)
 
@@ -41,14 +41,19 @@ class ClassesListViewTestCase(
 
     def test_context_contains_list_of_classes_ordered_by_number(self):
         self.login(self.teacher)
+        school_class2 = self.create_class(number="3c")
+        school_class3 = self.create_class(number="2b")
+        self.create_lesson(self.subject, self.teacher, school_class2)
+        self.create_lesson(self.subject, self.teacher, school_class3)
 
         response = self.client.get(self.get_url())
 
         self.assertQuerysetEqual(
-            response.context["school_classes"], [self.school_class]
+            response.context["school_classes"],
+            [self.school_class, school_class3, school_class2],
         )
 
-    def test_renders_appropriate_message_when_there_are_no_classes(self):
+    def test_renders_appropriate_message_if_there_are_no_classes(self):
         self.login(self.teacher)
         self.school_class.delete()
 
@@ -107,7 +112,7 @@ class ClassDetailViewTestCase(
     def get_not_permitted_user(self):
         return self.student
 
-    def test_return_404_if_the_teacher_does_not_teach_the_class(self):
+    def test_return_404_if_teacher_does_not_teach_class(self):
         school_class2 = self.create_class(number="2c")
         self.login(self.teacher)
 
