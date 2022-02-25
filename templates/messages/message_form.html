@@ -46,7 +46,7 @@
           <div class="collapse" id="teachers">
             {% for teacher in teachers %}
               <input type="checkbox" name="receivers" value="{{ teacher.pk }}" id="receiver-{{ teacher.pk }}"
-              {% if teacher.pk in form.initial.receivers %}checked{% endif %}>
+                     {% if teacher.pk in form.initial.receivers %}checked{% endif %}>
               <label for="receiver-{{ teacher.pk }}">{{ teacher.full_name }}</label><br>
             {% endfor %}
           </div>
@@ -69,7 +69,7 @@
               <strong class="ms-1">Students</strong><br>
               {% for student in class.students.all %}
                 <input type="checkbox" name="receivers" value="{{ student.pk }}" id="receiver-{{ student.pk }}"
-                {% if student.pk in form.initial.receivers %}checked{% endif %}>
+                       {% if student.pk in form.initial.receivers %}checked{% endif %}>
                 <label for="receiver-{{ student.pk }}">{{ student.full_name }}</label><br>
               {% endfor %}
 
@@ -77,7 +77,7 @@
               {% for student in class.students.all %}
                 {% with parent=student.parent %}
                   <input type="checkbox" name="receivers" value="{{ parent.pk }}" id="receiver-{{ parent.pk }}"
-                  {% if parent.pk in form.initial.receivers %}checked{% endif %}>
+                         {% if parent.pk in form.initial.receivers %}checked{% endif %}>
                   <label for="receiver-{{ parent.pk }}">{{ parent.full_name }}</label><br>
                 {% endwith %}
               {% endfor %}
@@ -111,7 +111,7 @@
 
       const selectAllButton = document.querySelector("#select-all-btn");
       const receiversCheckboxes = document.querySelectorAll(`input[type="checkbox"]`);
-      selectAllButton.addEventListener("click", function (e){
+      selectAllButton.addEventListener("click", function (e) {
           e.preventDefault();
           for (const checkbox of receiversCheckboxes)
               checkbox.checked = true;

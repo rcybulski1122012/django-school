@@ -9,8 +9,9 @@
      data-bs-toggle="popover" title="{{ event.title }}"
      data-bs-content="<strong>Description: </strong>{% if event.description %}{{ event.description }}{% endif %}<br>
                       <strong>Created: </strong> {{ event.created }}<br>
-                      <strong>Teacher: </strong> {{ event.teacher.full_name  }}<br>
-                      <strong>Scope:</strong> {% if event.school_class %}{{ event.school_class }}{% else %}global{% endif %}<br>
+                      <strong>Teacher: </strong> {{ event.teacher.full_name }}<br>
+                      <strong>Scope:</strong>
+             {% if event.school_class %}{{ event.school_class }}{% else %}global{% endif %}<br>
                       {% if user == event.teacher %}<a href='{{ event.update_url }}' class='btn btn-outline-primary'>Update</a>
                       <button
                         class='btn btn-outline-danger eventDeleteButton'

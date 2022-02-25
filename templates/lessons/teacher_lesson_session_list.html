@@ -20,9 +20,9 @@
     </div>
 
     <div class="col-3">
-        <label for="date_to" class="mb-1">Date:</label>
-        <input type="date" name="date" id="date_to" class="form-control"
-               value="{% if date %}{{ date }}{% else %}{% now "Y-m-d" %}{% endif %}">
+      <label for="date_to" class="mb-1">Date:</label>
+      <input type="date" name="date" id="date_to" class="form-control"
+             value="{% if date %}{{ date }}{% else %}{% now "Y-m-d" %}{% endif %}">
     </div>
   </div>
 {% endblock %}
@@ -30,7 +30,7 @@
 {% block js %}
   <script>
       let dateInput = document.querySelector("#date_to");
-      dateInput.addEventListener("change", function (){
+      dateInput.addEventListener("change", function () {
           let date = dateInput.value;
           let url = `${location.protocol}//${location.host}${location.pathname}?date=${date}`
           location.replace(url);

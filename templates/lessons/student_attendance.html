@@ -21,30 +21,57 @@
     <div class="col-5">
       <table class="table table-boarded">
         <thead>
-          <tr><th>Status</th><th>Hours</th><th>Percentage</th></tr>
+        <tr>
+          <th>Status</th>
+          <th>Hours</th>
+          <th>Percentage</th>
+        </tr>
         </thead>
         <tbody>
-{#        {# widthratio -> trick to divide two numbers in template  #}
-          <tr><td>Present</td><td>{{ student.present_hours }}</td><td>{% widthratio student.present_hours student.total_attendance 100 %}%</td></tr>
-          <tr><td>Absent</td><td>{{ student.absent_hours }}</td><td>{% widthratio student.absent_hours student.total_attendance 100 %}%</td></tr>
-          <tr><td>Exempt</td><td>{{ student.exempt_hours }}</td><td>{% widthratio student.exempt_hours student.total_attendance 100 %}%</td></tr>
-          <tr><td>Excused</td><td>{{ student.excused_hours }}</td><td>{% widthratio student.excused_hours student.total_attendance 100 %}%</td></tr>
-          <tr><td>Total</td><td>{{ student.total_attendance }}</td><td></td></tr>
+        {#        {# widthratio -> trick to divide two numbers in template  #}
+        <tr>
+          <td>Present</td>
+          <td>{{ student.present_hours }}</td>
+          <td>{% widthratio student.present_hours student.total_attendance 100 %}%</td>
+        </tr>
+        <tr>
+          <td>Absent</td>
+          <td>{{ student.absent_hours }}</td>
+          <td>{% widthratio student.absent_hours student.total_attendance 100 %}%</td>
+        </tr>
+        <tr>
+          <td>Exempt</td>
+          <td>{{ student.exempt_hours }}</td>
+          <td>{% widthratio student.exempt_hours student.total_attendance 100 %}%</td>
+        </tr>
+        <tr>
+          <td>Excused</td>
+          <td>{{ student.excused_hours }}</td>
+          <td>{% widthratio student.excused_hours student.total_attendance 100 %}%</td>
+        </tr>
+        <tr>
+          <td>Total</td>
+          <td>{{ student.total_attendance }}</td>
+          <td></td>
+        </tr>
         </tbody>
       </table>
 
       <table class="table table-boarded">
         <thead>
-          <tr><th>Filter by subjects</th></tr>
+        <tr>
+          <th>Filter by subjects</th>
+        </tr>
         </thead>
         <tbody>
-          {% for subject_name in subjects %}
-            <tr>
-              <td><a href="#" class="text-decoration-none" hx-target="body" hx-swap="outerHTML" hx-get="{{ student.attendance_url }}?subject={{ subject_name }}">
-                {{ subject_name }}
-              </a></td>
-            </tr>
-          {% endfor %}
+        {% for subject_name in subjects %}
+          <tr>
+            <td><a href="#" class="text-decoration-none" hx-target="body" hx-swap="outerHTML"
+                   hx-get="{{ student.attendance_url }}?subject={{ subject_name }}">
+              {{ subject_name }}
+            </a></td>
+          </tr>
+        {% endfor %}
         </tbody>
       </table>
     </div>
@@ -55,26 +82,26 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <script>
-  const data = {
-      labels: ['Present', 'Absent', 'Exempt', 'Excused'],
-      datasets: [{
-          data: [{{ student.present_hours}}, {{ student.absent_hours }}, {{ student.exempt_hours }}, {{ student.excused_hours }}],
-          backgroundColor: [
-              'rgb(11, 212, 0)',
-              'rgb(212, 0, 11)',
-              'rgb(255, 230, 0)',
-              'rgb(28, 149, 255)',
-          ]
-      }]
-  };
+      const data = {
+          labels: ['Present', 'Absent', 'Exempt', 'Excused'],
+          datasets: [{
+              data: [{{ student.present_hours}}, {{ student.absent_hours }}, {{ student.exempt_hours }}, {{ student.excused_hours }}],
+              backgroundColor: [
+                  'rgb(11, 212, 0)',
+                  'rgb(212, 0, 11)',
+                  'rgb(255, 230, 0)',
+                  'rgb(28, 149, 255)',
+              ]
+          }]
+      };
 
-  const attendanceChart = new Chart(
-      document.getElementById('attendanceChart'),
-      {
-          type: 'pie',
-          data: data
-      }
-  );
+      const attendanceChart = new Chart(
+          document.getElementById('attendanceChart'),
+          {
+              type: 'pie',
+              data: data
+          }
+      );
 
-</script>
+  </script>
 {% endblock %}

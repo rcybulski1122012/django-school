@@ -64,42 +64,42 @@
     <div class="table-responsive">
       <table class="table table-bordered">
         <thead>
-          <tr>
-            <th>Student</th>
-            <th>Realisation</th>
-            <th>Status</th>
-          </tr>
+        <tr>
+          <th>Student</th>
+          <th>Realisation</th>
+          <th>Status</th>
+        </tr>
         </thead>
         <tbody>
-          {% for student in students %}
-            {% with realisation=student.realisation.0 %}
-              <tr>
-                <td>{{ student.full_name }}</td>
-                <td>
-                  {% if realisation.attached_files.all %}
-                    {% for file in realisation.attached_files.all %}
-                      <a href="{{ file.file.url }}" download class="text-decoration-none">
-                        File {{ forloop.counter }}
-                      </a>
-                    {% endfor %}
+        {% for student in students %}
+          {% with realisation=student.realisation.0 %}
+            <tr>
+              <td>{{ student.full_name }}</td>
+              <td>
+                {% if realisation.attached_files.all %}
+                  {% for file in realisation.attached_files.all %}
+                    <a href="{{ file.file.url }}" download class="text-decoration-none">
+                      File {{ forloop.counter }}
+                    </a>
+                  {% endfor %}
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+              <td>
+                {% if realisation %}
+                  {% if realisation.submission_date > homework.completion_date %}
+                    LATE
                   {% else %}
-                    -
+                    SUBMITTED
                   {% endif %}
-                </td>
-                <td>
-                  {% if realisation %}
-                    {% if realisation.submission_date > homework.completion_date %}
-                      LATE
-                    {% else %}
-                      SUBMITTED
-                    {% endif %}
-                  {% else %}
-                    UNSUBMITTED
-                  {% endif %}
-                </td>
-              </tr>
-            {% endwith %}
-          {% endfor %}
+                {% else %}
+                  UNSUBMITTED
+                {% endif %}
+              </td>
+            </tr>
+          {% endwith %}
+        {% endfor %}
         </tbody>
       </table>
     </div>

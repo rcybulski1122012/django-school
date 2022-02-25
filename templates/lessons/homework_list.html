@@ -8,38 +8,38 @@
   <h1>Your homeworks</h1>
 
   {% if homeworks %}
-  <div class="table-responsive">
-  <table class="table table-bordered">
-    <thead>
-      <tr>
-        <th>Title</th>
-        <th>Subject</th>
-        {% if request.user.is_teacher %}
-          <th>Class</th>
-        {% endif %}
-        <th>Completion Date</th>
-        {% if request.user.is_student %}
-          <th>Status</th>
-        {% else %}
-          <th>Submitted</th>
-        {% endif %}
-      </tr>
-    </thead>
-    <tbody>
-      {% for homework in homeworks %}
+    <div class="table-responsive">
+      <table class="table table-bordered">
+        <thead>
         <tr>
-          <td><a href="{{ homework.detail_url }}" class="text-decoration-none">{{ homework.title }}</a></td>
-          <td>{{ homework.subject.name }}</td>
+          <th>Title</th>
+          <th>Subject</th>
           {% if request.user.is_teacher %}
-            <td>{{ homework.school_class.number }}</td>
+            <th>Class</th>
           {% endif %}
-          <td>{{ homework.completion_date|date:"d-m-Y" }}</td>
-          <th>
+          <th>Completion Date</th>
+          {% if request.user.is_student %}
+            <th>Status</th>
+          {% else %}
+            <th>Submitted</th>
+          {% endif %}
+        </tr>
+        </thead>
+        <tbody>
+        {% for homework in homeworks %}
+          <tr>
+            <td><a href="{{ homework.detail_url }}" class="text-decoration-none">{{ homework.title }}</a></td>
+            <td>{{ homework.subject.name }}</td>
             {% if request.user.is_teacher %}
-              {{ homework.submitted_count }} / {{ homework.total_count }}
-            {% else %}
-              {% with realisation=homework.realisation.0 %}
-                {% if realisation %}
+              <td>{{ homework.school_class.number }}</td>
+            {% endif %}
+            <td>{{ homework.completion_date|date:"d-m-Y" }}</td>
+            <th>
+              {% if request.user.is_teacher %}
+                {{ homework.submitted_count }} / {{ homework.total_count }}
+              {% else %}
+                {% with realisation=homework.realisation.0 %}
+                  {% if realisation %}
                     {% if realisation.submission_date.date > homework.completion_date %}
                       LATE
                     {% else %}
@@ -48,14 +48,14 @@
                   {% else %}
                     UNSUBMITTED
                   {% endif %}
-              {% endwith %}
-            {% endif %}
-          </th>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  </div>
+                {% endwith %}
+              {% endif %}
+            </th>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
   {% else %}
     {% if request.user.is_teacher %}
       You haven't set any homeworks yet.

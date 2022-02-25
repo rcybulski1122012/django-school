@@ -19,7 +19,7 @@
       <thead>
       <tr>
         <th>Student</th>
-        <th style="width:10%" ></th>
+        <th style="width:10%"></th>
         {% for category in categories %}
           <th>
             {{ category.name }}
@@ -74,7 +74,7 @@
               {
                   const td = grades.querySelector(`.student-{{ grade.student.pk }} .category-{{ grade.category.pk }}`);
                   td.innerText = "{{ grade.get_grade_display }}";
-                  td.dataset.bsToggle="popover";
+                  td.dataset.bsToggle = "popover";
                   td.dataset.bsContent = `
                     <h3>{{ grade.comment }}</h3>
                     <p>Weight: {{ grade.weight }}</p>
@@ -101,15 +101,15 @@
       });
 
       popoverTriggerList.forEach(function (element) {
-           element.addEventListener('shown.bs.popover', function() {
-               htmx.process(document.querySelector(".gradeDeleteButton"));
-           });
-        });
+          element.addEventListener('shown.bs.popover', function () {
+              htmx.process(document.querySelector(".gradeDeleteButton"));
+          });
+      });
 
-      document.querySelector("#base-modal").addEventListener('show.bs.modal', function (){
-            popoverList.forEach(function (element) {
-                element.hide();
-            });
-        });
+      document.querySelector("#base-modal").addEventListener('show.bs.modal', function () {
+          popoverList.forEach(function (element) {
+              element.hide();
+          });
+      });
   </script>
 {% endblock %}
