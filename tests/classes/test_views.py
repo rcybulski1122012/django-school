@@ -1,8 +1,10 @@
+from django.template import loader
 from django.test import TestCase
 from django.urls import reverse
 
-from tests.utils import (ClassesMixin, LessonsMixin, ResourceViewTestMixin,
-                         RolesRequiredTestMixin, UsersMixin)
+from tests.utils import (ClassesMixin, GradesMixin, LessonsMixin,
+                         ResourceViewTestMixin, RolesRequiredTestMixin,
+                         UsersMixin)
 
 
 class ClassListViewTestCase(
@@ -142,3 +144,127 @@ class ClassDetailViewTestCase(
 
         self.assertContains(response, self.student.full_name)
         self.assertContains(response, self.student.student_detail_url)
+
+
+class ClassSummaryPDFViewTestCase(
+    RolesRequiredTestMixin,
+    ResourceViewTestMixin,
+    UsersMixin,
+    ClassesMixin,
+    LessonsMixin,
+    GradesMixin,
+    TestCase,
+):
+    path_name = "classes:summary_pdf"
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class(tutor=cls.teacher)
+        cls.student1 = cls.create_student(
+            school_class=cls.school_class, first_name="AStudentName"
+        )
+        cls.student2 = cls.create_student(
+            school_class=cls.school_class,
+            first_name="ZStudentName",
+            username="student2",
+        )
+        cls.subject = cls.create_subject()
+        cls.grade_category = cls.create_grade_category(cls.subject, cls.school_class)
+        cls.lesson = cls.create_lesson(cls.subject, cls.teacher, cls.school_class)
+        cls.lesson_session = cls.create_lesson_session(cls.lesson)
+        cls.grade1 = cls.create_grade(
+            cls.grade_category, cls.subject, cls.student1, cls.teacher
+        )
+        cls.grade2 = cls.create_grade(
+            cls.grade_category,
+            cls.subject,
+            cls.student1,
+            cls.teacher,
+            grade=4.50,
+        )
+        cls.grade3 = cls.create_grade(
+            cls.grade_category,
+            cls.subject,
+            cls.student2,
+            cls.teacher,
+            grade=1.50,
+        )
+
+        for status in ["present", "present", "absent"]:
+            cls.create_attendance(
+                cls.lesson_session, [cls.student1, cls.student2], status=status
+            )
+
+    def get_url(self, class_slug=None):
+        class_slug = class_slug or self.school_class.slug
+
+        return reverse(self.path_name, args=[class_slug])
+
+    def get_nonexistent_resource_url(self):
+        return self.get_url(class_slug="does-not-exist")
+
+    def get_permitted_user(self):
+        return self.teacher
+
+    def get_not_permitted_user(self):
+        return self.student1
+
+    @staticmethod
+    def _get_html_content(response):
+        context = {}
+        for dict_ in response.context:
+            context.update(dict_)
+
+        return loader.get_template(response.template_name[0]).render(context)
+
+    def test_returns_404_if_teacher_is_not_tutor_of_class(self):
+        teacher2 = self.create_teacher(username="teacher2")
+        self.login(teacher2)
+
+        response = self.client.get(self.get_url())
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_renders_students_full_names(self):
+        self.login(self.teacher)
+
+        response = self.client.get(self.get_url())
+        content = self._get_html_content(response)
+
+        self.assertIn(self.student1.full_name, content)
+        self.assertIn(self.student2.full_name, content)
+
+    def test_renders_subjects_and_grades(self):
+        self.login(self.teacher)
+
+        response = self.client.get(self.get_url())
+        content = self._get_html_content(response)
+
+        self.assertIn(self.subject.name, content)
+        expected_grades_str = (
+            f"{self.grade1.get_grade_display()}, {self.grade2.get_grade_display()}"
+        )
+        self.assertIn(expected_grades_str, content)
+        self.assertIn("1+", content)
+
+    def test_renders_attendance(self):
+        self.login(self.teacher)
+
+        response = self.client.get(self.get_url())
+        content = self._get_html_content(response)
+
+        self.assertIn("67%", content)
+        self.assertIn("<td>2</td>", content)
+        self.assertIn("33%", content)
+        self.assertIn("<td>1</td>", content)
+        self.assertIn("<td>3</td>", content)
+
+    def test_does_not_renders_empty_page_at_the_end(self):
+        self.login(self.teacher)
+
+        response = self.client.get(self.get_url())
+
+        pages_count = len(response.get_document().pages)
+        self.assertEqual(pages_count, 2)
+        self.assertEqual(response.context["last_student"], self.student2)

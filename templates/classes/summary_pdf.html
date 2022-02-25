@@ -1,0 +1,99 @@
+{% load utils %}
+
+<!doctype html>
+<html lang="en">
+<head>
+  <title>
+    {{ school_class.number }} summary
+  </title>
+  <style>
+      div.break {
+          page-break-before: always;
+      }
+
+      table, th, td {
+          border: 1px black solid;
+          padding: 10px;
+      }
+
+      table {
+          width: 100%;
+          border-collapse: collapse;
+      }
+  </style>
+</head>
+<body>
+{% for student in grades_dict %}
+  <h2>{{ student.full_name }} summary | {% now "d-m-Y" %}</h2>
+  <hr>
+  <h4>Grades:</h4>
+  <table>
+    <thead>
+    <tr>
+      <th style="width: 25%">Subject</th>
+      <th style="width: 75%">Grades</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for subject_name in grades_dict|get_item:student %}
+      <tr>
+        <td>{{ subject_name }}</td>
+        <td>
+          {% with student_grades=grades_dict|get_item:student %}
+            {{ student_grades|get_item:subject_name|join:", " }}
+          {% endwith %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <h4>Attendance:</h4>
+
+  <table>
+    <thead>
+    <tr>
+      <th>Status</th>
+      <th>Hours</th>
+      <th>Percentage</th>
+    </tr>
+    </thead>
+    <tbody>
+    {# widthratio -> trick to divide two numbers in template #}
+    <tr>
+      <td>Present</td>
+      <td>{{ student.present_hours }}</td>
+      <td>{% widthratio student.present_hours student.total_attendance 100 %}%</td>
+    </tr>
+    <tr>
+      <td>Absent</td>
+      <td>{{ student.absent_hours }}</td>
+      <td>{% widthratio student.absent_hours student.total_attendance 100 %}%</td>
+    </tr>
+    <tr>
+      <td>Exempt</td>
+      <td>{{ student.exempt_hours }}</td>
+      <td>{% widthratio student.exempt_hours student.total_attendance 100 %}%</td>
+    </tr>
+    <tr>
+      <td>Excused</td>
+      <td>{{ student.excused_hours }}</td>
+      <td>{% widthratio student.excused_hours student.total_attendance 100 %}%</td>
+    </tr>
+    <tr>
+      <td>Total</td>
+      <td>{{ student.total_attendance }}</td>
+      <td></td>
+    </tr>
+    </tbody>
+  </table>
+
+  <h4>Notes:</h4>
+  {# TODO #}
+
+  {% if student != last_student %}
+    <div class="break"></div>
+  {% endif %}
+{% endfor %}
+</body>
+</html>

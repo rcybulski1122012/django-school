@@ -95,7 +95,7 @@ class CustomUserManager(UserManager):
     def get(self, *args, **kwargs):
         return (
             super()
-            .select_related("child__school_class", "school_class")
+            .select_related("child__school_class", "school_class", "teacher_class")
             .get(*args, **kwargs)
         )
 
@@ -166,6 +166,10 @@ class User(AbstractUser):
     @property
     def is_parent(self):
         return self.role == ROLES.PARENT
+
+    @property
+    def is_tutor(self):
+        return bool(getattr(self, "teacher_class", False))
 
     @property
     def student_detail_url(self):

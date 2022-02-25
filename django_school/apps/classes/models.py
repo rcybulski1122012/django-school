@@ -62,3 +62,7 @@ class Class(models.Model):
     @property
     def subject_list_url(self):
         return reverse("lessons:class_subject_list", args=[self.slug])
+
+    @property
+    def summary_pdf_url(self):
+        return reverse("classes:summary_pdf", args=[self.slug])

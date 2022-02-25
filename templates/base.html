@@ -38,6 +38,9 @@
                   <a class="dropdown-item" href="{% url "classes:list" %}">Classes</a>
                   <a class="dropdown-item" href="{% url "lessons:session_list" %}">Lesson Sessions</a>
                   <a class="dropdown-item" href="{% url "lessons:homework_list" %}">Homeworks</a>
+                  {% if request.user.is_teacher %}
+                    <a class="dropdown-item" href="{{ request.user.teacher_class.detail_url }}">Your class</a>
+                  {% endif %}
                 </div>
               </div>
             {% elif request.user.is_student %}

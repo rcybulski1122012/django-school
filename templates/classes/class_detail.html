@@ -22,4 +22,10 @@
       <p>This class does not contain any students.</p>
     {% endfor %}
   </ul>
+
+  {% if school_class.tutor == request.user %}
+    <a class="btn btn-primary mt-3" href="{{ school_class.summary_pdf_url }}" download>
+      Download class summary PDF
+    </a>
+  {% endif %}
 {% endblock %}

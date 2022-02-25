@@ -58,6 +58,16 @@ class UserModelTestCase(UsersMixin, ClassesMixin, TestCase):
 
         self.assertTrue(user.is_parent)
 
+    def test_is_tutor(self):
+        user = self.create_user()
+
+        self.assertFalse(user.is_tutor)
+
+        user.teacher_class = self.create_class()
+        user.save()
+
+        self.assertTrue(user.is_tutor)
+
     def test_clean_raises_ValidationError_if_user_is_not_student_and_has_class_assigned(
         self,
     ):

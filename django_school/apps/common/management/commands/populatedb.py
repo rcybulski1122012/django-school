@@ -143,6 +143,8 @@ class Command(BaseCommand):
         return User.objects.get_or_create(**kwargs)
 
     def create_loggable_teacher(self):
+        self.school_class = Class.objects.first()
+
         self.teacher, _ = self.create_loggable_user(
             username="teacher",
             password="teacher",
@@ -153,9 +155,10 @@ class Command(BaseCommand):
             phone_number="123-456-789",
         )
 
-    def create_loggable_student(self):
-        self.school_class = Class.objects.first()
+        self.school_class.tutor = self.teacher
+        self.school_class.save()
 
+    def create_loggable_student(self):
         self.create_loggable_user(
             username="student",
             password="student",
