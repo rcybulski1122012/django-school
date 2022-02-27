@@ -333,3 +333,21 @@ class NoteListViewTestCase(
         response = self.client.get(self.get_url())
 
         self.assertContains(response, '<ul class="pagination">')
+
+    def test_sets_notes_seen_by_student_attr_to_True_if_user_is_student(self):
+        self.assertFalse(self.note.seen_by_student)
+        self.login(self.student)
+
+        self.client.get(self.get_url())
+        self.note.refresh_from_db()
+
+        self.assertTrue(self.note.seen_by_student)
+
+    def test_sets_notes_seen_by_parent_attr_to_True_if_user_is_parent(self):
+        self.assertFalse(self.note.seen_by_parent)
+        self.login(self.parent)
+
+        self.client.get(self.get_url())
+        self.note.refresh_from_db()
+
+        self.assertTrue(self.note.seen_by_parent)

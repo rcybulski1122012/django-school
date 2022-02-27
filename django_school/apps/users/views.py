@@ -97,6 +97,19 @@ class NoteListView(
     template_name = "users/note_list.html"
     context_object_name = "notes"
 
+    def get(self, *args, **kwargs):
+        # in template unseen grades are rendered in a different way
+        result = super().get(*args, **kwargs)
+
+        if self.request.user.is_parent:
+            Note.objects.filter(student__parent=self.request.user).update(
+                seen_by_parent=True
+            )
+        elif self.request.user.is_student:
+            Note.objects.filter(student=self.request.user).update(seen_by_student=True)
+
+        return result
+
     def get_queryset(self):
         return (
             super()

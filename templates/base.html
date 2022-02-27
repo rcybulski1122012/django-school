@@ -47,7 +47,9 @@
               <div class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="learningDropdown" role="button"
                    data-bs-toggle="dropdown" aria-expanded="false">
-                  Learning
+                  {% with notification_count=unseen_grades_count|add:unseen_notes_count %}
+                    Learning {% if notification_count != 0 %}({{ notification_count }}){% endif %}
+                  {% endwith %}
                 </a>
                 <div class="dropdown-menu" aria-labelledby="learningDropdown">
                   <a class="dropdown-item" href="{{ request.user.grades_url }}">
@@ -56,7 +58,9 @@
                   <a class="dropdown-item" href="{{ request.user.attendance_url }}">Attendance</a>
                   <a class="dropdown-item" href="{% url "lessons:session_list" %}">Lesson Sessions</a>
                   <a class="dropdown-item" href="{% url "lessons:homework_list" %}">Homeworks</a>
-                  <a class="dropdown-item" href="{% url "users:note_list" %}">Notes</a>
+                  <a class="dropdown-item" href="{% url "users:note_list" %}">
+                    Notes {% if unseen_notes_count != 0 %}({{ unseen_notes_count }}){% endif %}
+                  </a>
                 </div>
               </div>
             {% elif request.user.is_parent %}
@@ -64,7 +68,9 @@
                 Grades {% if unseen_grades_count != 0 %}({{ unseen_grades_count }}){% endif %}
               </a>
               <a class="nav-link" href="{{ request.user.attendance_url }}">Attendance</a>
-              <a class="nav-link" href="{% url "users:note_list" %}">Notes</a>
+              <a class="nav-link" href="{% url "users:note_list" %}">
+                Notes {% if unseen_notes_count != 0 %}({{ unseen_notes_count }}){% endif %}
+              </a>
             {% endif %}
             <div class="nav-item dropdown">
               <a class="nav-link dropdown-toggle" href="#" id="messagesDropdown" role="button" data-bs-toggle="dropdown"

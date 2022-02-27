@@ -218,6 +218,8 @@ class Note(models.Model):
     teacher = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="notes_given"
     )
+    seen_by_student = models.BooleanField(default=False)
+    seen_by_parent = models.BooleanField(default=False)
 
     objects = NoteQuerySet.as_manager()
 
