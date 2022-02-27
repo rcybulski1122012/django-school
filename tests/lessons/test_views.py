@@ -841,6 +841,15 @@ class HomeworkListViewTestCase(
         qs = response.context["homeworks"]
         self.assertQuerysetEqual(qs, [self.homework])
 
+    def test_renders_paginator_if_there_are_more_than_10_homeworks(self):
+        self.login(self.student)
+        for _ in range(10):
+            self.create_homework(self.subject, self.teacher, self.school_class)
+
+        response = self.client.get(self.get_url())
+
+        self.assertContains(response, '<ul class="pagination">')
+
 
 class HomeworkDetailViewTestCase(
     RolesRequiredTestMixin,

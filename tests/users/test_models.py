@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from django_school.apps.lessons.models import Attendance
-from django_school.apps.users.models import ROLES
+from django_school.apps.users.models import ROLES, Note
 from tests.utils import ClassesMixin, GradesMixin, LessonsMixin, UsersMixin
 
 User = get_user_model()
@@ -183,6 +183,17 @@ class StudentsManagerTestCase(
 
         self.assertQuerysetEqual(users, [self.student, student2], ordered=False)
 
+    def test_with_teacher_notes(self):
+        teacher2 = self.create_teacher(username="teacher2")
+        note = self.create_note(self.student, self.teacher)
+        note2 = self.create_note(self.student, teacher2)
+
+        teacher_qs = User.students.with_teacher_notes(self.teacher)
+        teacher2_qs = User.students.with_teacher_notes(teacher2)
+
+        self.assertQuerysetEqual(teacher_qs.first().notes_gotten.all(), [note])
+        self.assertQuerysetEqual(teacher2_qs.first().notes_gotten.all(), [note2])
+
     @skip("Works fine on linux, but not on windows")
     def test_with_subject_grades_selects_grades_of_given_subject(self):
         subject2 = self.create_subject(name="subject2")
@@ -283,3 +294,43 @@ class TeachersManagerTestCase(UsersMixin, TestCase):
         teachers = User.teachers.all()
 
         self.assertQuerysetEqual(teachers, [self.teacher])
+
+
+class NoteQuerySetTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.teacher = cls.create_teacher()
+        cls.school_class = cls.create_class()
+        cls.student = cls.create_student(school_class=cls.school_class)
+        cls.subject = cls.create_subject()
+        cls.lesson = cls.create_lesson(cls.subject, cls.teacher, cls.school_class)
+        cls.note = cls.create_note(cls.student, cls.teacher)
+
+    def test_visible_to_user_returns_given_notes_if_user_is_teacher(self):
+        teacher2 = self.create_teacher(username="teacher2")
+        self.create_note(self.student, teacher2)
+
+        qs = Note.objects.visible_to_user(self.teacher)
+
+        self.assertQuerysetEqual(qs, [self.note])
+
+    def test_visible_to_user_returns_user_gotten_notes_if_user_is_student(self):
+        student2 = self.create_student(
+            username="student2", school_class=self.school_class
+        )
+        self.create_note(student2, self.teacher)
+
+        qs = Note.objects.visible_to_user(self.student)
+
+        self.assertQuerysetEqual(qs, [self.note])
+
+    def test_visible_to_user_returns_child_gotten_notes_if_user_is_parent(self):
+        student2 = self.create_student(
+            username="student2", school_class=self.school_class
+        )
+        self.create_note(student2, self.teacher)
+        parent = self.create_parent(child=self.student)
+
+        qs = Note.objects.visible_to_user(parent)
+
+        self.assertQuerysetEqual(qs, [self.note])

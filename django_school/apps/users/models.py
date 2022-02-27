@@ -67,6 +67,11 @@ class StudentsQuerySet(models.QuerySet):
             .distinct()
         )
 
+    def with_teacher_notes(self, teacher):
+        return self.prefetch_related(
+            Prefetch("notes_gotten", queryset=Note.objects.filter(teacher=teacher))
+        )
+
     def exclude_if_has_grade_in_category(self, category):
         return self.annotate(
             has_grade=Count("grades_gotten", filter=Q(grades_gotten__category=category))
@@ -192,3 +197,33 @@ class User(AbstractUser):
             return reverse("grades:student_grades", args=[self.slug])
         elif self.is_parent:
             return reverse("grades:student_grades", args=[self.child.slug])
+
+
+class NoteQuerySet(models.QuerySet):
+    def visible_to_user(self, user):
+        if user.is_teacher:
+            return self.filter(teacher=user)
+        elif user.is_student:
+            return self.filter(student=user)
+        elif user.is_parent:
+            return self.filter(student__parent=user)
+
+
+class Note(models.Model):
+    note = models.CharField(max_length=128)
+    created = models.DateTimeField(auto_now_add=True)
+    student = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="notes_gotten"
+    )
+    teacher = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="notes_given"
+    )
+
+    objects = NoteQuerySet.as_manager()
+
+    def __str__(self):
+        return self.note
+
+    @property
+    def delete_url(self):
+        return reverse("users:note_delete", args=[self.pk])

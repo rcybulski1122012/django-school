@@ -14,7 +14,7 @@ from django_school.apps.lessons.models import (AttachedFile, Attendance,
                                                Homework, HomeworkRealisation,
                                                Lesson, LessonSession, Subject)
 from django_school.apps.messages.models import Message, MessageStatus
-from django_school.apps.users.models import ROLES
+from django_school.apps.users.models import ROLES, Note
 
 User = get_user_model()
 
@@ -25,6 +25,7 @@ class UsersMixin:
     TEACHER_USERNAME = "teacher"
     STUDENT_USERNAME = "student"
     PARENT_USERNAME = "username"
+    DEFAULT_NOTE = "note"
 
     @classmethod
     def create_user(cls, username=DEFAULT_USERNAME, **kwargs):
@@ -66,6 +67,10 @@ class UsersMixin:
         superuser = cls.create_user(username, is_superuser=True, **kwargs)
 
         return superuser
+
+    @classmethod
+    def create_note(cls, student, teacher, note=DEFAULT_NOTE):
+        return Note.objects.create(student=student, teacher=teacher, note=note)
 
 
 class ClassesMixin:

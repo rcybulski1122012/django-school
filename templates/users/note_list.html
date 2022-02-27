@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}
+  Notes
+{% endblock %}
+
+{% block content %}
+  <h1>
+    {% if request.user.is_student %}
+      Your notes
+    {% else %}
+      Your child's notes
+    {% endif %}
+  </h1>
+
+  <ul class="list-group">
+    {% for note in notes %}
+      <li class="list-group-item">
+        <strong>Note:</strong> {{ note.note }}<br>
+        <strong>Teacher:</strong> {{ note.teacher.full_name }}<br>
+        <strong>Created:</strong> {{ note.created }}
+      </li>
+    {% empty %}
+      {% if request.user.is_student %}
+        <h4>You have not received any notes yet.</h4>
+      {% else %}
+        <h4>Your child has not received any notes yet.</h4>
+      {% endif %}
+    {% endfor %}
+  </ul>
+
+   {% include "common/paginator.html" %}
+{% endblock %}
