@@ -89,7 +89,27 @@
   </table>
 
   <h4>Notes:</h4>
-  {# TODO #}
+
+  {% if student.notes_gotten.all %}
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 25%">Date</th>
+          <th style="width: 75%">Note</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for note in student.notes_gotten.all %}
+          <tr>
+            <td>{{ note.created|date:"d-m-Y" }}</td>
+            <td>{{ note.note }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>{{ student.full_name }} has not received any notes yet.</p>
+  {% endif %}
 
   {% if student != last_student %}
     <div class="break"></div>

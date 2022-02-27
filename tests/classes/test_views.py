@@ -260,6 +260,25 @@ class ClassSummaryPDFViewTestCase(
         self.assertIn("<td>1</td>", content)
         self.assertIn("<td>3</td>", content)
 
+    def test_renders_notes_if_student_has_any(self):
+        self.login(self.teacher)
+        note = self.create_note(self.student1, self.teacher, note="NoteNote")
+
+        response = self.client.get(self.get_url())
+        content = self._get_html_content(response)
+
+        self.assertIn(note.note, content)
+
+    def test_renders_appropriate_message_if_student_has_not_any_notes(self):
+        self.login(self.teacher)
+
+        response = self.client.get(self.get_url())
+        content = self._get_html_content(response)
+
+        self.assertIn(
+            f"{self.student1.full_name} has not received any notes yet.", content
+        )
+
     def test_does_not_renders_empty_page_at_the_end(self):
         self.login(self.teacher)
 

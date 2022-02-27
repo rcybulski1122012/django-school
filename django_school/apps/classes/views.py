@@ -61,7 +61,7 @@ class ClassSummaryPDFView(
         ctx = super().get_context_data(**kwargs)
         students = list(
             User.students.with_attendance()
-            .prefetch_related("grades_gotten__subject")
+            .prefetch_related("grades_gotten__subject", "notes_gotten")
             .filter(school_class=self.get_object())
             .order_by("first_name")
         )
