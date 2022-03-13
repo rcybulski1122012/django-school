@@ -4,7 +4,7 @@ from django.urls import path
 from django_school.apps.users.views import (NoteCreateView, NoteDeleteView,
                                             NoteListView,
                                             PasswordChangeWithMessageView,
-                                            StudentDetailView)
+                                            SetPasswordView, StudentDetailView)
 
 app_name = "users"
 
@@ -15,6 +15,9 @@ urlpatterns = [
         "password_change/",
         PasswordChangeWithMessageView.as_view(),
         name="password_change",
+    ),
+    path(
+        "password_set/<uidb64>/<token>/", SetPasswordView.as_view(), name="password_set"
     ),
     path(
         "notes/add/",

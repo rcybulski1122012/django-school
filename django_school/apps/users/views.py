@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.views import PasswordChangeView
+from django.contrib.auth.views import (PasswordChangeView,
+                                       PasswordResetConfirmView)
 from django.contrib.messages.views import SuccessMessageMixin
 from django.http import Http404
 from django.urls import reverse_lazy
@@ -8,8 +9,11 @@ from django.views.generic import CreateView, DeleteView, DetailView, ListView
 
 from django_school.apps.common.utils import (AjaxRequiredMixin,
                                              RolesRequiredMixin)
-from django_school.apps.users.forms import NoteForm
+from django_school.apps.users.forms import (NoteForm,
+                                            SetPasswordWithActivationForm)
 from django_school.apps.users.models import ROLES, Note
+from django_school.apps.users.token_generator import \
+    set_password_token_generator
 
 User = get_user_model()
 
@@ -44,6 +48,14 @@ class StudentDetailView(
 class PasswordChangeWithMessageView(SuccessMessageMixin, PasswordChangeView):
     success_url = reverse_lazy("index")
     success_message = "The password has been changed successfully."
+
+
+class SetPasswordView(SuccessMessageMixin, PasswordResetConfirmView):
+    token_generator = set_password_token_generator
+    form_class = SetPasswordWithActivationForm
+    template_name = "registration/password_change_form.html"
+    success_url = reverse_lazy("users:login")
+    success_message = "The password has been set successfully"
 
 
 class NoteCreateView(

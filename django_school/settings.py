@@ -178,3 +178,5 @@ MARTOR_ENABLE_CONFIGS = {
     "spellcheck": "false",  # to enable/disable spellcheck in form textareas
     "hljs": "true",  # to enable/disable hljs highlighting in preview
 }
+
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"

@@ -1,6 +1,7 @@
 from django.test import TestCase
 
-from django_school.apps.users.forms import NoteForm
+from django_school.apps.users.forms import (NoteForm,
+                                            SetPasswordWithActivationForm)
 from tests.utils import ClassesMixin, LessonsMixin, UsersMixin
 
 
@@ -27,3 +28,25 @@ class NoteFormTestCase(UsersMixin, ClassesMixin, LessonsMixin, TestCase):
         form.is_valid()
 
         self.assertEqual(form.instance.teacher, self.teacher)
+
+
+class SetPasswordWithActivationFormTestCase(UsersMixin, TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = cls.create_user(is_active=False)
+
+    def test_save_activates_account(self):
+        form = SetPasswordWithActivationForm(
+            data={
+                "new_password1": "NewPassword123!",
+                "new_password2": "NewPassword123!",
+            },
+            user=self.user,
+        )
+        form.is_valid()
+
+        self.assertFalse(self.user.is_active)
+
+        form.save()
+
+        self.assertTrue(self.user.is_active)
