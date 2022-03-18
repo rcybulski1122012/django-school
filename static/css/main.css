@@ -1,3 +1,40 @@
+@import url('http://fonts.cdnfonts.com/css/harry-potter');
+
+* {
+    font-family: "Harry potter", sans-serif;
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+#login-page-background {
+    background-image: url("../images/hogwart.jpg");
+    background-size: cover;
+    background-position: bottom;
+    background-attachment: fixed;
+}
+
+#login-form-wrapper {
+    width: 90%;
+    height: auto;
+    max-width: 600px;
+    padding: 30px;
+    background-color: rgba(0,0,0,0.5);
+    color: white;
+}
+
+#login-form-wrapper input[type="text"], #login-form-wrapper input[type="password"]  {
+    background-color: black;
+    color: white;
+}
+
+#not-a-muggle-checkbox{
+    margin-top: 20px;
+    margin-bottom: 15px;
+}
+
 .navbar {
     border-bottom: 1px solid lightgray;
     padding: 1em;

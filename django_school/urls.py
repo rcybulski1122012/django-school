@@ -18,12 +18,11 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
-from django.views.generic import TemplateView
 
-from django_school.apps.common.views import attached_file_delete_view
+from django_school.apps.common.views import attached_file_delete_view, index
 
 urlpatterns = [
-    path("", TemplateView.as_view(template_name="index.html"), name="index"),
+    path("", index, name="index"),
     path("users/", include("django_school.apps.users.urls", namespace="users")),
     path("classes/", include("django_school.apps.classes.urls", namespace="classes")),
     path("lessons/", include("django_school.apps.lessons.urls", namespace="lessons")),
