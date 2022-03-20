@@ -19,7 +19,7 @@ class ClassQuerySet(models.QuerySet):
 
 
 class Class(models.Model):
-    number = models.CharField(max_length=4, unique=True)
+    number = models.CharField(max_length=32, unique=True)
     slug = models.SlugField(unique=True, blank=True)
     tutor = models.OneToOneField(
         settings.AUTH_USER_MODEL,

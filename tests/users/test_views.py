@@ -107,25 +107,13 @@ class PasswordChangeWithMessageViewTestCase(
 
     @classmethod
     def setUpTestData(cls):
-        cls.user = cls.create_user()
+        cls.user = cls.create_student()
 
     def get_url(self):
         return reverse(self.path_name)
 
     def get_permitted_user(self):
         return None
-
-    def test_redirects_to_index(self):
-        self.login(self.user)
-        data = {
-            "old_password": self.DEFAULT_PASSWORD,
-            "new_password1": "NewPassword1!",
-            "new_password2": "NewPassword1!",
-        }
-
-        response = self.client.post(self.get_url(), data)
-
-        self.assertRedirects(response, reverse("index"))
 
     def test_displays_success_message(self):
         self.login(self.user)

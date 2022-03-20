@@ -15,68 +15,94 @@ from django_school.apps.users.models import ROLES
 
 User = get_user_model()
 
-CLASSES = [f"{number}{letter}" for number in "123" for letter in "abc"]
+
 TEACHERS = [
-    "Harmony Obrien",
-    "Gregory Peters",
-    "Jordan Mason",
-    "Bill Shepard",
-    "Helen Conner",
-    "Alban Adams",
-    "Louie Adams",
-    "Alfie Garrett",
-    "Polly Covington",
-]
-STUDENTS = [
-    "Crispin Glisson",
-    "Horace Weber",
-    "Lonnie Aguilar",
-    "Leopold Hudson",
-    "Philippa Wood",
-    "Cade Burke",
-    "Rhea Mitchell",
-    "Howard Schultz",
-    "Harrison Fairbank",
-    "Lois Smart",
-    "Adele Harrison",
-    "Hale Bradley",
-    "Tyrone Parsons",
-    "Willette Peay",
-    "Gaylord Johnson",
+    "Alastor Moody",
+    "Aurora Sinistra",
+    "Bathsheda Babbling",
+    "Charity Burbage",
+    "Dolores Umbridge",
+    "Filius Flitwick",
+    "Gilderoy Lockhart",
+    "Horace Slughorn",
+    "Minerva McGonagall",
+    "Pomona Sprout",
+    "Quirinus Quirrell",
+    "Remus Lupin",
+    "Rolanda Hooch",
+    "Rubeus Hagrid",
+    "Severus Snape",
 ]
 
-PARENTS = [
-    "Gaylord Glisson",
-    "Trina Moss",
-    "Ella Santos",
-    "Maia Lucas",
-    "Calvert Kimmons",
-    "Matt Glover",
-    "Laurence Mccoy",
-    "Marlon Lipsey",
-    "Ernest Beck",
-    "Grover Terry",
-    "Grayson Read",
-    "Chris Atkinson",
-    "Harley Love",
-    "Eugene Waters",
-    "COlivia Hargraves",
+SUBJECT_TEACHERS_DICT = {
+    "Transfiguration": ["Albus Dumbledore", "Minerva McGonagall"],
+    "Defence Against the Dark Arts": [
+        "Alastor Moody",
+        "Dolores Umbridge",
+        "Gilderoy Lockhart",
+        "Quirinus Quirrell",
+        "Remus Lupin",
+        "Severus Snape",
+    ],
+    "Astronomy": ["Aurora Sinistra"],
+    "Ancient Runes": ["Bathsheda Babbling"],
+    "Muggle Studies": ["Quirinus Quirrell", "Charity Burbage"],
+    "Charms": ["Filius Flitwick"],
+    "Potions": ["Horace Slughorn", "Severus Snape"],
+    "Flying": ["Rolanda Hooch"],
+    "Herbology": ["Pomona Sprout"],
+    "Care of Magical Creatures": ["Rubeus Hagrid"],
+}
+
+STUDENT_PARENT_CLASS_LISTS = [
+    ["Harry Potter", None, "Gryffindor"],
+    ["Hermione Granger", None, "Gryffindor"],
+    ["Seamus Finnigan", "Mr. Finnigan", "Gryffindor"],
+    ["Dean Thomas", "Mrs. Thomas", "Gryffindor"],
+    ["Ginny Weasley", "Arthur Weasley", "Gryffindor"],
+    ["Lavender Brown", None, "Gryffindor"],
+    ["Neville Longbottom", "Augusta Longbottom", "Gryffindor"],
+    ["Draco Malfoy", "Lucius Malfoy", "Slytherin"],
+    ["Vincent Crabbe", "Crabbe Senior", "Slytherin"],
+    ["Gregory Goyle", "Goyle Senior", "Slytherin"],
+    ["Millicent Bulstrode", "Violetta Bulstrode", "Slytherin"],
+    ["Pansy Parkinson", "Perseus Parkinson", "Slytherin"],
+    ["Blaise Zabini", "Mrs Zabini", "Slytherin"],
+    ["Roger Davies", "Mr. Davies", "Ravenclaw"],
+    ["Cho Chang", "Madam Chang", "Ravenclaw"],
+    ["Padma Patil", "Mr. Patil", "Ravenclaw"],
+    ["Luna Lovegood", "Xenophilius Lovegood", "Ravenclaw"],
+    ["Marcus Belby", "Damocles Belby", "Ravenclaw"],
+    ["Ernie Macmillan", "George Macmillan", "Hufflepuff"],
+    ["Susan Bones", "Edgar Bones", "Hufflepuff"],
+    ["Justin Finch-Fletchley", None, "Hufflepuff"],
+    ["Cedric Diggory", "Amos Diggory", "Hufflepuff"],
 ]
+
 
 SUBJECTS = [
-    "Art",
-    "Geography",
-    "English",
-    "Literacy",
-    "Music",
-    "Science",
-    "Mathematics",
-    "Chemistry",
-    "Biology",
-    "Physics",
-    "Physical Education",
-    "Information Technology",
+    "Transfiguration",
+    "Defence Against the Dark Arts",
+    "Astronomy",
+    "Ancient Runes",
+    "Muggle Studies",
+    "Charms",
+    "Divination",
+    "Potions",
+    "Herbology",
+    "Flying",
+    "Care of Magical Creatures",
 ]
+
+
+CLASSES = [
+    "Gryffindor",
+    "Slytherin",
+    "Ravenclaw",
+    "Hufflepuff",
+]
+
+
 GRADE_CATEGORIES = [
     "Exam 1",
     "Exam 2",
@@ -86,37 +112,44 @@ GRADE_CATEGORIES = [
     "Group project",
     "Final exam",
 ]
+
+
 GLOBAL_EVENTS = [
-    "Trip meeting",
-    "School patron saint's day",
-    "School party",
+    "Quidditch Tournament",
+    "Triwizard tournament" "School party",
 ]
+
+
 CLASS_EVENTS = [
     "Exam 1",
-    "Interview",
-    "Class trip",
+    "Exam 2",
+    "Exam 3",
     "Homework",
+    "Group project",
 ]
 
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
         for f in [
-            self.create_superuser,
-            self.create_teachers,
-            self.create_classes,
-            self.create_students_and_parents,
-            self.create_subjects,
-            self.create_loggable_teacher,
-            self.create_loggable_student,
-            self.create_loggable_parent,
+            self.create_superuser,  # ok
+            self.create_teachers,  # ok
+            self.create_classes,  # ok
+            self.create_students_and_parents,  # ok
+            self.create_subjects,  # ok
+            self.create_loggable_teacher,  # ok
+            self.create_loggable_student,  # ok
+            self.create_loggable_parent,  # ok
             self.create_lessons,
-            self.create_grades_categories_and_grades,
-            self.create_events,
+            self.create_grades_categories_and_grades,  # ok
+            self.create_events,  # ok
         ]:
             try:
                 f()
             except Exception as e:
+                import traceback
+
+                traceback.print_exc()
                 print(e)
 
     def create_superuser(self):
@@ -149,9 +182,9 @@ class Command(BaseCommand):
             username="teacher",
             password="teacher",
             role=ROLES.TEACHER,
-            first_name="Teacher",
-            last_name="Loggable",
-            gender="female",
+            first_name="Albus",
+            last_name="Dumbledore",
+            gender="male",
             phone_number="123-456-789",
         )
 
@@ -163,23 +196,12 @@ class Command(BaseCommand):
             username="student",
             password="student",
             role=ROLES.STUDENT,
-            first_name="Student",
-            last_name="Loggable",
+            first_name="Ron",
+            last_name="Weasley",
             gender="male",
             phone_number="456-123-789",
             school_class=self.school_class,
         )
-
-        subject = Subject.objects.create(name="History", slug="history")
-        lesson = Lesson.objects.create(
-            subject=subject,
-            teacher=self.teacher,
-            school_class=self.school_class,
-            time=Lesson.LESSONS_TIMES[0][0],
-            weekday=Lesson.WEEKDAYS[0][0],
-            classroom=1,
-        )
-        self.create_lesson_sessions_and_attendances([lesson])
 
     def create_loggable_parent(self):
         child = User.students.get(username="student")
@@ -188,9 +210,9 @@ class Command(BaseCommand):
             username="parent",
             password="parent",
             role=ROLES.PARENT,
-            first_name="Parent",
-            last_name="Loggable",
-            gender="male",
+            first_name="Molly",
+            last_name="Weasley",
+            gender="female",
             phone_number="789-456-123",
             child=child,
         )
@@ -225,33 +247,39 @@ class Command(BaseCommand):
 
     @staticmethod
     def create_students_and_parents():
-        classes = list(Class.objects.all())
+        classes = {
+            class_name: Class.objects.get(number=class_name) for class_name in CLASSES
+        }
+
         students = []
-        for full_name in STUDENTS:
-            first_name, last_name = full_name.split()
+        for student_name, _, class_name in STUDENT_PARENT_CLASS_LISTS:
+            first_name, last_name = student_name.split()
             students.append(
                 User(
                     role=ROLES.STUDENT,
                     first_name=first_name,
                     last_name=last_name,
-                    slug=slugify(full_name),
-                    username=full_name,
-                    school_class=random.choice(classes),
+                    slug=slugify(student_name),
+                    username=student_name,
+                    school_class=classes[class_name],
                 )
             )
 
         User.objects.bulk_create(students)
 
         parents = []
-        for student, parent_full_name in zip(students, PARENTS):
-            first_name, last_name = parent_full_name.split()
+        for student, (_, parent_name, _) in zip(students, STUDENT_PARENT_CLASS_LISTS):
+            if parent_name is None:
+                continue
+
+            first_name, last_name = parent_name.split()
             parents.append(
                 User(
                     role=ROLES.STUDENT,
                     first_name=first_name,
                     last_name=last_name,
-                    slug=slugify(first_name),
-                    username=parent_full_name,
+                    slug=slugify(parent_name),
+                    username=parent_name,
                     child=student,
                 )
             )
@@ -268,8 +296,13 @@ class Command(BaseCommand):
 
     def create_lessons(self):
         classes = Class.objects.all()
-        subjects = Subject.objects.all()
-        teachers = list(User.teachers.all())
+        subjects = {subject.name: subject for subject in Subject.objects.all()}
+        teachers_dict = {teacher.full_name: teacher for teacher in User.teachers.all()}
+        for full_name in TEACHERS:
+            first_name, last_name = full_name.split()
+            teachers_dict[full_name] = User.teachers.get(
+                first_name=first_name, last_name=last_name
+            )
         lessons = []
         time_weekday_combinations = [
             (time[0], weekday[0])
@@ -279,19 +312,19 @@ class Command(BaseCommand):
 
         for school_class in classes:
             combinations = random.sample(time_weekday_combinations, len(subjects))
-            for subject in subjects:
-                if random.choice([True, False]):
-                    time, weekday = combinations.pop()
-                    lessons.append(
-                        Lesson(
-                            time=time,
-                            weekday=weekday,
-                            classroom=random.randint(1, 100),
-                            subject=subject,
-                            teacher=random.choice(teachers),
-                            school_class=school_class,
-                        )
+            for subject, teachers in SUBJECT_TEACHERS_DICT.items():
+                time, weekday = combinations.pop()
+                teacher = teachers_dict[random.choice(teachers)]
+                lessons.append(
+                    Lesson(
+                        time=time,
+                        weekday=weekday,
+                        classroom=random.randint(1, 100),
+                        subject=subjects[subject],
+                        teacher=teacher,
+                        school_class=school_class,
                     )
+                )
 
         # to ensure that the loggable teacher is teaching the loggable student
         lessons.append(

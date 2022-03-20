@@ -35,9 +35,14 @@ html, body {
     margin-bottom: 15px;
 }
 
+#hogwarts-crest {
+    height: 50px;
+    padding: 0;
+    margin: 0;
+}
+
 .navbar {
     border-bottom: 1px solid lightgray;
-    padding: 1em;
 }
 
 .nav-link {
