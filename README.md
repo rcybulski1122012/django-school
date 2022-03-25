@@ -1,8 +1,8 @@
-# Django School
-School management system made with Python and Django.
+# Hogwarts School
+Hogwarts inspired school management system made with Python and Django.
 Created for educational purposes.
 
-[Live version](https://django-school-management.herokuapp.com/)
+[Live version](https://hogwarts-school-management.herokuapp.com/)
 
 Login details (accounts generated with populatedb command):
 * login: **admin**, password: **admin**
