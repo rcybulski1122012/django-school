@@ -85,25 +85,29 @@ class LessonSessionListView(
     context_object_name = "lesson_sessions"
 
     def get_queryset(self):
-        date = self.request.GET.get("date", datetime.date.today())
+        date = self.request.GET.get("date", None)
 
-        qs = (
-            super()
-            .get_queryset()
-            .visible_to_user(self.request.user)
-            .filter(date=date)
-            .select_related(
-                "lesson__teacher",
-                "lesson__school_class",
-                "lesson__subject",
-            )
+        qs = super().get_queryset().visible_to_user(self.request.user)
+
+        if date is None:
+            today = datetime.datetime.today()
+            first_session = qs.filter(date__gte=today).order_by("date").first()
+
+            date = first_session.date.strftime("%Y-%m-%d") if first_session else today
+
+        qs = qs.filter(date=date).select_related(
+            "lesson__teacher",
+            "lesson__school_class",
+            "lesson__subject",
         )
+
+        self.date = date
 
         return qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["date"] = self.request.GET.get("date")
+        context["date"] = self.date
 
         return context
 
@@ -177,6 +181,7 @@ class ClassSubjectListView(
                 teacher=self.request.user, school_class=self.school_class
             )
             .filter(lessons__school_class=self.school_class)
+            .distinct()
         )
 
     def get_context_data(self, **kwargs):
@@ -203,9 +208,11 @@ def student_attendance_summary_view(request, student_slug):
         ),
         slug=student_slug,
     )
-    subjects = Subject.objects.filter(
-        lessons__school_class__students=student
-    ).values_list("name", flat=True)
+    subjects = (
+        Subject.objects.filter(lessons__school_class__students=student)
+        .distinct()
+        .values_list("name", flat=True)
+    )
 
     ctx = {
         "student": student,

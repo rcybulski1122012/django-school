@@ -55,8 +55,18 @@
       });
 
       popoverTriggerList.forEach(function (element) {
-          element.addEventListener('shown.bs.popover', function () {
+          element.addEventListener('shown.bs.popover', function (e) {
               htmx.process(document.querySelector(".eventDeleteButton"));
+
+
+          });
+
+          element.addEventListener('show.bs.popover', function (e) {
+              for(const popover of popoverList) {
+                  if (element !== popover._element) {
+                      popover.hide();
+                  }
+              }
           });
       });
 

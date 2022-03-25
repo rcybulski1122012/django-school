@@ -21,11 +21,13 @@
         <strong>Created:</strong> {{ note.created }}
       </li>
     {% empty %}
+      <p>
       {% if request.user.is_student %}
-        <h4>You have not received any notes yet.</h4>
+        You have not received any notes yet.
       {% else %}
-        <h4>Your child has not received any notes yet.</h4>
+        Your child has not received any notes yet.
       {% endif %}
+      </p>
     {% endfor %}
   </ul>
 

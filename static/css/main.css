@@ -1,12 +1,16 @@
 @import url('http://fonts.cdnfonts.com/css/harry-potter');
 
-* {
+h1, h2, h3, h4, h5, h6, .nav-item, .nav-link, .navbar-brand {
     font-family: "Harry potter", sans-serif;
 }
 
 html, body {
     height: 100%;
     margin: 0;
+}
+
+a {
+    text-decoration: none;
 }
 
 #login-page-background {
@@ -36,13 +40,10 @@ html, body {
 }
 
 #hogwarts-crest {
-    height: 50px;
-    padding: 0;
+    height: 55px;
+    padding: 5px;
     margin: 0;
-}
-
-.navbar {
-    border-bottom: 1px solid lightgray;
+    margin-right: 5px;
 }
 
 .nav-link {
@@ -120,4 +121,12 @@ input[type="checkbox"] {
 .event:hover {
     opacity: 0.9;
     transition: 0.15s
+}
+
+
+/* navbar */
+.header {
+    box-shadow: 0px 2px 20px rgba(1, 41, 112, 0.1);
+    background-color: #fff;
+    margin-bottom: 10px;
 }

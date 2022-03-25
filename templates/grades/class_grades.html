@@ -104,6 +104,14 @@
           element.addEventListener('shown.bs.popover', function () {
               htmx.process(document.querySelector(".gradeDeleteButton"));
           });
+
+          element.addEventListener('show.bs.popover', function (e) {
+              for (const popover of popoverList) {
+                  if (element !== popover._element) {
+                      popover.hide();
+                  }
+              }
+          });
       });
 
       document.querySelector("#base-modal").addEventListener('show.bs.modal', function () {

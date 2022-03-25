@@ -173,7 +173,7 @@ class LessonSessionListViewTestCase(
 
         self.assertQuerysetEqual(response.context["lesson_sessions"], [session1])
 
-    def test_selects_today_lesson_sessions_by_default(self):
+    def test_selects_today_lesson_sessions_by_default_if_any_exists(self):
         self.login(self.teacher)
         lesson2 = self.create_lesson(
             self.subject, self.teacher, self.school_class, weekday="mon"
@@ -184,6 +184,17 @@ class LessonSessionListViewTestCase(
         response = self.client.get(self.get_url())
 
         self.assertQuerysetEqual(response.context["lesson_sessions"], [session1])
+
+    def test_selects_first_future_lesson_session_if_there_are_no_session_today(self):
+        self.login(self.teacher)
+        today = datetime.datetime.today()
+        session = self.create_lesson_session(
+            self.lesson, today + datetime.timedelta(days=10)
+        )
+
+        response = self.client.get(self.get_url())
+
+        self.assertQuerysetEqual(response.context["lesson_sessions"], [session])
 
     def test_selects_lessons_in_given_date(self):
         self.login(self.teacher)

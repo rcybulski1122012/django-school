@@ -311,20 +311,21 @@ class Command(BaseCommand):
         ]
 
         for school_class in classes:
-            combinations = random.sample(time_weekday_combinations, len(subjects))
+            combinations = random.sample(time_weekday_combinations, len(subjects) * 5)
             for subject, teachers in SUBJECT_TEACHERS_DICT.items():
-                time, weekday = combinations.pop()
-                teacher = teachers_dict[random.choice(teachers)]
-                lessons.append(
-                    Lesson(
-                        time=time,
-                        weekday=weekday,
-                        classroom=random.randint(1, 100),
-                        subject=subjects[subject],
-                        teacher=teacher,
-                        school_class=school_class,
+                for _ in range(3):
+                    time, weekday = combinations.pop()
+                    teacher = teachers_dict[random.choice(teachers)]
+                    lessons.append(
+                        Lesson(
+                            time=time,
+                            weekday=weekday,
+                            classroom=random.randint(1, 100),
+                            subject=subjects[subject],
+                            teacher=teacher,
+                            school_class=school_class,
+                        )
                     )
-                )
 
         # to ensure that the loggable teacher is teaching the loggable student
         lessons.append(

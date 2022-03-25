@@ -190,7 +190,7 @@ class NoteCreateViewTestCase(
 
         response = self.client.post(self.get_url(), data=data, follow=True)
 
-        self.assertContains(response, "The note has been create successfully")
+        self.assertContains(response, "The note has been created successfully")
 
 
 class NoteDeleteViewTestCase(

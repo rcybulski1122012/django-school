@@ -11,7 +11,7 @@
     <tbody>
     {% for time in lessons_times %}
       <tr>
-        <td>{{ time.1 }}</td>
+        <td  style="min-width:120px">{{ time.1 }}</td>
         {% for weekday in weekdays %}
           <td id="{{ weekday.0 }}{{ time.0 }}">
             <div class="lesson"> -</div>

@@ -66,7 +66,7 @@ class NoteCreateView(
 ):
     model = Note
     form_class = NoteForm
-    success_message = "The note has been create successfully"
+    success_message = "The note has been created successfully"
     template_name = "users/note_create.html"
 
     def get_form_kwargs(self):

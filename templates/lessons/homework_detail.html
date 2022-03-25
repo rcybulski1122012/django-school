@@ -51,7 +51,7 @@
       <ul class="list-group">
         {% for file in homework_realisation.attached_files.all %}
           <li class="list-group-item">
-            <a href="{{ file.file.url }}" download class="text-decoration-none">
+            <a href="{{ file.file.url }}" download>
               Attachment {{ forloop.counter }}
             </a>
           </li>
@@ -78,7 +78,7 @@
               <td>
                 {% if realisation.attached_files.all %}
                   {% for file in realisation.attached_files.all %}
-                    <a href="{{ file.file.url }}" download class="text-decoration-none">
+                    <a href="{{ file.file.url }}" download>
                       File {{ forloop.counter }}
                     </a>
                   {% endfor %}

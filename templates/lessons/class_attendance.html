@@ -31,7 +31,7 @@
       <tbody>
       {% for student in students %}
         <tr>
-          <th><a href="{{ student.attendance_url }}" class="text-decoration-none">{{ student.full_name }}</a></th>
+          <th><a href="{{ student.attendance_url }}">{{ student.full_name }}</a></th>
           <td>{{ student.present_hours }}</td>
           <td>{% widthratio student.present_hours student.total_attendance 100 %}%</td>
           <td>{{ student.absent_hours }}</td>

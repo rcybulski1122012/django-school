@@ -28,7 +28,7 @@
         <tbody>
         {% for homework in homeworks %}
           <tr>
-            <td><a href="{{ homework.detail_url }}" class="text-decoration-none">{{ homework.title }}</a></td>
+            <td><a href="{{ homework.detail_url }}">{{ homework.title }}</a></td>
             <td>{{ homework.subject.name }}</td>
             {% if request.user.is_teacher %}
               <td>{{ homework.school_class.number }}</td>
@@ -57,11 +57,13 @@
       </table>
     </div>
   {% else %}
-    {% if request.user.is_teacher %}
-      You haven't set any homeworks yet.
-    {% else %}
-      You don't have any homework.
-    {% endif %}
+    <p>
+      {% if request.user.is_teacher %}
+        You haven't set any homeworks yet.
+      {% else %}
+        You don't have any homework.
+      {% endif %}
+    </p>
   {% endif %}
 
   {% include "common/paginator.html" %}

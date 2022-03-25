@@ -76,9 +76,11 @@
               <strong class="ms-1">Parents</strong><br>
               {% for student in class.students.all %}
                 {% with parent=student.parent %}
-                  <input type="checkbox" name="receivers" value="{{ parent.pk }}" id="receiver-{{ parent.pk }}"
-                         {% if parent.pk in form.initial.receivers %}checked{% endif %}>
-                  <label for="receiver-{{ parent.pk }}">{{ parent.full_name }}</label><br>
+                  {% if parent %}
+                    <input type="checkbox" name="receivers" value="{{ parent.pk }}" id="receiver-{{ parent.pk }}"
+                           {% if parent.pk in form.initial.receivers %}checked{% endif %}>
+                    <label for="receiver-{{ parent.pk }}">{{ parent.full_name }}</label><br>
+                  {% endif %}
                 {% endwith %}
               {% endfor %}
             </div>
